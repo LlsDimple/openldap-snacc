@@ -47,27 +47,13 @@ GDecAsnEnumContent PARAMS ((b, result, bytesDecoded, env),
 	long strLen;
 
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b,&peek_head, GSER_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( b,&peek_head, GSER_NO_COPY )) ){
 		Asn1Error("ENUMERATED : Token Reading ERROR\n");
 		longjmp( env, -20);
 	}
+
 	result->value_identifier = peek_head;
+	result->len = strLen;
+
 	*bytesDecoded += strLen;
-}
-
-/*
- * Matching Rule for ENUMERATE
- * if and only if the enumeration item identifiers are the same
- */
-AsnInt
-GMatchingAsnEnumContent PARAMS ((a, b),
-	GAsnEnum *a _AND_
-	GAsnEnum* b)
-{
-	assert( a );
-	assert( b );
-	assert( a->identifier );
-	assert( b->identifier );
-
-	return ( strcmp( a->identifier, b->identifier ) == 0) ;
 }

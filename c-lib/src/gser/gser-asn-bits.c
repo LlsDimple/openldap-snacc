@@ -24,6 +24,7 @@
  * hstring	= squote "hexdecimal-digit squote %48
  * bstring	= squote *binary-digit squote %42
  * binary-digit	= 0 / 1
+ * each bit is encoded to a binary-digit
  */
 
 AsnLen
@@ -72,6 +73,14 @@ GEncAsnBitsContent PARAMS ((b, bits),
  * GSER Decodes the content of a BIT STRING (including the unused bits octet)
  * Always returns a single contiguous bit string
  */
+#define FIRST_BIT	0x01
+#define SECOND_BIT	0x02
+#define THRID_BIT 	0x04
+#define FOURTH_BIT	0x08
+#define FIFTH_BIT	0x10
+#define SIXTH_BIT	0x20
+#define SEVENTH_BIT	0x40
+#define EIGITH_BIT	0x80
 void
 GDecAsnBitsContent PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -79,18 +88,52 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded, env),
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
 {
-}
+	long strLen, data_len, bit_pos, num_of_bits;
+        char* peek_head, *data;
+	unsigned char set;
+                                                                          
+        *bytesDecoded = 0;
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		longjmp( env, -20);
+        }
 
-/*
- * Matching Rule for BIT STRING
- */
-AsnInt
-GMatchingAsnBitsContent PARAMS ((bits1, bits2),
-	GAsnBits *bits1 _AND_ 
-	GAsnBits *bits2)
-{
-	/* Need to be Implemented */
-	assert( bits1 );
-	assert( bits2 );
-	return 1;
+	if ( peek_head[0] != '\'' ) {
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		longjmp( env, -20);
+	}
+
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		longjmp( env, -20);
+        }
+
+	data = peek_head;
+	data_len = strLen;
+
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		longjmp( env, -20);
+        }
+
+	if ( peek_head[0] != '\'' ||
+			!( peek_head[1] == 'H' || peek_head[1] == 'B') ) {
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		longjmp( env, -20);
+	}
+
+	bit_pos = 0;
+	num_of_bits = 8;
+	while ( data_len-- ) {
+		set = 1;
+		set = set << (bit_pos%num_of_bits-1);
+		if ( data[bit_pos] == '1' ) {
+			data[bit_pos/num_of_bits] = data[bit_pos/num_of_bits] | set;
+		}
+		else if ( data[bit_pos] == '0' ) {
+			data[bit_pos/num_of_bits] = data[bit_pos/num_of_bits] & ~set;
+		}
+		bit_pos++;
+		if ( bit_pos == num_of_bits ) bit_pos = 0;
+	}
 }

@@ -14,7 +14,7 @@
 
 /*
  * Return the next token and its length, skipping sp and msp
- * Token : identifier, value , {, }, 'H, 'B, ', \, :
+ * Token : identifier, value , {, }, 'H, 'B, ', \, \" :
  *
  * Mode : GSER_COPY, GSER_NO_COPY, GSER_PEEK
  * GSER_COPY mode :
@@ -46,6 +46,11 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 
    len = 1;
    peek_byte = BufPeekSeg(b,&len);
+
+   if ( peek_byte == NULL ){
+	*pos = NULL;
+	return 0;
+   }
 
    switch ( *peek_byte ) {
 	case '{' :
@@ -91,6 +96,11 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 	   }
 	   *pos = peek_byte;
 	   break;
+	case '\"' : /* All string is placed between double quote */
+	   if ( mode != GSER_PEEK )
+		BufGetByte ( b );
+	   i = 1;
+	   *pos = peek_byte;
 	default : /* identifier and value are parsed */
 	   i = 1;
 	   len = INDEFINITE_LEN;
@@ -98,7 +108,10 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 	   while ( 1 ) {
 		if ( (peek_byte[i] == '}') || (peek_byte[i] == ',') ||
 			peek_byte[i] == ':' || (peek_byte[i] == ' ')||
-			peek_byte[i]=='\'' || (i >= len) ){
+			peek_byte[i] == '\'' || (i >= len) ||
+			/* double quote is escaped with double quote */
+			( ( i < len - 2 ) && (peek_byte[i] == '\"')
+			&& (peek_byte[i+1] != '\"' ) ) ){
 		   if ( mode == GSER_COPY ) {
 		      *pos = Asn1Alloc(i+1);
 		      BufCopy(*pos, b,(unsigned long)i);

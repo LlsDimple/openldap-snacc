@@ -21,6 +21,5 @@
  *                  = %xE0-EF 2(%x80-BF) /
  *                  = %xF0-E7 3(%x80-BF) /
  */
-#define GEncIA5StringContent GEncAsnOctsContent
-#define GDecIA5StringContent GDecAsnOctsContent
-#define GMatchingIA5StringContent GMatchingAsnOctsContent
+#define GEncIA5StringContent GEncAsnUTF8StringContent
+#define GDecIA5StringContent GDecAsnUTF8StringContent

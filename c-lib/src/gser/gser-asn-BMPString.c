@@ -13,29 +13,29 @@
 #include "gen-buf.h"
 
 /*
- * BMPString needs to be translated into UTF8
+ * BMPString(UCS-2) needs to be translated into UTF8
  * It can be done just direct mapping
  * RFC 3641
- * StringValue	    = dquote *SafeUTF8Character dquote
- * SafeUTFCharacter = %x00-21 / %x23-7f /
- *                  = dquote dquote /
- *                  = %xc0-DF %x80-BF /
- *                  = %xE0-EF 2(%x80-BF) /
- *                  = %xF0-E7 3(%x80-BF) /
  */
-extern int escapeDquote(GBMPString*);
-static int BMPStringtoUTF8( char* octs, int len){
+static int TranslateUCS2toUTF8( char* octs, int len){
 	return 1;
 }
 
-AsnLen GEncBMPStringContent(GenBuf *b, GBMPString *octs)
+static int TranslateUTF8toUCS2( char* octs, int len){
+	return 1;
+}
+
+AsnLen GEncBMPStringContent(GenBuf *b, GBMPString *result )
 {
+	TranslateUCS2toUTF8( result->value.octs, result->value.octetLen );
+	GEncUTF8StringContent( b,result );
 	return 0;
 } 
 
 void GDecBMPStringContent(GenBuf *b, GBMPString *result,
 				 AsnLen *bytesDecoded, ENV_TYPE env)
 {
+	/* UTF-8, a Transformation format of ISO RFC 2279 */
+	GDecUTF8StringContent(b,result,bytesDecoded, env);
+	TranslateUTF8toUCS2( result->value.octs, result->value.octetLen);
 }
-
-#define GMatchingBMPStringContent GMatchingAsnOctsContent

@@ -115,8 +115,6 @@
 #include "snaccCder.h"
 #include "print.h"
 
-#include "asn-gser.h"
-
 #define MAX_BUF 4096
 
 

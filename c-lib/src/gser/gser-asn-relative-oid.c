@@ -51,19 +51,3 @@ GDecAsnRelativeOidContent PARAMS ((b, result, bytesDecoded, env),
 	*bytesDecoded = strLen;
 
 }
-
-/*
- * Matching Rule for Relative OID
- * If and only if the values have the same number of arcs and 
- * corresponding arcs are the same
- */
-AsnInt GMatchingAsnRelativeOidContent PARAMS (( a, b ),
-	GAsnRelativeOid *a _AND_
-	GAsnRelativeOid  *b)
-{
-	assert( a );
-	assert( b );
-	assert( a->value.octs );
-	assert( b->value.octs );
-	return ( strcmp ( a->value.octs, b->value.octs ) == 0 );
-}

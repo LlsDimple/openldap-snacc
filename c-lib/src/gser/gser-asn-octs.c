@@ -125,21 +125,3 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
 		longjmp( env, -20);
 	}
 }
-
-/*
- * Matching Rule for OCTET STRING
- * RFC 3687 : 6.2. l)
- * the same if and only if the values have the same number of octets
- * and corresponding octets are the same.
- */
-AsnInt
-GMatchingAsnOctsContent PARAMS ((a, b),
-	GAsnOcts *a _AND_
-	GAsnOcts *b)
-{
-	assert ( a );
-	assert ( b );
-	assert ( a->value.octs );
-	assert ( a->value.octs );
-	return ( strcmp ( a->value.octs, b->value.octs ) == 0 );
-}

@@ -17,12 +17,6 @@
  * UniverseString need to be translated into UTF8
  * It can be done just direct mapping
  * RFC 3641
- * StringValue	    = dquote *SafeUTF8Character dquote
- * SafeUTFCharacter = %x00-21 / %x23-7f /
- *                  = dquote dquote /
- *                  = %xc0-DF %x80-BF /
- *                  = %xE0-EF 2(%x80-BF) /
- *                  = %xF0-E7 3(%x80-BF) /
  */
 static int UniversalStringtoUTF8( char* octs, int len){
 	return 1;
@@ -38,7 +32,7 @@ GEncUniversalStringContent PARAMS ((b, octs),
     GUniversalString *octs)
 {
 	UniversalStringtoUTF8(octs->value.octs,octs->value.octetLen);
-	GEncAsnOctsContent(b,(GAsnOcts*)octs);
+	GEncAsnUTF8StringContent(b,(GAsnOcts*)octs);
 	return octs->value.octetLen;
 }
 
@@ -49,6 +43,6 @@ GDecUniversalStringContent PARAMS ((b, result, bytesDecoded, env),
    AsnLen *bytesDecoded _AND_
    ENV_TYPE env)
 {
-	GDecAsnOctsContent(b, (GAsnOcts*)result, bytesDecoded, env);
+	GDecAsnUTF8StringContent(b, (GAsnOcts*)result, bytesDecoded, env);
 	UTF8toUniversalString(result->value.octs, result->value.octetLen);
 }

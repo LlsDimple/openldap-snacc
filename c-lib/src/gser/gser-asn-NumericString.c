@@ -11,6 +11,5 @@
 
 #include "asn-incl.h"
 
-#define GEncAsnNumericStringContent GEncAsnOctsContent
-#define GDecAsnNumericStringContent GDecAsnOctsContent
-#define GMatchingAsnNumericStringContent GMatchingAsnOctsContent
+#define GEncAsnNumericStringContent GEncAsnUTF8StringContent
+#define GDecAsnNumericStringContent GDecAsnUTF8StringContent
