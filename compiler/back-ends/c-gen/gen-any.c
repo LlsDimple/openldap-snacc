@@ -93,7 +93,7 @@ void PrintCInitModuleCode(FILE *src, FILE *hdr, CRules *r, ModuleList *mods,
 	modName = m->modId->name;
 
 	fprintf (src,"void init_module_%s() {\n", modName);
-	fprintf (src,"\tadd_OD_entry(\"/*Replace ME with OID*/\",GDecComponent/*Replace Me with Outermost ASN.1 Type*/,GDecComponent/*Me Either*/,NULL);\n");
+	fprintf (src,"\tadd_OD_entry(\"/*Replace ME with OID*/\",GDecComponent/*Replace Me with Outermost ASN.1 Type*/,BDecComponent/*Me Either*/,NULL);\n");
 	fprintf (src,"\tInitAny%s();\n",modName);
 	fprintf (src,"}\n\n");
 }

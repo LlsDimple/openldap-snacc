@@ -391,8 +391,16 @@ PrintCElmtFree PARAMS ((src, td, parent, e, varName),
     MakeVarPtrRef (genFreeCRulesG, td, parent, e, varName, elmtVarRef);
 
     /* if optional then put in NULL check */
-    if(e->optional || (e->defaultVal != NULL))
+    if(e->optional || (e->defaultVal != NULL)) {
+	if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+		if ( strncmp ( ctri->optTestRoutineName, "ASN", 3) == 0 ) 
+			fprintf (src, "\tif(COMPONENT%s (%s))\n    {\n", ctri->optTestRoutineName+3, elmtVarRef);
+		else 
+			fprintf (src, "\tif(COMPONENT%s (%s))\n    {\n", ctri->optTestRoutineName, elmtVarRef);
+	} else {
         fprintf (src, "\tif(%s (%s))\n    {\n", ctri->optTestRoutineName, elmtVarRef);
+	}
+    }
 
     /* free contents of elmt first */
     switch(ctri->cTypeId)

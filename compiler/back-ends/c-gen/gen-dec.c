@@ -135,6 +135,17 @@ int IsPrimitiveType ( Type* t );
 
 extern EncRulesType GetEncRulesType();
 
+static
+void PrintCompDecodeHead( FILE* src ) {
+    fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) ) {\n");
+    fprintf (src, "\tmemset(&c_temp,0,sizeof(c_temp));\n");
+    fprintf (src, "\t\t k = &c_temp;\n");
+    fprintf (src, "\t} else\n");
+    fprintf (src, "\t\t k = t = *v;\n");
+    fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+}
+
+
 void
 PrintCDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
     FILE *src _AND_
@@ -321,6 +332,7 @@ Type *t)
     fprintf (src, "\tt->comp_desc->cd_all_match = (allcomponent_matching_func*)MatchingComponent%s;\n", name);
 }
 
+
 static void
 PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, varName),
     FILE *src _AND_
@@ -341,11 +353,7 @@ PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, varName),
 
     parentCtri = t->cTypeRefInfo;
 
-    fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-    fprintf (src, "\t\t k = &c_temp;\n");
-    fprintf (src, "\telse\n");
-    fprintf (src, "\t\t k = t = *v;\n");
-    fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+    PrintCompDecodeHead (src);
 
     fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading identifier\");\n");
@@ -1561,11 +1569,8 @@ PrintCSetDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
     initialElmtLevel = elmtLevel;
 
     if ( GetEncRulesType() == BER_COMP ) {
-	fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-	fprintf (src, "\t\t k = &c_temp;\n");
-	fprintf (src, "\telse\n");
-	fprintf (src, "\t\t k = t = *v;\n");
-	fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+
+	PrintCompDecodeHead( src );
 	varName = "k";
 	strcpy( tmpVarName2, "&k" );
     }
@@ -1928,11 +1933,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     e = (NamedType*)FIRST_LIST_ELMT (elmts);
     tmpTypeId = GetBuiltinType (e->type);
 
-    fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-    fprintf (src, "\t\t k = &c_temp;\n");
-    fprintf (src, "\telse\n");
-    fprintf (src, "\t\t k = t = *v;\n");
-    fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+    PrintCompDecodeHead( src );
 /*
  * Print codes for reading '{' in GSER encoded data stream,
  */
@@ -2032,11 +2033,8 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     e = (NamedType*)FIRST_LIST_ELMT (elmts);
     tmpTypeId = GetBuiltinType (e->type);
 
-    fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-    fprintf (src, "\t\t k = &c_temp;\n");
-    fprintf (src, "\telse\n");
-    fprintf (src, "\t\t k = t = *v;\n");
-    fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+    PrintCompDecodeHead( src );
+
 /*
  * Print codes for reading '{' in GSER encoded data stream,
  */
@@ -2366,11 +2364,7 @@ PrintCSeqDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
     initialElmtLevel = elmtLevel;
 
     if ( GetEncRulesType() == BER_COMP ) {
-	fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-	fprintf (src, "\t\t k = &c_temp;\n");
-	fprintf (src, "\telse\n");
-	fprintf (src, "\t\t k = t = *v;\n");
-	fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+	PrintCompDecodeHead( src );
 	varName = "k";
 	strcpy( tmpVarName2, "&k" );
     }
@@ -2931,11 +2925,7 @@ PrintCListDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, v
                    (builtinType == BASICTYPE_ANYDEFINEDBY)));
 
     if ( GetEncRulesType() == BER_COMP ) {
-	fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-	fprintf (src, "\t\t k = &c_temp;\n");
-	fprintf (src, "\telse\n");
-	fprintf (src, "\t\t k = t = *v;\n");
-	fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+	PrintCompDecodeHead( src );
 	varName = "k";
 	strcpy( tmpVarName2, "&k" );
 
@@ -3178,11 +3168,8 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
     
     fprintf (src, "\tint ElmtsLen1;\n");
 
-    fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-    fprintf (src, "\t\t k = &c_temp;\n");
-    fprintf (src, "\telse\n");
-    fprintf (src, "\t\t k = t = *v;\n");
-    fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+    PrintCompDecodeHead( src );
+
     if ( ctri->isPtr )
 	fprintf (src, "\tAsnListInit( &k->comp_list, 0 );\n");
     else {
@@ -3493,11 +3480,7 @@ PrintCChoiceDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, var
     parentCtri = t->cTypeRefInfo;
 
     if ( GetEncRulesType() == BER_COMP ) {
-	fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) )\n");
-	fprintf (src, "\t\t k = &c_temp;\n");
-	fprintf (src, "\telse\n");
-	fprintf (src, "\t\t k = t = *v;\n");
-	fprintf (src, "\tmode = DEC_ALLOC_MODE_2;\n");
+	PrintCompDecodeHead( src );
 	varName = "k";
 	strcpy( tmpVarName2, "&k" );
     }
