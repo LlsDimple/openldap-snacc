@@ -139,7 +139,11 @@ void ExpBufCopyToFile PROTO ((ExpBuf *b, FILE *f));
 
 /* reading and writing routines */
 
+#ifdef LDAP_COMPONENT
+int			ExpBufCopyAny PROTO ((ExpBuf **b,void *value, unsigned long *bytesDecoded ));
+#else
 int			ExpBufCopyAny PROTO ((ExpBuf **b,void *value, unsigned long *bytesDecoded, ENV_TYPE env));
+#endif
 void		ExpBufSkip PROTO (( ExpBuf**, unsigned long len));
 int			ExpBufCopy PROTO (( char *dst, ExpBuf **b, unsigned long len));
 unsigned char	ExpBufPeekByte PROTO (( ExpBuf **b));

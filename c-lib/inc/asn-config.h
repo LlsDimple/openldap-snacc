@@ -151,9 +151,15 @@ Asn1ErrorHandler Asn1InstallErrorHandler PROTO ((Asn1ErrorHandler handler));
 
 #define Asn1Alloc( size)		NibbleAlloc (size)
 #define Asn1Free( ptr)			/* empty */
+#ifdef LDAP_COMPONENT
+#define CheckAsn1Alloc( ptr )	\
+	if ((ptr) == NULL)\
+	   return -1
+#else
 #define CheckAsn1Alloc( ptr, env)	\
 	if ((ptr) == NULL)\
 	  longjmp (env, -27)
+#endif
 
 #else /* !USE_NIBBLE_MEMORY */
 
@@ -161,9 +167,16 @@ Asn1ErrorHandler Asn1InstallErrorHandler PROTO ((Asn1ErrorHandler handler));
 
 #define Asn1Alloc( size)		Malloc (size)
 #define Asn1Free( ptr)			Free (ptr)
+
+#ifdef LDAP_COMPONENT
+#define CheckAsn1Alloc( ptr )	\
+	if ((ptr) == NULL)\
+	  return -1
+#else
 #define CheckAsn1Alloc( ptr, env)	\
 	if ((ptr) == NULL)\
 	  longjmp (env, -27)
+#endif
 
 #endif /* USE_NIBBLE_MEMORY */
 

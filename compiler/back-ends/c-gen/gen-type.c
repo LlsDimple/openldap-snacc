@@ -124,7 +124,7 @@ PrintCTypeDef PARAMS ((f, r, m, td),
         case C_LIST:	// Deepak: following three stmts writes the equivalent C code in header file.
             fprintf (f, "typedef ");
             PrintCType (f, r, m, td, NULL, t);	// Deepak: Prints Basic ASN Data Type like NumericString or PrintableString or ENUMERATED etc...
-	    if ( GetEncRulesType() == GSER ) {
+	    if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ) {
             	fprintf (f, " Component%s;", ctdi->cTypeName);// Deepak: Prints User Defined ASN Data Type like Order-number, Item-code etc...
 	    } else {
             	fprintf (f, " %s;", ctdi->cTypeName);
@@ -142,13 +142,14 @@ PrintCTypeDef PARAMS ((f, r, m, td),
             fprintf (f,"%s %s", "struct", t->cTypeRefInfo->cTypeName);
             PrintTypeComment (f, td, t);
             fprintf (f,"\n{\n");
-            if ( GetEncRulesType() == GSER ){
+            if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ){
 		fprintf(f, "%s","\tSyntax* syntax;\n");
 		fprintf(f, "%s","\tComponentDesc* comp_desc;\n");
 		fprintf(f, "%s","\tstruct berval identifier;\n");
+		fprintf(f, "%s","\tchar id_buf[MAX_IDENTIFIER_LEN];\n");
             }
             PrintCStructElmts (f, r, m, td, NULL, t);
-            if ( GetEncRulesType() == GSER )
+            if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP )
             fprintf (f, "} Component%s;", ctdi->cTypeName);
 	    else
             fprintf (f, "} %s;", ctdi->cTypeName);
@@ -276,7 +277,7 @@ PrintCType PARAMS ((f, r, m, td, parent, t),
              * defined from a struct type (set/seq/choice)
              * but only if not a ref of a ref
              */
-	    if ( GetEncRulesType() == GSER ) {
+	    if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ) {
             	fprintf (f,"Component%s", ctri->cTypeName);
 		if (ctri->isPtr) fprintf (f,"*");
 		break;
@@ -319,8 +320,11 @@ PrintCType PARAMS ((f, r, m, td, parent, t),
 		fprintf (f, "}");
 		break;
 	    }
-	    if ( GetEncRulesType() == GSER ) 
+	    if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ) 
+		 if ( strncmp ( ctri->cTypeName, "Asn", 3 ) == 0 )
                  fprintf (f,"Component%s",ctri->cTypeName+3/*take off "Asn"*/);
+		 else
+                 fprintf (f,"Component%s",ctri->cTypeName/*take off "Asn"*/);
             else
                  fprintf (f,"%s", ctri->cTypeName);
             /*
@@ -684,19 +688,20 @@ PrintCChoiceTypeDef PARAMS ((f, r, m, td),
     fprintf (f, "struct %s", choiceName);
     PrintTypeComment (f, td, t);
     fprintf (f,"\n{\n");
-    if ( GetEncRulesType() == GSER ) {
+    if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ) {
 	fprintf(f, "\tSyntax* syntax;\n");
 	fprintf(f, "\tComponentDesc* comp_desc;\n");
 	fprintf(f, "\tstruct berval identifier;\n");
+	fprintf(f, "\tchar id_buf[MAX_IDENTIFIER_LEN];\n");
     }
     PrintCChoiceIdEnum (f, r, m, td, NULL, t);
     fprintf (f,"\n");
     PrintCChoiceUnion (f, r, m, td, NULL, t);
     fprintf (f, " %s;", ctri->cFieldName);
-    if ( GetEncRulesType() == GSER )
-    fprintf (f,"\n} Component%s;\n\n", choiceName);
+    if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP )
+	fprintf (f,"\n} Component%s;\n\n", choiceName);
     else
-    fprintf (f,"\n} %s;\n\n", choiceName);
+	fprintf (f,"\n} %s;\n\n", choiceName);
 }  /* PrintCChoiceDef */
 
 static void

@@ -426,13 +426,20 @@ SBufGetByte PARAMS ((b),
         return (unsigned char)(*((*b)->readLoc++));
 } /* SBufGetByte */
 
+#ifdef LDAP_COMPONENT
+int 
+SBufCopyAny PARAMS ((b, value, *bytesDecoded ),
+SBuf *b _AND_
+void *value _AND_
+unsigned long *bytesDecoded )
+#else
 int 
 SBufCopyAny PARAMS ((b, value, *bytesDecoded, env),
 SBuf *b _AND_
 void *value _AND_
 unsigned long *bytesDecoded _AND_
 ENV_TYPE env)
-
+#endif
 {
     AsnLen totalElmtsLen1 = 0;
     AsnTag tagId1 = 0;
@@ -454,20 +461,33 @@ ENV_TYPE env)
 
 	loc = b->dataStart;  // Get the buffer pointer
 
+#ifdef LDAP_COMPONENT
+	tagId1 = BDecTag(&gb, &totalElmtsLen1 );			/* item tag */
+	elmtLen1 = BDecLen (&gb, &totalElmtsLen1 );		/* len of item */
+#else
 	tagId1 = BDecTag(&gb, &totalElmtsLen1, env);			/* item tag */
 	elmtLen1 = BDecLen (&gb, &totalElmtsLen1, env);		/* len of item */
+#endif
 	if (elmtLen1 == INDEFINITE_LEN)
 	{
 		/* can't deal with indef len unknown types here (at least for now) */
 		Asn1Error("BDecUnknownAsnAny: ERROR - indef length object found\n");
+#ifdef LDAP_COMPONENT
+		return -1;
+#else
 		longjmp(env, -910);
+#endif
 	}
 	
 	/* and now decode the contents */
 	data = (AsnOcts *) value;	/* allocated by the any routine */
 	data->octetLen = elmtLen1 + totalElmtsLen1;	/* tag+len+data lengths */
 	data->octs = Asn1Alloc(data->octetLen +1);
+#ifdef LDAP_COMPONENT
+    CheckAsn1Alloc (data->octs );
+#else
     CheckAsn1Alloc (data->octs, env);
+#endif
 
 	/* use normal buffer reading to copy the any */
     SBufCopy(&data->octs[totalElmtsLen1] , &b, totalElmtsLen1+elmtLen1);
@@ -475,7 +495,11 @@ ENV_TYPE env)
     if (SBufReadError(&b))
     {
         Asn1Error("BDecUnknownAsnAny: ERROR - decoded past end of data\n");
+#ifdef LDAP_COMPONENT
+        return -1;
+#else
         longjmp(env, -920);
+#endif
     }
 
     /* add null terminator - this is not included in the str's len */

@@ -16,6 +16,35 @@ TeletexString *v)
     l += BEncTag1 (b, UNIV, PRIM, TELETEXSTRING_TAG_CODE);
     return l;
 } /* BEncTeletexString */
+#ifdef LDAP_COMPONENT
+int BDecTeletexStringContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+ GenBuf *b _AND_
+ AsnTag tagId _AND_
+ AsnLen len _AND_
+ AsnOcts *result _AND_
+ AsnLen *bytesDecoded )
+{
+	return BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+}
+int BDecTeletexString PARAMS ((b, result, bytesDecoded ),
+GenBuf *b _AND_
+TeletexString *result _AND_
+AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen1;
+
+    if (((tag = BDecTag (b, bytesDecoded )) != 
+MAKE_TAG_ID (UNIV, PRIM, TELETEXSTRING_TAG_CODE))&&
+         (tag != MAKE_TAG_ID (UNIV, CONS, TELETEXSTRING_TAG_CODE)))
+    {
+        Asn1Error ("BDecTeletexString: ERROR - wrong tag\n");
+	return -1;
+    }
+    elmtLen1 = BDecLen (b, bytesDecoded );
+    return BDecTeletexStringContent (b, tag, elmtLen1, result, bytesDecoded );
+}  /* BDecTeletexString */
+#else
 void BDecTeletexStringContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
  GenBuf *b _AND_
  AsnTag tagId _AND_
@@ -45,3 +74,4 @@ MAKE_TAG_ID (UNIV, PRIM, TELETEXSTRING_TAG_CODE))&&
     elmtLen1 = BDecLen (b, bytesDecoded, env);
     BDecTeletexStringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 }  /* BDecTeletexString */
+#endif

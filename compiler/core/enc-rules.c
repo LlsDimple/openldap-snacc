@@ -43,7 +43,7 @@ static const char rcsid[] = "@(#)$RCSfile: enc-rules.c,v $ $Revision: 1.2 $";
 /* Static variables. */
 static EncRulesType rulesG;
 static char* prefixG;
-static EncRulesType rulesListG[4] = {NOP, NOP, NOP, NOP};
+static EncRulesType rulesListG[6] = {NOP, NOP, NOP, NOP, NOP, NOP};
 
 /* Set the encoding rule to be used */
 int SetEncRules PARAMS ((encoding), EncRulesType encoding)
@@ -58,6 +58,15 @@ int SetEncRules PARAMS ((encoding), EncRulesType encoding)
     SET_BER_LIBTYPE();
 
     return 1; 
+  case BER_COMP:
+    /* Basic Encoding Rules */
+    rulesG = BER_COMP;
+    prefixG = "B";
+
+    /* Set the correct encodings */
+    SET_BER_COMP_LIBTYPE();
+
+    return 1; 
   case DER:
     /* Distinguished Encoding Rules */
     rulesG = DER;
@@ -69,7 +78,13 @@ int SetEncRules PARAMS ((encoding), EncRulesType encoding)
   case GSER :
     rulesG = GSER;
     prefixG = "G";
-    SET_BER_LIBTYPE();
+    SET_GSER_LIBTYPE();
+    return 1;
+
+  case GSER_COMP :
+    rulesG = GSER_COMP;
+    prefixG = "G";
+    SET_GSER_COMP_LIBTYPE();
     return 1;
   default:
     /* No such rule */
@@ -84,6 +99,10 @@ void AddEncRules PARAMS((encoding), EncRulesType encoding)
     rulesListG[0] = encoding;
   } else if (rulesListG[0] != encoding && rulesListG[1] == NOP) {
     rulesListG[1] = encoding;
+  } else if (rulesListG[1] != encoding && rulesListG[2] == NOP) {
+    rulesListG[2] = encoding;
+  } else if (rulesListG[2] != encoding && rulesListG[3] == NOP) {
+    rulesListG[3] = encoding;
   } else {
     /* Encoding must be already set */
     return;

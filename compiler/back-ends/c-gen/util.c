@@ -221,6 +221,9 @@ PrintEocDecoders PARAMS ((f, maxLenLevel, minLenLevel, lenBaseVarName, totalLeve
     for (i = maxLenLevel; i > minLenLevel; i--)
     {
         fprintf (f,"\tif (%s%d == INDEFINITE_LEN)\n", lenBaseVarName, i);
+	if ( GetEncRulesType() == BER_COMP )
+        fprintf (f,"        %sDecEoc (b, &%s%d );\n", GetEncRulePrefix(), totalBaseVarName, totalLevel);
+	else
         fprintf (f,"        %sDecEoc (b, &%s%d, env);\n", GetEncRulePrefix(), totalBaseVarName, totalLevel);
 		//RWC;fprintf (f,"\t\t%sDecEoc(b,&%s%d);\n", GetEncRulePrefix(), totalBaseVarName, totalLevel);
     }

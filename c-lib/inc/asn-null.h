@@ -29,14 +29,21 @@ typedef char AsnNull;
 
 
 AsnLen BEncAsnNull PROTO ((GenBuf *b, AsnNull *data));
-
+#ifdef LDAP_COMPONENT
+int BDecAsnNull PROTO ((GenBuf *b, AsnNull *result, AsnLen *bytesDecoded ));
+#else
 void BDecAsnNull PROTO ((GenBuf *b, AsnNull *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 
 /* 'return' length of encoded NULL value, 0 */
 #define BEncAsnNullContent(b, data) 0
 
+#ifdef LDAP_COMPONENT
+int BDecAsnNullContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnNull *result, AsnLen *bytesDecoded ));
+#else
 void BDecAsnNullContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnNull *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
  /* do nothing */
 void FreeAsnNull PROTO ((AsnNull *b));
@@ -48,7 +55,3 @@ void PrintAsnNull PROTO ((FILE *f, AsnNull * b, unsigned int indent));
 }
 #endif /* __cplusplus */
 #endif /* conditional include */
-
-
-
-

@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
   /* Type of encoding rule being used */
-  typedef enum {BER, DER, GSER , NOP} EncRulesType; 
+  typedef enum {BER, BER_COMP, DER, GSER, GSER_COMP , NOP} EncRulesType; 
 
   int SetEncRules PROTO((EncRulesType encoding));
   EncRulesType *GetEncRules();

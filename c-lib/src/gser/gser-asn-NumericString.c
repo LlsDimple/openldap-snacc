@@ -9,7 +9,5 @@
  * 2004/06/18	03:20:00	slim@OpenLDAP.org
  */
 
-#include "asn-incl.h"
-
-#define GEncAsnNumericStringContent GEncAsnUTF8StringContent
-#define GDecAsnNumericStringContent GDecAsnUTF8StringContent
+#define GEncNumericStringContent GEncUTF8StringContent
+#define GDecNumericStringContent GDecUTF8StringContent

@@ -106,6 +106,20 @@ extern StrStk strStkG;
  * add a char*,len pair to top of stack.
  * grows stack if necessary using realloc (!)
  */
+#ifdef LDAP_COMPONENT
+#define PUSH_STR(strPtr, strsLen )\
+{\
+    if (strStkG.nextFreeElmt >= strStkG.numElmts)\
+    {\
+       strStkG.stk = (StrStkElmt*) realloc (strStkG.stk, (strStkG.numElmts + strStkG.growElmts) *sizeof (StrStkElmt));\
+       strStkG.numElmts += strStkG.growElmts;\
+    }\
+    strStkG.totalByteLen += strsLen;\
+    strStkG.stk[strStkG.nextFreeElmt].str = strPtr;\
+    strStkG.stk[strStkG.nextFreeElmt].len = strsLen;\
+    strStkG.nextFreeElmt++;\
+}
+#else
 #define PUSH_STR(strPtr, strsLen, env)\
 {\
     if (strStkG.nextFreeElmt >= strStkG.numElmts)\
@@ -118,7 +132,7 @@ extern StrStk strStkG;
     strStkG.stk[strStkG.nextFreeElmt].len = strsLen;\
     strStkG.nextFreeElmt++;\
 }
-
+#endif
 
 /*
  * Set up size values for the stack that is used for merging constructed

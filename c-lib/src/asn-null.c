@@ -88,6 +88,27 @@ BEncAsnNull PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 NULL
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnNull PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnNull *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, NULLTYPE_TAG_CODE))
+    {
+        Asn1Error ("BDecAsnNull: ERROR wrong tag on NULL.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnNullContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnNull */
+#else
 void
 BDecAsnNull PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -108,8 +129,29 @@ BDecAsnNull PARAMS ((b, result, bytesDecoded, env),
     BDecAsnNullContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnNull */
+#endif
 
-
+#ifdef LDAP_COMPONENT
+int
+BDecAsnNullContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag tagId _AND_
+    AsnLen len _AND_
+    AsnNull *result _AND_
+    AsnLen *bytesDecoded )
+{
+    if (len != 0)
+    {
+        Asn1Error ("BDecAsnNullContent: ERROR - NULL type's len must be 0\n");
+	return -1;
+    }
+    bytesDecoded=bytesDecoded;  /* referenced to avoid compiler warning. */
+    result=result;
+    tagId=tagId;
+    b=b;
+    return 1;
+}  /* BDecAsnNullContent */
+#else
 void
 BDecAsnNullContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -129,6 +171,7 @@ BDecAsnNullContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     tagId=tagId;
     b=b;
 }  /* BDecAsnNullContent */
+#endif
 
 /*
  * Prints the NULL value to the given FILE * in Value Notation.

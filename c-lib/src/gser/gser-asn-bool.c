@@ -43,6 +43,43 @@ GEncAsnBoolContent PARAMS ((b, data),
  * GSER-Decodes just the content of an ASN.1 BOOLEAN from the given buffer.
  * longjmps if there is a buffer reading problem
  */
+#ifdef LDAP_COMPONENT
+int
+GDecAsnBoolContent PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    GAsnBool  *result _AND_
+    AsnLen  *bytesDecoded )
+{
+    char* data;
+    unsigned long len;
+
+    len = 4;
+    data = BufGetSeg (b, &len);
+    *bytesDecoded = 0;
+
+    if ( BufReadError (b) )
+    {
+         Asn1Error ("GDecAsnBoolContent: ERROR\n");
+         return -1;
+    }
+
+    if ( data[0] == 'T' ){
+       result->value = 1;
+       (*bytesDecoded) = 4;
+    }
+    else if ( data[0] == 'F' ){
+       result->value = 0;
+       /* To move the pointer after "E" of "FALSE"to the right position */
+       BufGetByte (b);
+       (*bytesDecoded) = 5;
+    }
+    else {
+	Asn1Error("Invalid BOOLEAN Format\n");
+	return -1;
+    }
+    return 1;
+}
+#else
 void
 GDecAsnBoolContent PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -78,3 +115,4 @@ GDecAsnBoolContent PARAMS ((b, result, bytesDecoded, env),
 	longjmp(env, -20);
     }
 }
+#endif

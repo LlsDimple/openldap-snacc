@@ -26,8 +26,13 @@ typedef struct GAsnBits
 } GAsnBits;
 #define GASNBITS_PRESENT(abits) ((abits)->value.bits != NULL)
 AsnLen GEncAsnBitsContent PROTO ((GenBuf *b, GAsnBits *bits));
+#ifdef LDAP_COMPONENT
+int GDecAsnBitsContent PROTO ((GenBuf *b, GAsnBits *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnBitsContent PROTO ((GenBuf *b, GAsnBits *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 /*
  * BMP String
  */
@@ -38,8 +43,13 @@ typedef struct GBMPSting
 } GBMPString;
 
 AsnLen GEncBMPStringContent PROTO ((GenBuf *b, GBMPString *octs));
+#ifdef LDAP_COMPONENT
+int GDecBMPStringContent PROTO ((GenBuf *b, GBMPString *result,
+				 AsnLen *bytesDecoded ));
+#else
 void GDecBMPStringContent PROTO ((GenBuf *b, GBMPString *result,
 				 AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /*
  * BOOLEAN
@@ -50,8 +60,13 @@ typedef struct GAsnBool{
 } GAsnBool;
 
 AsnLen GEncAsnBoolContent PROTO ((GenBuf *b, GAsnBool *data));
+#ifdef LDAP_COMPONENT
+int GDecAsnBoolContent PROTO ((GenBuf *b, GAsnBool *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnBoolContent PROTO ((GenBuf *b, GAsnBool *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 /*
  * ENUMERTED
  */
@@ -63,8 +78,13 @@ typedef struct GAsnEnum{
 } GAsnEnum;
 
 AsnLen GEncAsnEnumContent PROTO ((GenBuf *a, GAsnEnum* data));
+#ifdef LDAP_COMPONENT
+int GDecAsnEnumContent PROTO ((GenBuf *a, GAsnEnum *result,
+				AsnLen *bytesDecoded));
+#else
 void GDecAsnEnumContent PROTO ((GenBuf *a, GAsnEnum *result,
 				AsnLen *bytesDecoded,ENV_TYPE env));
+#endif
 /*
  * IA5 String
  */
@@ -74,8 +94,13 @@ typedef struct GIA5String{
 } GIA5String;
 
 AsnLen GEncIA5StringContent PROTO ((GenBuf *b, GIA5String *octs));
+#ifdef LDAP_COMPONENT
+int GDecIA5StringContent PROTO ((GenBuf *b, GIA5String *result,
+				 AsnLen *bytesDecoded ));
+#else
 void GDecIA5StringContent PROTO ((GenBuf *b, GIA5String *result,
 				 AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 /*
  * INTEGER
  */
@@ -87,8 +112,13 @@ typedef struct GAsnInt{
 #define GNOT_NULL(ptr) ((ptr) != NULL)
 
 AsnLen GEncAsnIntContent PROTO ((GenBuf *b, GAsnInt *data));
+#ifdef LDAP_COMPONENT
+int GDecAsnIntContent PROTO ((GenBuf *b, GAsnInt *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnIntContent PROTO ((GenBuf *b, GAsnInt *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 /*
  * LIST Data Structure for C_LIST
  */
@@ -103,8 +133,14 @@ typedef struct GAsnNull{
 } GAsnNull;
 
 AsnLen GEncAsnNullContent PROTO ((GenBuf *b, GAsnNull *data));
+#ifdef LDAP_COMPONENT
+int GDecAsnNullContent PROTO ((GenBuf *b, GAsnNull *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnNullContent PROTO ((GenBuf *b, GAsnNull *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * Numeric String
  */
@@ -114,8 +150,14 @@ typedef struct GNumericString{
 } GNumericString;
 
 AsnLen GEncNumericStringContent PROTO ((GenBuf *b, GNumericString *octs));
+#ifdef LDAP_COMPONENT
+int GDecNumericStringContent PROTO ((GenBuf *b, GNumericString *result,
+					AsnLen *bytesDecoded ));
+#else
 void GDecNumericStringContent PROTO ((GenBuf *b, GNumericString *result,
 					AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * OCTETS STRING
  */
@@ -127,8 +169,14 @@ typedef struct GAsnOcts{
 #define GASNOCTS_PRESENT(aocts) ((aocts)->value.octs != NULL)
 
 AsnLen GEncAsnOctsContent PROTO ((GenBuf *b, GAsnOcts *octs));
+#ifdef LDAP_COMPONENT
+int GDecAsnOctsContent PROTO ((GenBuf *b, GAsnOcts *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnOctsContent PROTO ((GenBuf *b, GAsnOcts *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * OID
  */
@@ -140,8 +188,14 @@ typedef struct GAsnOid{
 #define GASNOID_PRESENT(aoid) ASNOCTS_PRESENT(aoid)
 
 #define GEncAsnOidContent( b, oid)   GEncAsnOctsContent (b, oid)
+#ifdef LDAP_COMPONENT
+int GDecAsnOidContent PROTO ((GenBuf *b, GAsnOid  *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnOidContent PROTO ((GenBuf *b, GAsnOid  *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * Printable String
  */
@@ -151,8 +205,14 @@ typedef struct GPrintableString{
 } GPrintableString;
 
 AsnLen GEncPrintableStringContent PROTO ((GenBuf *b, GPrintableString *octs));
+#ifdef LDAP_COMPONENT
+int GDecPrintableStringContent PROTO ((GenBuf *b, GPrintableString *result,
+					AsnLen *bytesDecoded ));
+#else
 void GDecPrintableStringContent PROTO ((GenBuf *b, GPrintableString *result,
 					AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * REAL
  */
@@ -162,8 +222,13 @@ typedef struct GAsnReal{
 } GAsnReal;
 
 AsnLen GEncAsnRealContent PROTO ((GenBuf *b, GAsnReal *data));
+#ifdef LDAP_COMPONENT
+int GDecAsnRealContent PROTO ((GenBuf *b, GAsnReal *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecAsnRealContent PROTO ((GenBuf *b, GAsnReal *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /*
  * Relative OID
@@ -175,8 +240,13 @@ typedef struct GAsnRelativeOid{
 } GAsnRelativeOid;
 
 #define GEncAsnRelativeOidContent( b, oid)   GEncAsnOctsContent (b, oid)
+#ifdef LDAP_COMPONENT
+int GDecAsnRelativeOidContent PROTO ((GenBuf *b, GAsnRelativeOid  *result,
+					  AsnLen *bytesDecoded ));
+#else
 void GDecAsnRelativeOidContent PROTO ((GenBuf *b, GAsnRelativeOid  *result,
 					  AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /*
  * Teletex String
@@ -187,9 +257,15 @@ typedef struct GTeletexString
 	TeletexString value;
 } GTeletexString;
 
-AsnLen GEncTeletexStringContent PROTO ((GenBuf *b, GAsnOcts *octs));
+AsnLen GEncTeletexStringContent PROTO ((GenBuf *b, GTeletexString *octs));
+#ifdef LDAP_COMPONENT
+int GDecTeletexStringContent PROTO ((GenBuf *b, GTeletexString *result,
+				  AsnLen *bytesDecoded ));
+#else
 void GDecTeletexStringContent PROTO ((GenBuf *b, GAsnOcts *result,
 				  AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * Universal String
  */
@@ -199,8 +275,13 @@ typedef struct GUniversalString{
 } GUniversalString;
 
 AsnLen GEncUniversalStringContent PROTO ((GenBuf *b, GUniversalString *octs));
+#ifdef LDAP_COMPONENT
+int GDecUniversalStringContent PROTO ((GenBuf *b, GUniversalString *result,
+					AsnLen *bytesDecoded ));
+#else
 void GDecUniversalStringContent PROTO ((GenBuf *b, GUniversalString *result,
 					AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /*
  * UTF8 String
@@ -211,8 +292,14 @@ typedef struct GUTF8String{
 } GUTF8String;
 
 AsnLen GEncUTF8StringContent PROTO ((GenBuf *b, GUTF8String *octs));
+#ifdef LDAP_COMPONENT
+int GDecUTF8StringContent PROTO ((GenBuf *b, GUTF8String *result,
+				AsnLen *bytesDecoded ));
+#else
 void GDecUTF8StringContent PROTO ((GenBuf *b, GUTF8String *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * Visible String
  */
@@ -222,8 +309,14 @@ typedef struct GVisibleString{
 } GVisibleString;
 
 AsnLen GEncVisibleStringContent PROTO ((GenBuf *b, GVisibleString *octs));
+#ifdef LDAP_COMPONENT
+int GDecVisibleStringContent PROTO ((GenBuf *b, GVisibleString *result,
+					  AsnLen *bytesDecoded ));
+#else
 void GDecVisibleStringContent PROTO ((GenBuf *b, GVisibleString *result,
 					  AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 #define GDecISO646StringContent GDecUTF8StringContent
 #define GDecGeneralizedTimeContent GDecUTF8StringContent
 #define GDecUTCTimeContent GDecUTF8StringContent

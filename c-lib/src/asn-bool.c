@@ -81,6 +81,26 @@ BEncAsnBool PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 BOOLEAN
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnBool PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnBool    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, BOOLEAN_TAG_CODE))
+    {
+         Asn1Error ("BDecAsnBool: ERROR - wrong tag on BOOLEAN.\n");
+	 return -1;
+    }
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnBoolContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnBool */
+#else
 void
 BDecAsnBool PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -96,11 +116,11 @@ BDecAsnBool PARAMS ((b, result, bytesDecoded, env),
          Asn1Error ("BDecAsnBool: ERROR - wrong tag on BOOLEAN.\n");
          longjmp (env, -40);
     }
-
     elmtLen = BDecLen (b, bytesDecoded, env);
     BDecAsnBoolContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnBool */
+#endif
 
 /*
  * Encodes just the content of the given BOOLEAN value to the given buffer.
@@ -118,6 +138,33 @@ BEncAsnBoolContent PARAMS ((b, data),
  * Decodes just the content of an ASN.1 BOOLEAN from the given buffer.
  * longjmps if there is a buffer reading problem
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnBoolContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag tagId _AND_
+    AsnLen len _AND_
+    AsnBool  *result _AND_
+    AsnLen  *bytesDecoded )
+{
+    if (len != 1)
+    {
+        Asn1Error ("BDecAsnBoolContent: ERROR - BOOLEAN length must be 1\n");
+	return -1;
+    }
+
+    (*bytesDecoded)++;
+    *result = (unsigned char)(BufGetByte (b) != 0);
+
+    if (BufReadError (b))
+    {
+        Asn1Error ("BDecAsnBoolContent: ERROR - decoded past end of data\n");
+	return -1;
+    }
+    tagId = tagId;  /* referenced to avoid compiler warning. */
+    return 1;
+}  /* BDecAsnBoolContent */
+#else
 void
 BDecAsnBoolContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -143,6 +190,7 @@ BDecAsnBoolContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     }
     tagId = tagId;  /* referenced to avoid compiler warning. */
 }  /* BDecAsnBoolContent */
+#endif
 
 /*
  * Prints the given BOOLEAN to the given FILE * in ASN.1 Value notation.
@@ -165,5 +213,3 @@ void FreeAsnBool PARAMS ((b), AsnBool* b)
 {
     b=b;
 }
-
-

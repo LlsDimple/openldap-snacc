@@ -64,6 +64,27 @@ BEncAsnEnum PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 ENUMERATED
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnEnum PARAMS ((b, result, bytesDecoded),
+    GenBuf *b _AND_
+    AsnEnum    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, ENUM_TAG_CODE))
+    {
+        Asn1Error ("BDecAsnInt: ERROR wrong tag on ENUMERATED.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnEnumContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnEnum */
+#else
 void
 BDecAsnEnum PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -84,3 +105,4 @@ BDecAsnEnum PARAMS ((b, result, bytesDecoded, env),
     BDecAsnEnumContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnEnum */
+#endif

@@ -85,6 +85,27 @@ BEncAsnOid PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 OBJECT ID
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnOid PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnOid    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, OID_TAG_CODE))
+    {
+        Asn1Error ("BDecAsnOid: ERROR - wrong tag on OBJECT IDENTIFIER.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnOidContent (b, tag, elmtLen, result, bytesDecoded);
+
+}  /* BDecAsnOid */
+#else
 void
 BDecAsnOid PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -105,13 +126,41 @@ BDecAsnOid PARAMS ((b, result, bytesDecoded, env),
     BDecAsnOidContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnOid */
-
+#endif
 
 
 /*
  * Decodes just the content of the OID.
  * AsnOid is handled the same as a primtive octet string
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnOidContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag tagId _AND_
+    AsnLen len _AND_
+    AsnOid *result _AND_
+    AsnLen *bytesDecoded )
+{
+    if (len == INDEFINITE_LEN)
+    {
+        Asn1Error ("BDecAsnOidContent: ERROR - indefinite length on primitive\n");
+	return -1;
+    }
+    result->octetLen = len;
+    result->octs =  Asn1Alloc (len);
+    CheckAsn1Alloc (result->octs );
+    BufCopy (result->octs, b, len);
+    if (BufReadError (b))
+    {
+         Asn1Error ("BDecAsnOidContent: ERROR - decoded past end of data\n");
+	return -1;
+    }
+    (*bytesDecoded) += len;
+    tagId=tagId;  /* referenced to avoid compiler warning. */
+    return 1;
+}  /* BDecAsnOidContent */
+#else
 void
 BDecAsnOidContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -138,6 +187,7 @@ BDecAsnOidContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     (*bytesDecoded) += len;
     tagId=tagId;  /* referenced to avoid compiler warning. */
 }  /* BDecAsnOidContent */
+#endif
 
 
 

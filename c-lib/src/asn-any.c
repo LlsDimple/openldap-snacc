@@ -102,9 +102,13 @@ void BDecUnknownAsnAny(GenBuf *b,void *value, AsnLen *bytesDecoded, ENV_TYPE env
 		longjmp (env, -900);
 
 #ifdef OLD_CODE
-	
+#ifdef LDAP_COMPONENT	
+	tagId1 = BDecTag(b, &totalElmtsLen1 );			/* item tag */
+	elmtLen1 = BDecLen (b, &totalElmtsLen1 );		/* len of item */
+#else
 	tagId1 = BDecTag(b, &totalElmtsLen1, env);			/* item tag */
 	elmtLen1 = BDecLen (b, &totalElmtsLen1, env);		/* len of item */
+#endif
 	if (elmtLen1 == INDEFINITE_LEN)
 	{
 		/* can't deal with indef len unknown types here (at least for now) */
@@ -362,6 +366,7 @@ BEncAsnAny PARAMS ((b, v),
  * Note: this calls the BDecFoo not BDecFooContent routine form
  * since the tags are needed too.
  */
+#ifndef LDAP_COMPONENT
 void BDecAsnAny PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
     AsnAny  *result _AND_
@@ -380,6 +385,7 @@ void BDecAsnAny PARAMS ((b, result, bytesDecoded, env),
         longjmp (env, -44);
     }
 }
+#endif
 
 /*
  * Calls the print routine pointed to from the given type's

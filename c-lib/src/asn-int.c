@@ -103,6 +103,27 @@ BEncAsnInt PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 INTEGER
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnInt PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnInt    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, INTEGER_TAG_CODE))
+    {
+         Asn1Error ("BDecAsnInt: ERROR wrong tag on INTEGER.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded);
+    return BDecAsnIntContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnInt */
+#else
 void
 BDecAsnInt PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -123,6 +144,8 @@ BDecAsnInt PARAMS ((b, result, bytesDecoded, env),
     BDecAsnIntContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnInt */
+#endif
+
 
 
 /*
@@ -180,6 +203,54 @@ BEncAsnIntContent PARAMS ((b, data),
 /*
  * Decodes content of BER a INTEGER value.  The given tag is ignored.
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnIntContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag     tagId _AND_
+    AsnLen     len _AND_
+    AsnInt    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    int   i;
+    long retVal;
+    unsigned long byte;
+
+
+    if (len > sizeof (AsnInt))
+    {
+        Asn1Error ("BDecAsnIntContent: ERROR - integer to big to decode.\n");
+	return -1;
+    }
+
+    /*
+     * look at integer value
+     */
+    byte = (unsigned long ) BufGetByte (b);
+
+    if (byte & 0x80)   /* top bit of first byte is sign bit */
+        retVal = (-1 << 8) | byte;
+    else
+        retVal = byte;
+
+    /*
+     * write from buffer into long int
+     */
+    for (i = 1; i < (int)len; i++)
+        retVal = (retVal << 8) | (unsigned long)(BufGetByte (b));
+
+    if (BufReadError (b))
+    {
+        Asn1Error ("BDecAsnIntContent: ERROR - decoded past end of data \n");
+	return -1;
+    }
+    (*bytesDecoded) += len;
+
+    *result = retVal;
+    tagId=tagId;  /* referenced to avoid compiler warning. */
+    return 1;
+}  /* BDecAsnIntContent */
+#else
 void
 BDecAsnIntContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -227,7 +298,7 @@ BDecAsnIntContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     tagId=tagId;  /* referenced to avoid compiler warning. */
 
 }  /* BDecAsnIntContent */
-
+#endif
 
 /*
  * Prints the given integer to the given FILE * in Value Notation.
@@ -273,6 +344,27 @@ BEncUAsnInt PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 INTEGER
  */
+#ifdef LDAP_COMPONENT
+int
+BDecUAsnInt PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    UAsnInt *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, INTEGER_TAG_CODE))
+    {
+         Asn1Error ("BDecAsnInt: ERROR wrong tag on INTGER.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecUAsnIntContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecUAsnInt */
+#else
 void
 BDecUAsnInt PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -293,7 +385,7 @@ BDecUAsnInt PARAMS ((b, result, bytesDecoded, env),
     BDecUAsnIntContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecUAsnInt */
-
+#endif
 
 /*
  * encodes unsigned longeger.  This allows you to correctly
@@ -361,6 +453,60 @@ BEncUAsnIntContent PARAMS ((b, data),
  * assumes unsigned integer - This routine is useful for
  * integer subtyped to > 0 eg Guage ::= INTEGER (0..4294967295)
  */
+#ifdef LDAP_COMPONENT
+int
+BDecUAsnIntContent PARAMS ((b, tag, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag   tag _AND_
+    AsnLen   len _AND_
+    UAsnInt *result _AND_
+    AsnLen  *bytesDecoded )
+{
+    int   i;
+    unsigned long retVal;
+
+    retVal =  (unsigned long) BufGetByte (b);
+
+    if (len > (sizeof (UAsnInt)+1))
+    {
+        Asn1Error ("BDecUAsnIntContent: ERROR - integer to big to decode.\n");
+        return -1;
+    }
+    else if (retVal & 0x80)   /* top bit of first byte is sign bit */
+    {
+        Asn1Error ("BDecUAsnIntContent: ERROR - integer is negative.\n");
+	return -1;
+    }
+    else if ((len == (sizeof (UAsnInt)+1)) && (retVal != 0))
+    {
+        /*
+         * first octet must be zero 5 octets long - extra 0 octet
+         * at beginning is only used for value > 0 that need the
+         * high bit
+         */
+        Asn1Error ("BDecUAsnIntContent: ERROR - integer is negative.\n");
+	return -1;
+    }
+
+    /*
+     * write from buffer into long int
+     */
+    for (i = 1; i < (int)len; i++)
+        retVal = (retVal << 8) | (unsigned long)(BufGetByte (b));
+
+    if (BufReadError (b))
+    {
+        Asn1Error ("BDecUIntegerContent: ERROR - decoded past end of data\n");
+	return -1;
+    }
+    (*bytesDecoded) += len;
+
+    *result = retVal;
+    tag=tag; /* referenced to avoid compiler warning. */
+    return 1;
+
+}  /* BDecUAsnIntContent */
+#else
 void
 BDecUAsnIntContent PARAMS ((b, tag, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -413,7 +559,7 @@ BDecUAsnIntContent PARAMS ((b, tag, len, result, bytesDecoded, env),
     tag=tag; /* referenced to avoid compiler warning. */
 
 }  /* BDecUAsnIntContent */
-
+#endif
 
 void
 PrintUAsnInt PARAMS ((f, v, indent),

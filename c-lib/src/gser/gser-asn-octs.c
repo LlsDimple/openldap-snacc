@@ -59,6 +59,74 @@ GEncAsnOctsContent PARAMS ((b, o),
 /*
  * GSER Decodes the content of a GSER OCTET STRING value
  */
+#ifdef LDAP_COMPONENT
+int
+GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    GAsnOcts *result _AND_
+    AsnLen *bytesDecoded )
+{
+	long strLen,i,k;
+	char* peek_head;
+	unsigned char* data;
+	
+	*bytesDecoded = 0;
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("OCTET String : Token Reading ERROR\n");
+		return -1;
+	}
+
+
+	*bytesDecoded += strLen;
+
+	if ( *peek_head != '\''){
+		Asn1Error("OCTET String :  Should Begin with \'\n");
+		return -1;
+	}
+
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("OCTET String :  String read ERROR\n");
+		return -1;
+	}
+
+	result->value.octetLen = strLen;
+	data = Asn1Alloc(sizeof(char)*(strLen>>2)+1);
+	k = strLen/2-1;
+	for ( i = 0 ; i < strLen ; i += 2, k-- ){
+	   if( peek_head[i] >= 'A' )
+		peek_head[i] = peek_head[i]-'A'+10;
+	   else
+		peek_head[i] = peek_head[i]-'0';
+
+	   if( peek_head[i+1] >= 'A' )
+		peek_head[i+1] = peek_head[i+1]-'A'+10;
+	   else
+		peek_head[i+1] = peek_head[i+1]-'0';
+
+	   data[k] = (char)( (peek_head[i+1]<<4)&0xF0)|(peek_head[i]&0x0F );
+	}
+
+	data[strLen] = '\0';
+
+	result->value.octs = data;
+	*bytesDecoded += strLen;
+
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("OCTET String :  Token(\"H) read ERROR\n");
+		Asn1Free(peek_head);
+		return -1;
+	}
+
+	*bytesDecoded += strLen;
+
+	if ( peek_head[0] != '\'' || peek_head[1] != 'H' ){
+		Asn1Error("OCTET String :  Should End with \"H\n");
+		Asn1Free(peek_head);
+		return -1;
+	}
+	return 1;
+}
+#else
 void
 GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -125,3 +193,4 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
 		longjmp( env, -20);
 	}
 }
+#endif

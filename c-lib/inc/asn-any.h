@@ -108,7 +108,9 @@ void FreeAsnAny PROTO ((AsnAny *v));
 
 AsnLen BEncAsnAny PROTO ((GenBuf *b, AsnAny *v));
 
+#ifndef LDAP_COMPONENT
 void BDecAsnAny PROTO ((GenBuf *b, AsnAny *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 #define DEncAsnAny BEncAsnAny
 #define DDecAsnAny BDecAsnAny

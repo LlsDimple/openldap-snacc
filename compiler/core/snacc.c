@@ -520,6 +520,12 @@ int main PARAMS ((argc, argv),
 					encRulesSet = TRUE;
 					currArg+=2;
 				}
+				else if (strcmp(argv[currArg+1], "BER_COMP") == 0)
+				{
+					AddEncRules(BER_COMP);
+					encRulesSet = TRUE;
+					currArg+=2;
+				}
 				else if (strcmp(argv[currArg+1], "DER") == 0)
 				{
 					AddEncRules(DER);
@@ -531,6 +537,12 @@ int main PARAMS ((argc, argv),
 					AddEncRules(GSER);
 					encRulesSet = TRUE;
 					currArg += 2;
+				}
+				else if (strcmp(argv[currArg+1], "GSER_COMP") == 0)
+				{
+					AddEncRules(GSER_COMP);
+					encRulesSet = TRUE;
+					currArg+=2;
 				}
 				else
 				{

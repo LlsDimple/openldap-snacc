@@ -44,7 +44,7 @@ const MaskValue gUTF8Masks[MAX_UTF8_OCTS_PER_CHAR] = {
 
 
 /* Function Prototypes */
-static bool IsValidUTF8String(UTF8String* octs);
+bool IsValidUTF8String(UTF8String* octs);
 
 
 AsnLen BEncUTF8StringContent(GenBuf *b, UTF8String *octs)
@@ -69,7 +69,20 @@ AsnLen BEncUTF8String(GenBuf *b, UTF8String *v)
 	return l;
 } /* end of BEncUTF8String() */
 
-
+#ifdef LDAP_COMPONENT
+int BDecUTF8StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+				   UTF8String *result, AsnLen *bytesDecoded )
+{
+	int rc;
+	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	if (IsValidUTF8String(result) == false)
+	{
+		Asn1Error ("BDecUTF8StringContent: ERROR - Invalid UTF-8 Encoding");
+		return -1;
+	}
+	return rc;
+} /* end of BDecUTF8StringContent() */
+#else
 void BDecUTF8StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 						   UTF8String *result, AsnLen *bytesDecoded,
 						   ENV_TYPE env)
@@ -81,14 +94,30 @@ void BDecUTF8StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
         longjmp (env, -40);
 	}
 } /* end of BDecUTF8StringContent() */
+#endif
 
+#ifdef LDAP_COMPONENT
+int BDecUTF8String(GenBuf *b, UTF8String *result, AsnLen *bytesDecoded )
+{
+	AsnTag tag;
+	AsnLen elmtLen1;
+	if (((tag = BDecTag (b, bytesDecoded )) != 
+		MAKE_TAG_ID (UNIV, PRIM, UTF8STRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, UTF8STRING_TAG_CODE)))
+	{
+		Asn1Error ("BDecUTF8String: ERROR - wrong tag\n");
+		return -1;
+	}
 
+	elmtLen1 = BDecLen (b, bytesDecoded );
+	return BDecUTF8StringContent (b, tag, elmtLen1, result, bytesDecoded );
+}
+#else
 void BDecUTF8String(GenBuf *b, UTF8String *result, AsnLen *bytesDecoded,
 					ENV_TYPE env)
 {
 	AsnTag tag;
 	AsnLen elmtLen1;
-
 	if (((tag = BDecTag (b, bytesDecoded, env)) != 
 		MAKE_TAG_ID (UNIV, PRIM, UTF8STRING_TAG_CODE)) &&
 		(tag != MAKE_TAG_ID (UNIV, CONS, UTF8STRING_TAG_CODE)))
@@ -100,9 +129,9 @@ void BDecUTF8String(GenBuf *b, UTF8String *result, AsnLen *bytesDecoded,
 	elmtLen1 = BDecLen (b, bytesDecoded, env);
 	BDecUTF8StringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 }
+#endif
 
-
-static bool IsValidUTF8String(UTF8String* octs)
+bool IsValidUTF8String(UTF8String* octs)
 {
 	unsigned long i;
 	unsigned int j;

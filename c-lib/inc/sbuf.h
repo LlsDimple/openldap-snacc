@@ -101,7 +101,11 @@ unsigned char	SBufGetByte PROTO ((SBuf **b));
 char		*SBufPeekSeg PROTO ((SBuf **b, long *lenPtr));
 void		SBufPutByteRvs PROTO ((SBuf **b, unsigned char byte));
 int			SBufSetWriteError PROTO ((SBuf *b, unsigned short Value));
-int			SBufCopyAny PROTO ((SBuf *b, void *value, unsigned long *bytesDecoded, ENV_TYPE env));
+#ifdef LDAP_COMPONENT
+int	SBufCopyAny PROTO ((SBuf *b, void *value, unsigned long *bytesDecoded ));
+#else
+int	SBufCopyAny PROTO ((SBuf *b, void *value, unsigned long *bytesDecoded, ENV_TYPE env));
+#endif
 
 #ifdef __cplusplus
 }

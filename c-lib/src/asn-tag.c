@@ -67,10 +67,16 @@
  * RETURNS 0 if decoded a 0 byte (ie first byte of an EOC)
  */
 AsnTag
+#ifdef LDAP_COMPONENT
+BDecTag PARAMS ((b, bytesDecoded ),
+    GenBuf * b _AND_
+    AsnLen *bytesDecoded )
+#else
 BDecTag PARAMS ((b, bytesDecoded, env),
     GenBuf * b _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     AsnTag tagId;
     AsnTag tmpTagId;
@@ -98,14 +104,22 @@ BDecTag PARAMS ((b, bytesDecoded, env),
         if (i > (sizeof (AsnTag)+1))
         {
             Asn1Error ("BDecTag: ERROR - tag value overflow\n");
+#ifdef LDAP_COMPONENT
+	    return -1;
+#else
             longjmp (env, -25);
+#endif
         }
     }
 
     if (BufReadError (b))
     {
         Asn1Error ("BDecTag: ERROR - decoded past the end of data\n");
-        longjmp (env, -26);
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
+	longjmp (env, -26);
+#endif
     }
 
     return tagId;

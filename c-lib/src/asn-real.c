@@ -177,6 +177,27 @@ BEncAsnReal PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 REAL
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnReal PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnReal *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded)) != MAKE_TAG_ID (UNIV, PRIM, REAL_TAG_CODE))
+    {
+         Asn1Error ("BDecAsnReal: ERROR wrong tag on REAL.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnRealContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnReal */
+#else
 void
 BDecAsnReal PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -197,8 +218,7 @@ BDecAsnReal PARAMS ((b, result, bytesDecoded, env),
     BDecAsnRealContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnReal */
-
-
+#endif
 
 #ifdef IEEE_REAL_FMT
 
@@ -767,6 +787,15 @@ BEncAsnRealContent PARAMS ((b, value),
  * This only supports the binary REAL encoding.  The decimal encoding
  * is left as an exercise to the reader.
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag    tagId _AND_
+    AsnLen    len _AND_
+    AsnReal  *result _AND_
+    AsnLen *bytesDecoded )
+#else
 void
 BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -775,6 +804,7 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     AsnReal  *result _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     unsigned char firstOctet;
     unsigned char firstExpOctet;
@@ -794,7 +824,11 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     else if (len == INDEFINITE_LEN)
     {
         Asn1Error ("BDecAsnRealContent: ERROR - indefinite length on primitive.\n");
+#ifdef LDAP_COMPONENT
+        return -1;
+#else
         longjmp (env, -67);
+#endif
     }
 
     firstOctet = BufGetByte (b);
@@ -808,7 +842,11 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
         else
         {
             Asn1Error ("BDecAsnRealContent: ERROR - unrecognized real number of length 1 octet.\n");
+#ifdef LDAP_COMPONENT
+            return -1;
+#else
             longjmp (env, -22);
+#endif
         }
     }
     else
@@ -879,7 +917,11 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
 
                 default:
                     Asn1Error ("BDecAsnRealContent: ERROR - unsupported base for a binary real number.\n");
+#ifdef LDAP_COMPONENT
+                    return -1;
+#else
                     longjmp (env, -23);
+#endif
                     break;
 
             }
@@ -897,7 +939,11 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
         else /* decimal version */
         {
             Asn1Error ("BDecAsnRealContent: ERROR - decimal REAL form is not currently supported\n");
+#ifdef LDAP_COMPONENT
+            return -1;
+#else
             longjmp (env, -24);
+#endif
         }
     }
     tagId = tagId;  /* referenced to avoid compiler warning. */

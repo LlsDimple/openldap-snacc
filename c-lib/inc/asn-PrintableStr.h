@@ -11,8 +11,13 @@ typedef AsnOcts PrintableString; /* [UNIVERSAL 19] IMPLICIT OCTET STRING */
 AsnLen BEncPrintableString PROTO ((GenBuf *b, PrintableString *v));
 AsnLen BEncPrintableStringContent PROTO ((GenBuf *b, PrintableString *octs));
 
+#ifdef LDAP_COMPONENT
+int BDecPrintableString PROTO ((GenBuf *b, PrintableString *result, AsnLen *bytesDecoded ));
+int BDecPrintableStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, PrintableString *result, AsnLen *bytesDecoded ));
+#else
 void BDecPrintableString PROTO ((GenBuf *b, PrintableString *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecPrintableStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, PrintableString *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 #define PrintPrintableString PrintAsnOcts
 

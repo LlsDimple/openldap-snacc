@@ -58,7 +58,11 @@ typedef AsnInt AsnEnum;
  */
 AsnLen BEncAsnEnum PROTO ((GenBuf *b, AsnEnum *data));
 
+#ifdef LDAP_COMPONENT
+int BDecAsnEnum PROTO ((GenBuf *b, AsnEnum *result, AsnLen *bytesDecoded ));
+#else
 void BDecAsnEnum PROTO ((GenBuf *b, AsnEnum *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /* DAD - modified the two defines here so that enum Ptr's can
  * be resolved to the same size dest as what AsnInt gets
@@ -66,7 +70,11 @@ void BDecAsnEnum PROTO ((GenBuf *b, AsnEnum *result, AsnLen *bytesDecoded, ENV_T
  */
 #define BEncAsnEnumContent(a,b) BEncAsnIntContent((a),((AsnInt *) (b)))
 
+#ifdef LDAP_COMPONENT
+#define BDecAsnEnumContent(a,b,c,d,e)  BDecAsnIntContent((a),(b),(c),((AsnInt*)(d)),(e))
+#else
 #define BDecAsnEnumContent(a,b,c,d,e,f)  BDecAsnIntContent((a),(b),(c),((AsnInt*)(d)),(e),(f))
+#endif
 
 #define FreeAsnEnum FreeAsnInt
 

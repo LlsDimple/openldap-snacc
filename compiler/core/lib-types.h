@@ -46,7 +46,10 @@ typedef struct LibType
 #ifndef NO_EXTN_LIBTYPE
 extern LibType* libTypesG;
 extern LibType libBERTypesG[];
+extern LibType libBERCOMPTypesG[];
 extern LibType libDERTypesG[];
+extern LibType libGSERTypesG[];
+extern LibType libGSERCOMPTypesG[];
 #endif
 
 #define LIBTYPE_GET_UNIV_TAG_CODE( tId)		(libTypesG[tId].univTagCode)
@@ -55,6 +58,9 @@ extern LibType libDERTypesG[];
 #define LIBTYPE_GET_ANY_REFS_HNDL( tId)		(&libTypesG[tId].anyRefs)
 #define LIBTYPE_GET_ANY_REFS( tId)		(libTypesG[tId].anyRefs)
 #define SET_BER_LIBTYPE() (libTypesG = libBERTypesG)
+#define SET_BER_COMP_LIBTYPE() (libTypesG = libBERTypesG)
 #define SET_DER_LIBTYPE() (libTypesG = libDERTypesG)
+#define SET_GSER_LIBTYPE() (libTypesG = libBERTypesG)
+#define SET_GSER_COMP_LIBTYPE() (libTypesG = libBERTypesG)
 
 #endif

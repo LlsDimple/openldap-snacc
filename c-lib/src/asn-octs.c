@@ -99,6 +99,27 @@ BEncAsnOcts PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 OCTET STRING
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnOcts PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnOcts    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if (((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, OCTETSTRING_TAG_CODE)) && (tag != MAKE_TAG_ID (UNIV, CONS, OCTETSTRING_TAG_CODE)))
+    {
+         Asn1Error ("BDecAsnOcts: ERROR - wrong tag on OCTET STRING.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnOctsContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnOcts */
+#else
 void
 BDecAsnOcts PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -119,7 +140,7 @@ BDecAsnOcts PARAMS ((b, result, bytesDecoded, env),
     BDecAsnOctsContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnOcts */
-
+#endif
 /*
  * BER encodes just the content of an OCTET STRING.
  */
@@ -140,12 +161,20 @@ BEncAsnOctsContent PARAMS ((b, o),
  * fills string stack with references to the pieces of a
  * construced octet string
  */
+#ifdef LDAP_COMPONENT
+static int
+FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnLen elmtLen0 _AND_
+    AsnLen *bytesDecoded )
+#else
 static void
 FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
     GenBuf *b _AND_
     AsnLen elmtLen0 _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     unsigned long refdLen;
     unsigned long totalRefdLen;
@@ -156,15 +185,27 @@ FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
 
     for (; (totalElmtsLen1 < elmtLen0) || (elmtLen0 == INDEFINITE_LEN); )
     {
+#ifdef LDAP_COMPONENT
+        tagId1 = BDecTag (b, &totalElmtsLen1 );
+#else
         tagId1 = BDecTag (b, &totalElmtsLen1, env);
+#endif
 
         if ((tagId1 == EOC_TAG_ID) && (elmtLen0 == INDEFINITE_LEN))
         {
+#ifdef LDAP_COMPONENT
+            BDEC_2ND_EOC_OCTET (b, &totalElmtsLen1 );
+#else
             BDEC_2ND_EOC_OCTET (b, &totalElmtsLen1, env);
+#endif
             break;
         }
 
+#ifdef LDAP_COMPONENT
+        elmtLen1 = BDecLen (b, &totalElmtsLen1 );
+#else
         elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
+#endif
         if (tagId1 == MAKE_TAG_ID (UNIV, PRIM, OCTETSTRING_TAG_CODE))
         {
             /*
@@ -176,8 +217,11 @@ FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
             while (1)
             {
                 strPtr = (char *)BufGetSeg (b, &refdLen);
-
+#ifdef LDAP_COMPONENT
+                PUSH_STR (strPtr, refdLen );
+#else
                 PUSH_STR (strPtr, refdLen, env);
+#endif
                 totalRefdLen += refdLen;
                 if (totalRefdLen == elmtLen1)
                     break; /* exit this while loop */
@@ -185,7 +229,11 @@ FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
                 if (refdLen == 0) /* end of data */
                 {
                     Asn1Error ("BDecConsOctetString: ERROR - attempt to decode past end of data\n");
+#ifdef LDAP_COMPONENT
+                    return -1;
+#else
                     longjmp (env, -18);
+#endif
                 }
                 refdLen = elmtLen1 - totalRefdLen;
             }
@@ -199,16 +247,27 @@ FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
              * constructed octets string embedding in this constructed
              * octet string. decode it.
              */
+#ifdef LDAP_COMPONENT
+            FillOctetStringStk (b, elmtLen1, &totalElmtsLen1 );
+#else
             FillOctetStringStk (b, elmtLen1, &totalElmtsLen1, env);
+#endif
         }
         else  /* wrong tag */
         {
             Asn1Error ("BDecConsOctetString: ERROR - decoded non-OCTET STRING tag inside a constructed OCTET STRING\n");
+#ifdef LDAP_COMPONENT
+            return -1;
+#else
             longjmp (env, -19);
+#endif
         }
     } /* end of for */
 
     (*bytesDecoded) += totalElmtsLen1;
+#ifdef LDAP_COMPONENT
+	return 1;
+#endif
 
 }  /* FillOctetStringStk */
 
@@ -219,6 +278,44 @@ FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
  * string. puts a NULL terminator on the string but does not include
  * this in the length.
  */
+#ifdef LDAP_COMPONENT
+static int
+BDecConsAsnOcts PARAMS ((b, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnLen len _AND_
+    AsnOcts *result _AND_
+    AsnLen *bytesDecoded )
+{
+    char *bufCurr;
+    unsigned long curr;
+
+    RESET_STR_STK();
+
+    /*
+     * decode each piece of the octet string, puting
+     * an entry in the octet string stack for each
+     */
+    FillOctetStringStk (b, len, bytesDecoded );
+
+    result->octetLen = strStkG.totalByteLen;
+
+    /* alloc str for all octs pieces with extra byte for null terminator */
+    bufCurr = result->octs = Asn1Alloc (strStkG.totalByteLen +1);
+    CheckAsn1Alloc (result->octs);
+
+    /* copy octet str pieces into single blk */
+    for (curr = 0; curr < strStkG.nextFreeElmt; curr++)
+    {
+        memcpy (bufCurr, strStkG.stk[curr].str, strStkG.stk[curr].len);
+        bufCurr += strStkG.stk[curr].len;
+    }
+
+    /* add null terminator - this is not included in the str's len */
+    *bufCurr = '\0';
+    return 1;
+
+}  /* BDecConsAsnOcts */
+#else
 static void
 BDecConsAsnOcts PARAMS ((b, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -255,10 +352,20 @@ BDecConsAsnOcts PARAMS ((b, len, result, bytesDecoded, env),
     *bufCurr = '\0';
 
 }  /* BDecConsAsnOcts */
+#endif
 
 /*
  * Decodes the content of a BER OCTET STRING value
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag tagId _AND_
+    AsnLen len _AND_
+    AsnOcts *result _AND_
+    AsnLen *bytesDecoded )
+#else
 void
 BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -267,30 +374,47 @@ BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     AsnOcts *result _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     /*
      * tagId is encoded tag shifted into long int.
      * if CONS bit is set then constructed octet string
      */
     if (TAG_IS_CONS (tagId))
+#ifdef LDAP_COMPONENT
+        BDecConsAsnOcts (b, len, result, bytesDecoded );
+#else
         BDecConsAsnOcts (b, len, result, bytesDecoded, env);
+#endif
 
     else /* primitive octet string */
     {
         if (len == INDEFINITE_LEN)
         {
              Asn1Error ("BDecAsnOctsContent: ERROR - indefinite length on primitive\n");
+#ifdef LDAP_COMPONENT
+             return -1;
+#else
              longjmp (env, -67);
+#endif
         }
         result->octetLen = len;
         result->octs =  Asn1Alloc (len+1);
+#ifdef LDAP_COMPONENT
+        CheckAsn1Alloc (result->octs );
+#else
         CheckAsn1Alloc (result->octs, env);
+#endif
         BufCopy (result->octs, b, len);
 
         if (BufReadError (b))
         {
             Asn1Error ("BDecAsnOctsContent: ERROR - decoded past end of data\n");
+#ifdef LDAP_COMPONENT
+            return -1;
+#else
             longjmp (env, -20);
+#endif
         }
 
         /* add null terminator - this is not included in the str's len */

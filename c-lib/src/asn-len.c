@@ -140,10 +140,16 @@ BEncDefLen2 PARAMS ((b, len),
  * decodes and returns an ASN.1 length
  */
 AsnLen
+#ifdef LDAP_COMPONENT
+BDecLen PARAMS ((b, bytesDecoded ),
+    GenBuf *b _AND_
+    unsigned long  *bytesDecoded )
+#else
 BDecLen PARAMS ((b, bytesDecoded, env),
     GenBuf *b _AND_
     unsigned long  *bytesDecoded _AND_
-    jmp_buf env)
+  jmp_buf env)
+#endif
 {
     AsnLen len;
     AsnLen byte;
@@ -154,7 +160,11 @@ BDecLen PARAMS ((b, bytesDecoded, env),
     if (BufReadError (b))
     {
         Asn1Error ("BDecLen: ERROR - decoded past end of data\n");
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
         longjmp (env, -13);
+#endif
     }
 
     (*bytesDecoded)++;
@@ -174,7 +184,11 @@ BDecLen PARAMS ((b, bytesDecoded, env),
         if (lenBytes > sizeof (AsnLen))
         {
             Asn1Error ("BDecLen: ERROR - length overflow\n");
-            longjmp (env, -14);
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
+        longjmp (env, -13);
+#endif
         }
 
         (*bytesDecoded) += lenBytes;
@@ -186,7 +200,11 @@ BDecLen PARAMS ((b, bytesDecoded, env),
         if (BufReadError (b))
         {
             Asn1Error ("BDecLen: ERROR - decoded past end of data\n");
-            longjmp (env, -15);
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
+        longjmp (env, -15);
+#endif
         }
 
         return len;
@@ -210,19 +228,32 @@ BEncEoc PARAMS ((b),
  * Flags and error if the octets are non-zero or if a read error
  * occurs.  Increments bytesDecoded by the length of the EOC marker.
  */
-
+#ifdef LDAP_COMPONENT
+int
+BDecEoc PARAMS ((b, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnLen *bytesDecoded)
+#else
 void
 BDecEoc PARAMS ((b, bytesDecoded, env),
     GenBuf *b _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     if ((BufGetByte (b) != 0) || (BufGetByte (b) != 0) || BufReadError (b))
     {
         Asn1Error ("BDecEoc: ERROR - non zero byte in EOC or end of data reached\n");
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
         longjmp (env, -16);
+#endif
     }
     (*bytesDecoded) += 2;
+#ifdef LDAP_COMPONENT
+	return 1;
+#endif
 
 }  /* BDecEoc */
 
@@ -245,10 +276,16 @@ int PeekEoc PARAMS ((b),
  * decodes and returns a DER encoded ASN.1 length
  */
 AsnLen
+#ifdef LDAP_COMPONENT
+DDecLen PARAMS ((b, bytesDecoded ),
+    GenBuf *b _AND_
+    unsigned long  *bytesDecoded)
+#else
 DDecLen PARAMS ((b, bytesDecoded, env),
     GenBuf *b _AND_
     unsigned long  *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     AsnLen len;
     AsnLen byte;
@@ -259,7 +296,11 @@ DDecLen PARAMS ((b, bytesDecoded, env),
     if (BufReadError (b))
     {
         Asn1Error ("DDecLen: ERROR - decoded past end of data\n");
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
         longjmp (env, -13);
+#endif
     }
 
     (*bytesDecoded)++;
@@ -268,7 +309,11 @@ DDecLen PARAMS ((b, bytesDecoded, env),
 
     else if (byte == (AsnLen) 0x080)  {/* indef len indicator */
       Asn1Error("DDecLen: ERROR - Indefinite length decoded");
-      longjmp(env, -666);
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
+        longjmp (env, -666);
+#endif
     }
 
     else  /* long len form */
@@ -281,7 +326,11 @@ DDecLen PARAMS ((b, bytesDecoded, env),
         if (lenBytes > sizeof (AsnLen))
         {
             Asn1Error ("DDecLen: ERROR - length overflow\n");
-            longjmp (env, -14);
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
+        longjmp (env, -14);
+#endif
         }
 
         (*bytesDecoded) += lenBytes;
@@ -293,7 +342,11 @@ DDecLen PARAMS ((b, bytesDecoded, env),
         if (BufReadError (b))
         {
             Asn1Error ("DDecLen: ERROR - decoded past end of data\n");
-            longjmp (env, -15);
+#ifdef LDAP_COMPONENT
+	return -1;
+#else
+        longjmp (env, -15);
+#endif
         }
 
         return len;

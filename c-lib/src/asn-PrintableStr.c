@@ -28,9 +28,23 @@ AsnLen BEncPrintableString(GenBuf *b, PrintableString *v)
     return l;
 } /* end of BEncPrintableString() */
 
-
+#ifdef LDAP_COMPONENT
+int
+BDecPrintableStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+				PrintableString *result, AsnLen *bytesDecoded )
+{
+	int rc;
+	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	if (chkPrintableString (result) < 0)
+	{
+        	Asn1Error ("BDecPrintableStringContent: ERROR - Format Error");
+		return -1;
+	}
+	return rc;
+} /* end of BDecPrintableStringContent() */
+#else
 void BDecPrintableStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
-								PrintableString *result, AsnLen *bytesDecoded,
+				PrintableString *result, AsnLen *bytesDecoded,
 								ENV_TYPE env)
 {
 	BDecAsnOctsContent (b, tagId, len, result, bytesDecoded, env);
@@ -40,14 +54,32 @@ void BDecPrintableStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
         longjmp (env, -40);
 	}
 } /* end of BDecPrintableStringContent() */
+#endif
 
 
+#ifdef LDAP_COMPONENT
+int BDecPrintableString(GenBuf *b, PrintableString *result,
+				 AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen1;
+    if (((tag = BDecTag (b, bytesDecoded )) != 
+		MAKE_TAG_ID (UNIV, PRIM, PRINTABLESTRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, PRINTABLESTRING_TAG_CODE)))
+    {
+        Asn1Error ("BDecPrintableString: ERROR - wrong tag\n");
+	return -1;
+    }
+
+    elmtLen1 = BDecLen (b, bytesDecoded );
+    return BDecPrintableStringContent (b, tag, elmtLen1, result, bytesDecoded );
+}  /* end of BDecPrintableString() */
+#else
 void BDecPrintableString(GenBuf *b, PrintableString *result,
 						 AsnLen *bytesDecoded, ENV_TYPE env)
 {
     AsnTag tag;
     AsnLen elmtLen1;
-
     if (((tag = BDecTag (b, bytesDecoded, env)) != 
 		MAKE_TAG_ID (UNIV, PRIM, PRINTABLESTRING_TAG_CODE)) &&
 		(tag != MAKE_TAG_ID (UNIV, CONS, PRINTABLESTRING_TAG_CODE)))
@@ -55,10 +87,11 @@ void BDecPrintableString(GenBuf *b, PrintableString *result,
         Asn1Error ("BDecPrintableString: ERROR - wrong tag\n");
         longjmp (env, -101);
     }
+
     elmtLen1 = BDecLen (b, bytesDecoded, env);
     BDecPrintableStringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 }  /* end of BDecPrintableString() */
-
+#endif
 
 static int chkPrintableString(PrintableString *checkBuf)
 {

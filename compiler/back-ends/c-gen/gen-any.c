@@ -497,18 +497,39 @@ REN -- 1/13/98 -- added the following: */
 					        encRoutineName = NULL;
 					}
 
+				if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER_COMP ) {
+					if (bv->choiceId == BASICVALUE_OID)
+						fprintf(src, "    InstallAnyByComponentOid (%s, &oid%d, ",
+							anyId, i++);
+					else if (bv->choiceId == BASICVALUE_INTEGER)
+						fprintf(src, "    InstallAnyByComponentInt (%s, %d, ",
+							anyId, bv->a.integer);
+				} else {
 					if (bv->choiceId == BASICVALUE_OID)
 						fprintf(src, "    InstallAnyByOid (%s, &oid%d, ",
 							anyId, i++);
 					else if (bv->choiceId == BASICVALUE_INTEGER)
 						fprintf(src, "    InstallAnyByInt (%s, %d, ",
 							anyId, bv->a.integer);
+				}
 
 					if (encRoutineName != NULL)
 					{
+					if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+						if ( strncmp( typeName, "Asn", 3) == 0 ) typeName = typeName+3;
+						fprintf(src, "sizeof (Component%s), (EncodeFcn)B%s, ", typeName, 
+							encRoutineName);
+						fprintf(src, "(CDecodeFcn)GDecComponent%s, ", typeName);
+						fprintf(src, "(CDecodeFcn)BDecComponent%sTag, ", typeName);
+					} else {
 						fprintf(src, "sizeof (%s), (EncodeFcn)B%s, ", typeName, 
 							encRoutineName);
 						fprintf(src, "(DecodeFcn)B%s, ", decRoutineName);
+					}
+					if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+						fprintf(src, "(ExtractFcn)NULL,");
+						fprintf(src, "(MatchFcn)MatchingComponent%s,",typeName);
+					}
 						if (printFree)
 							fprintf(src, "(FreeFcn)%s, ", freeRoutineName);
 						else

@@ -37,12 +37,15 @@ typedef struct AsnOcts
 
 
 AsnLen BEncAsnOcts PROTO ((GenBuf *b, AsnOcts *data));
-
-void BDecAsnOcts PROTO ((GenBuf *b, AsnOcts *result, AsnLen *bytesDecoded, ENV_TYPE env));
-
 AsnLen BEncAsnOctsContent PROTO ((GenBuf *b, AsnOcts *octs));
 
+#ifdef LDAP_COMPONENT
+int BDecAsnOcts PROTO ((GenBuf *b, AsnOcts *result, AsnLen *bytesDecoded ));
+int BDecAsnOctsContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded ));
+#else
+void BDecAsnOcts PROTO ((GenBuf *b, AsnOcts *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecAsnOctsContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 void FreeAsnOcts PROTO ((AsnOcts *o));
 

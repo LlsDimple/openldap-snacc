@@ -19,10 +19,12 @@
  * RFC 3641
  */
 static int UniversalStringtoUTF8( char* octs, int len){
+	/*YET-To-Be-Implemented*/
 	return 1;
 }
 
 static int UTF8toUniversalString( char* octs, int len){
+	/*YET-To-Be-Implemented*/
 	return 1;
 }
 
@@ -32,10 +34,20 @@ GEncUniversalStringContent PARAMS ((b, octs),
     GUniversalString *octs)
 {
 	UniversalStringtoUTF8(octs->value.octs,octs->value.octetLen);
-	GEncAsnUTF8StringContent(b,(GAsnOcts*)octs);
+	GEncUTF8StringContent(b,(GAsnOcts*)octs);
 	return octs->value.octetLen;
 }
-
+#ifdef LDAP_COMPONENT
+int
+GDecUniversalStringContent PARAMS ((b, result, bytesDecoded ),
+   GenBuf *b _AND_
+   GUniversalString *result _AND_
+   AsnLen *bytesDecoded )
+{
+	GDecUTF8StringContent(b, (GAsnOcts*)result, bytesDecoded );
+	UTF8toUniversalString(result->value.octs, result->value.octetLen);
+}
+#else
 void
 GDecUniversalStringContent PARAMS ((b, result, bytesDecoded, env),
    GenBuf *b _AND_
@@ -43,6 +55,7 @@ GDecUniversalStringContent PARAMS ((b, result, bytesDecoded, env),
    AsnLen *bytesDecoded _AND_
    ENV_TYPE env)
 {
-	GDecAsnUTF8StringContent(b, (GAsnOcts*)result, bytesDecoded, env);
+	GDecUTF8StringContent(b, (GAsnOcts*)result, bytesDecoded, env);
 	UTF8toUniversalString(result->value.octs, result->value.octetLen);
 }
+#endif

@@ -40,13 +40,18 @@ extern char numToHexCharTblG[];
  * BER encode/decode routines
  */
 AsnLen BEncAsnBits PROTO ((GenBuf *b, AsnBits *data));
-
+#ifdef LDAP_COMPONENT
+int BDecAsnBits PROTO ((GenBuf *b, AsnBits *result, AsnLen *bytesDecoded ));
+#else
 void BDecAsnBits PROTO ((GenBuf *b, AsnBits *result, AsnLen *bytesDecoded, ENV_TYPE env));
-
+#endif
 AsnLen BEncAsnBitsContent PROTO ((GenBuf *b, AsnBits *bits));
 
+#ifdef LDAP_COMPONENT
+int BDecAsnBitsContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnBits *result, AsnLen *bytesDecoded ));
+#else
 void BDecAsnBitsContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnBits *result, AsnLen *bytesDecoded, ENV_TYPE env));
-
+#endif
 /* 
  * DER encode/decode routines
  *

@@ -48,27 +48,32 @@ extern "C" {
 
 AsnLen BEncAsnInt PROTO ((GenBuf *b, AsnInt *data));
 
-void BDecAsnInt PROTO ((GenBuf *b, AsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
-
 AsnLen BEncAsnIntContent PROTO ((GenBuf *b, AsnInt *data));
 
+#ifdef LDAP_COMPONENT
+int BDecAsnInt PROTO ((GenBuf *b, AsnInt *result, AsnLen *bytesDecoded ));
+int BDecAsnIntContent PROTO ((GenBuf *b, AsnTag tag, AsnLen elmtLen, AsnInt  *result, AsnLen *bytesDecoded ));
+#else
+void BDecAsnInt PROTO ((GenBuf *b, AsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecAsnIntContent PROTO ((GenBuf *b, AsnTag tag, AsnLen elmtLen, AsnInt  *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /* do nothing  */
 #define FreeAsnInt( v)
 
 void PrintAsnInt PROTO ((FILE *f, AsnInt *v, unsigned int indent));
 
-
-
-
 AsnLen BEncUAsnInt PROTO ((GenBuf *b, UAsnInt *data));
-
-void BDecUAsnInt PROTO ((GenBuf *b, UAsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
 
 AsnLen BEncUAsnIntContent PROTO ((GenBuf *b, UAsnInt *data));
 
+#ifdef LDAP_COMPONENT
+int BDecUAsnInt PROTO ((GenBuf *b, UAsnInt *result, AsnLen *bytesDecoded ));
+int BDecUAsnIntContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UAsnInt *result, AsnLen *bytesDecoded ));
+#else
+void BDecUAsnInt PROTO ((GenBuf *b, UAsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecUAsnIntContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UAsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 /* do nothing  */
 #define FreeUAsnInt( v)
@@ -80,8 +85,3 @@ void PrintUAsnInt PROTO ((FILE *f, UAsnInt *v, unsigned int indent));
 #endif /* __cplusplus */
 
 #endif /* conditional include */
-
-
-
-
-

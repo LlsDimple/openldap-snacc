@@ -21,9 +21,9 @@
  * dquote	= %x22
  */
 AsnLen
-GEncAsnUTF8StringContent PARAMS ((b, o),
+GEncUTF8StringContent PARAMS ((b, o),
     GenBuf *b _AND_
-    GAsnOcts *o)
+    GUTF8String *o)
 {
 	/* Need to be Implemented */
 }
@@ -56,10 +56,66 @@ UnEscapeDquote PARAMS (( str , strLen ),
 /*
  * GSER Decodes the content of a GSER UTF8String
  */
-void
-GDecAsnUTF8StringContent PARAMS ((b, result, bytesDecoded, env),
+#ifdef LDAP_COMPONENT
+int
+GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
     GenBuf *b _AND_
-    GAsnOcts *result _AND_
+    GUTF8String *result _AND_
+    AsnLen *bytesDecoded )
+{
+	long strLen;
+	char* peek_head;
+	
+	*bytesDecoded = 0;
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("UTF8String : Token Reading ERROR\n");
+		return -1;
+	}
+
+	*bytesDecoded += strLen;
+
+	if ( *peek_head != '\"'){
+		Asn1Error("UTFString :  Should Begin with \" \n");
+		return -1;
+	}
+	/* Read StringValue */
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("UTF8String : Token Reading ERROR\n");
+		return -1;
+	}
+
+	*bytesDecoded += strLen;
+
+	result->value.octs = peek_head;
+	result->value.octetLen = strLen;
+	if( !UnEscapeDquote( peek_head, &strLen ) ) {
+		Asn1Error("UTF8String : Unsafe UTF8 Character\n");
+		return -1;
+	}
+
+	if ( !IsValidUTF8String( &result->value ) ) {
+		Asn1Error("UTF8String : Unsafe UTF8 Character\n");
+		return -1;
+	}
+
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("UTF8String : Token Reading ERROR\n");
+		return -1;
+	}
+	
+	*bytesDecoded += strLen;
+
+	if ( *peek_head != '\"'){
+		Asn1Error("UTFString :  Should end with \" \n");
+		return -1;
+	}
+	return 1;
+}
+#else
+void
+GDecUTF8StringContent PARAMS ((b, result, bytesDecoded, env),
+    GenBuf *b _AND_
+    GUTF8String *result _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
 {
@@ -92,7 +148,11 @@ GDecAsnUTF8StringContent PARAMS ((b, result, bytesDecoded, env),
 		Asn1Error("UTF8String : Unsafe UTF8 Character\n");
 		longjmp( env, -20);
 	}
-	
+
+	if ( !IsValidUTF8String( result ) ) {
+		Asn1Error("UTF8String : Unsafe UTF8 Character\n");
+		longjmp( env, -20);
+	}
 
 	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
@@ -106,3 +166,4 @@ GDecAsnUTF8StringContent PARAMS ((b, result, bytesDecoded, env),
 		longjmp( env, -20);
 	}
 }
+#endif

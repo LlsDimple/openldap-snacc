@@ -36,7 +36,12 @@ typedef AsnOcts VideotexString; /* [UNIVERSAL 21] IMPLICIT OCTET STRING */
 
 AsnLen BEncVideotexString PROTO ((GenBuf *b, VideotexString *v));
 
+#ifdef LDAP_COMPONENT
+int BDecVideotexString PROTO ((GenBuf *b, VideotexString *result, AsnLen *bytesDecoded ));
+#else
 void BDecVideotexString PROTO ((GenBuf *b, VideotexString *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 #define BEncVideotexStringContent BEncAsnOctsContent
 
 #define BDecVideotexStringContent BDecAsnOctsContent
@@ -51,8 +56,11 @@ void BDecVideotexString PROTO ((GenBuf *b, VideotexString *result, AsnLen *bytes
 typedef AsnOcts GraphicString; /* [UNIVERSAL 25] IMPLICIT OCTET STRING */
 
 AsnLen BEncGraphicString PROTO ((GenBuf *b, GraphicString *v));
-
+#ifdef LDAP_COMPONENT
+int BDecGraphicString PROTO ((GenBuf *b, GraphicString *result, AsnLen *bytesDecoded ));
+#else
 void BDecGraphicString PROTO ((GenBuf *b, GraphicString *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 #define BEncGraphicStringContent BEncAsnOctsContent
 
 #define BDecGraphicStringContent BDecAsnOctsContent
@@ -84,7 +92,11 @@ typedef AsnOcts ISO646String; /* [UNIVERSAL 26] IMPLICIT OCTET STRING */
 
 AsnLen BEncISO646String PROTO ((GenBuf *b, ISO646String *v));
 
+#ifdef LDAP_COMPONENT
+int BDecISO646String PROTO ((GenBuf *b, ISO646String *result, AsnLen *bytesDecoded));
+#else
 void BDecISO646String PROTO ((GenBuf *b, ISO646String *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 #define BEncISO646StringContent BEncAsnOctsContent
 
 #define BDecISO646StringContent BDecAsnOctsContent
@@ -100,7 +112,11 @@ typedef AsnOcts GeneralString; /* [UNIVERSAL 27] IMPLICIT OCTET STRING */
 
 AsnLen BEncGeneralString PROTO ((GenBuf *b, GeneralString *v));
 
+#ifdef LDAP_COMPONENT
+int BDecGeneralString PROTO ((GenBuf *b, GeneralString *result, AsnLen *bytesDecoded ));
+#else
 void BDecGeneralString PROTO ((GenBuf *b, GeneralString *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 #define BEncGeneralStringContent BEncAsnOctsContent
 
 #define BDecGeneralStringContent BDecAsnOctsContent
@@ -116,7 +132,11 @@ typedef AsnOcts UTCTime; /* [UNIVERSAL 23] IMPLICIT OCTET STRING */
 
 AsnLen BEncUTCTime PROTO ((GenBuf *b, UTCTime *v));
 
+#ifdef LDAP_COMPONENT
+int BDecUTCTime PROTO ((GenBuf *b, UTCTime *result, AsnLen *bytesDecoded));
+#else
 void BDecUTCTime PROTO ((GenBuf *b, UTCTime *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 #define BEncUTCTimeContent BEncAsnOctsContent
 
 #define BDecUTCTimeContent BDecAsnOctsContent
@@ -132,7 +152,11 @@ typedef AsnOcts GeneralizedTime; /* [UNIVERSAL 24] IMPLICIT OCTET STRING */
 
 AsnLen BEncGeneralizedTime PROTO ((GenBuf *b, GeneralizedTime *v));
 
+#ifdef LDAP_COMPONENT
+int BDecGeneralizedTime PROTO ((GenBuf *b, GeneralizedTime *result, AsnLen *bytesDecoded));
+#else
 void BDecGeneralizedTime PROTO ((GenBuf *b, GeneralizedTime *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 #define BEncGeneralizedTimeContent BEncAsnOctsContent
 
 #define BDecGeneralizedTimeContent BDecAsnOctsContent
@@ -162,7 +186,11 @@ typedef struct EXTERNALChoice /* CHOICE */
 
 AsnLen BEncEXTERNALChoiceContent PROTO ((GenBuf *b, EXTERNALChoice *v));
 
+#ifdef LDAP_COMPONENT
+int BDecEXTERNALChoiceContent PROTO ((GenBuf *b, AsnTag tagId0, AsnLen elmtLen0, EXTERNALChoice *v, AsnLen *bytesDecoded ));
+#else
 void BDecEXTERNALChoiceContent PROTO ((GenBuf *b, AsnTag tagId0, AsnLen elmtLen0, EXTERNALChoice *v, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 
 void PrintEXTERNALChoice PROTO ((FILE* f, EXTERNALChoice *v, unsigned int indent));
@@ -182,16 +210,22 @@ typedef struct EXTERNAL /* [UNIVERSAL 8] IMPLICIT SEQUENCE */
 
 AsnLen BEncEXTERNAL PROTO ((GenBuf *b, EXTERNAL *v));
 
+#ifdef LDAP_COMPONENT
+int BDecEXTERNAL PROTO ((GenBuf *b, EXTERNAL *result, AsnLen *bytesDecoded ));
+#else
 void BDecEXTERNAL PROTO ((GenBuf *b, EXTERNAL *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 AsnLen BEncEXTERNALContent PROTO ((GenBuf *b, EXTERNAL *v));
 
+#ifdef LDAP_COMPONENT
+int BDecEXTERNALContent PROTO ((GenBuf *b, AsnTag tagId0, AsnLen elmtLen0, EXTERNAL *v, AsnLen *bytesDecoded ));
+#else
 void BDecEXTERNALContent PROTO ((GenBuf *b, AsnTag tagId0, AsnLen elmtLen0, EXTERNAL *v, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 
 void PrintEXTERNAL PROTO ((FILE* f, EXTERNAL *v, unsigned int indent));
 void FreeEXTERNAL PROTO ((EXTERNAL *v));
-
-
 
 
 #ifdef __cplusplus

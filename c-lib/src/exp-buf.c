@@ -280,6 +280,66 @@ ExpBufReadError PARAMS ((b),
     return (*b)->readError;
 } /* ExpBufReadError */
 
+#ifdef LDAP_COMPONENT
+int ExpBufCopyAny PARAMS ((b, value, *bytesDecoded ),
+ExpBuf **b _AND_        // RWC; ADDED 2nd "*" to work properly...
+void *value _AND_
+AsnLen *bytesDecoded )
+{
+    AsnLen totalElmtsLen1 = 0;
+    AsnTag tagId1 = 0;
+    AsnLen elmtLen1 = 0;
+    AsnOcts	*data = 0;	/* where we will store the stuff */
+	GenBuf gb;    // Our GenBuf
+	char *loc = 0;
+
+
+	if (b == 0)
+	{
+		ExpBufSetWriteError(*b, TRUE);
+		return -1;
+	}
+
+	// Put the ExpBuf into a GenBuf so we can use BDecTag & BDecLen
+	PutExpBufInGenBuf (*b, &gb);
+
+
+	loc = (*b)->curr;  // Get the buffer pointer
+	tagId1 = BDecTag(&gb, &totalElmtsLen1 );			/* item tag */
+	elmtLen1 = BDecLen (&gb, &totalElmtsLen1 );		/* len of item */
+	if (elmtLen1 == INDEFINITE_LEN)
+	{
+		/* can't deal with indef len unknown types here (at least for now) */
+		Asn1Error("BDecUnknownAsnAny: ERROR - indef length object found\n");
+		return -1;
+	}
+	
+	/* and now decode the contents */
+	data = (AsnOcts *) value;	/* allocated by the any routine */
+	data->octetLen = elmtLen1 + totalElmtsLen1;	/* tag+len+data lengths */
+	data->octs = Asn1Alloc(data->octetLen +1);
+    CheckAsn1Alloc (data->octs );
+
+	/* use normal buffer reading to copy the any */
+    /*RWC;RESET current pointer to be sure to get tag/length AND data.*/
+    (*b)->curr = loc;
+    ExpBufCopy(&data->octs[0/*RWC;totalElmtsLen1*/] , b, totalElmtsLen1+elmtLen1);
+
+    if (ExpBufReadError(b))
+    {
+        Asn1Error("BDecUnknownAsnAny: ERROR - decoded past end of data\n");
+	return -1;
+    }
+
+    /* add null terminator - this is not included in the str's len */
+    data->octs[data->octetLen] = '\0';
+    (*bytesDecoded) += data->octetLen;
+	/* (*bytesDecoded) += totalElmtsLen1; just use the total blob length */
+
+
+	return 0;
+}
+#else
 int ExpBufCopyAny PARAMS ((b, value, *bytesDecoded, env),
 ExpBuf **b _AND_        // RWC; ADDED 2nd "*" to work properly...
 void *value _AND_
@@ -305,7 +365,6 @@ ENV_TYPE env)
 
 
 	loc = (*b)->curr;  // Get the buffer pointer
-
 	tagId1 = BDecTag(&gb, &totalElmtsLen1, env);			/* item tag */
 	elmtLen1 = BDecLen (&gb, &totalElmtsLen1, env);		/* len of item */
 	if (elmtLen1 == INDEFINITE_LEN)
@@ -340,6 +399,7 @@ ENV_TYPE env)
 
 	return 0;
 }
+#endif
 
 int
 ExpBufSetWriteError PARAMS ((b, Value),

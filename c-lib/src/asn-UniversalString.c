@@ -25,10 +25,43 @@ AsnLen BEncUniversalString(GenBuf *b, UniversalString *v)
     return l;
 } /* end of BEncUniversalString() */
 
+#ifdef LDAP_COMPONENT
+int
+BDecUniversalStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+				UniversalString *result, AsnLen *bytesDecoded )
+{
+	int rc;
+	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	if ((result->octetLen % 4) != 0)
+	{
+        Asn1Error ("BDecUniversalStringContent: ERROR - Invalid UniversalString Format");
+	return -1;
+	}
+	return rc;
+} /* end of BDecUniversalStringContent() */
 
+int BDecUniversalString(GenBuf *b, UniversalString *result,
+					 AsnLen *bytesDecoded )
+{
+	AsnTag tag;
+	AsnLen elmtLen1;
+
+	if (((tag = BDecTag (b, bytesDecoded )) != 
+		MAKE_TAG_ID (UNIV, PRIM, UNIVERSALSTRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, UNIVERSALSTRING_TAG_CODE)))
+	{
+		Asn1Error ("BDecUniversalString: ERROR - wrong tag\n");
+		return -1;
+	}
+
+    elmtLen1 = BDecLen (b, bytesDecoded );
+    return BDecUniversalStringContent (b, tag, elmtLen1, result, bytesDecoded );
+
+}  /* BDecUniversalString */
+#else
 void BDecUniversalStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
-								UniversalString *result, AsnLen *bytesDecoded,
-								ENV_TYPE env)
+				UniversalString *result, AsnLen *bytesDecoded,
+							ENV_TYPE env)
 {
 	BDecAsnOctsContent (b, tagId, len, result, bytesDecoded, env);
 	if ((result->octetLen % 4) != 0)
@@ -57,6 +90,7 @@ void BDecUniversalString(GenBuf *b, UniversalString *result,
     BDecUniversalStringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 
 }  /* BDecUniversalString */
+#endif
 
 
 /* Convert a UniversalString to a wide character string */

@@ -30,7 +30,20 @@ AsnLen BEncIA5String(GenBuf *b, IA5String *v)
     return l;
 } /* end of BEncBMPString() */
 
-
+#ifdef LDAP_COMPONENT
+int BDecIA5StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+				  IA5String *result, AsnLen *bytesDecoded )
+{
+    int rc;
+    rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded);
+	if (checkIA5String(result) != 0)
+    {
+        Asn1Error ("BDecIA5StringContent: ERROR - Invalid IA5String");
+	return -1;
+    }
+    return rc;
+} /* end of BDecIA5StringContent() */
+#else
 void BDecIA5StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 						  IA5String *result, AsnLen *bytesDecoded, 
 						  ENV_TYPE env)
@@ -42,8 +55,26 @@ void BDecIA5StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
         longjmp (env, -40);
     }
 } /* end of BDecIA5StringContent() */
+#endif
 
+#ifdef LDAP_COMPONENT
+int BDecIA5String(GenBuf *b, IA5String *result, AsnLen *bytesDecoded)
+{
+    AsnTag tag;
+    AsnLen elmtLen1;
 
+    if (((tag = BDecTag (b, bytesDecoded)) != 
+		MAKE_TAG_ID (UNIV, PRIM, IA5STRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, IA5STRING_TAG_CODE)))
+    {
+        Asn1Error ("BDecIA5String: ERROR - wrong tag\n");
+	return -1;
+    }
+    elmtLen1 = BDecLen (b, bytesDecoded );
+    return BDecIA5StringContent (b, tag, elmtLen1, result, bytesDecoded );
+ 
+} /* end of BDecIA5String() */
+#else
 void BDecIA5String(GenBuf *b, IA5String *result, AsnLen *bytesDecoded, 
 				   ENV_TYPE env)
 {
@@ -61,7 +92,7 @@ void BDecIA5String(GenBuf *b, IA5String *result, AsnLen *bytesDecoded,
     BDecIA5StringContent (b, tag, elmtLen1, result, bytesDecoded, env);
  
 } /* end of BDecIA5String() */
-
+#endif
 
 static int checkIA5String(IA5String *octs)
 {

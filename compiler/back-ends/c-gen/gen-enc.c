@@ -853,7 +853,20 @@ PrintCElmtEncodeCode PARAMS ((src, td, parent, e, level, varName),
             /* get type of 'defining' field (int/enum/oid)*/
             idNamedType = e->type->basicType->a.anyDefinedBy->link;
             tmpTypeId = GetBuiltinType (idNamedType->type);
-
+	
+	if( GetEncRulesType() == BER_COMP ) {
+            if (tmpTypeId == BASICTYPE_OID || tmpTypeId == BASICTYPE_RELATIVE_OID)
+            {
+                MakeVarPtrRef (genEncCRulesG, td, parent, idNamedType->type, varName, idVarRef);
+                fprintf (src, "\tSetAnyTypeByComponentOid(%s,%s);\n", elmtVarRef, idVarRef);
+            }
+            else
+            {
+                /* want to ref int by value not ptr */
+                MakeVarValueRef (genEncCRulesG, td, parent, idNamedType->type, varName, idVarRef);
+                fprintf (src, "\tSetAnyTypeByComponentInt(%s,%s);\n", elmtVarRef, idVarRef);
+            }
+	} else {
             if (tmpTypeId == BASICTYPE_OID || tmpTypeId == BASICTYPE_RELATIVE_OID)
             {
                 MakeVarPtrRef (genEncCRulesG, td, parent, idNamedType->type, varName, idVarRef);
@@ -865,6 +878,7 @@ PrintCElmtEncodeCode PARAMS ((src, td, parent, e, level, varName),
                 MakeVarValueRef (genEncCRulesG, td, parent, idNamedType->type, varName, idVarRef);
                 fprintf (src, "\tSetAnyTypeByInt(%s,%s);\n", elmtVarRef, idVarRef);
             }
+	}
 
             /* ANY's enc's do tag and len so zap the Content suffix */
             fprintf (src, "\t%s = %s%s(b,%s);\n", itemLenNameG, 

@@ -24,6 +24,20 @@ AsnLen BEncBMPString(GenBuf *b, BMPString *v)
 } /* end of BEncBMPString() */
 
 
+#ifdef LDAP_COMPONENT
+int BDecBMPStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+				 BMPString *result, AsnLen *bytesDecoded )
+{
+	int rc;
+	rc = BDecAsnOctsContent(b, tagId, len, result, bytesDecoded );
+	if ((result->octetLen % 2) != 0)
+	{
+		Asn1Error ("BDecBMPStringContent: ERROR - Invalid BMPString Format");
+		return -1;
+	}
+	return rc;
+}
+#else
 void BDecBMPStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 						  BMPString *result, AsnLen *bytesDecoded,
 						  ENV_TYPE env)
@@ -35,13 +49,31 @@ void BDecBMPStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 		longjmp (env, -40);
 	}
 }
+#endif
 
+#ifdef LDAP_COMPONENT
+int BDecBMPString(GenBuf *b, BMPString *result, AsnLen *bytesDecoded)
+{
+	AsnTag tag;
+	AsnLen elmtLen1;
+	if (((tag = BDecTag (b, bytesDecoded )) != 
+		MAKE_TAG_ID (UNIV, PRIM, BMPSTRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, BMPSTRING_TAG_CODE)))
+	{
+		Asn1Error ("BDecBMPString: ERROR - wrong tag\n");
+		return -1;
+	}
+	elmtLen1 = BDecLen (b, bytesDecoded );
+	BDecBMPStringContent (b, tag, elmtLen1, result, bytesDecoded );
+	return 1;
+
+}  /* BDecBMPString */
+#else
 void BDecBMPString(GenBuf *b, BMPString *result, AsnLen *bytesDecoded,
 				   ENV_TYPE env)
 {
 	AsnTag tag;
 	AsnLen elmtLen1;
-
 	if (((tag = BDecTag (b, bytesDecoded, env)) != 
 		MAKE_TAG_ID (UNIV, PRIM, BMPSTRING_TAG_CODE)) &&
 		(tag != MAKE_TAG_ID (UNIV, CONS, BMPSTRING_TAG_CODE)))
@@ -49,12 +81,11 @@ void BDecBMPString(GenBuf *b, BMPString *result, AsnLen *bytesDecoded,
 		Asn1Error ("BDecBMPString: ERROR - wrong tag\n");
 		longjmp (env, -113);
 	}
-
 	elmtLen1 = BDecLen (b, bytesDecoded, env);
 	BDecBMPStringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 
 }  /* BDecBMPString */
-
+#endif
 
 /* Convert a BMPString to a wide character string */
 int CvtBMPString2wchar(BMPString *inOcts, wchar_t **outStr)

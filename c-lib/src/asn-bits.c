@@ -56,6 +56,28 @@ BEncAsnBits PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 BIT STRING
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnBits PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnBits    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+    if (((tag =BDecTag (b, bytesDecoded )) !=
+         MAKE_TAG_ID (UNIV, PRIM, BITSTRING_TAG_CODE)) &&
+        (tag != MAKE_TAG_ID (UNIV, CONS, BITSTRING_TAG_CODE)))
+    {
+        Asn1Error ("BDecAsnBits: ERROR - wrong tag on BIT STRING.\n");
+	return -1;
+    }
+    elmtLen = BDecLen (b, bytesDecoded );
+    BDecAsnBitsContent (b, tag, elmtLen, result, bytesDecoded );
+    return 1;
+
+}  /* BDecAsnBits */
+#else
 void
 BDecAsnBits PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -65,7 +87,6 @@ BDecAsnBits PARAMS ((b, result, bytesDecoded, env),
 {
     AsnTag tag;
     AsnLen elmtLen;
-
     if (((tag =BDecTag (b, bytesDecoded, env)) !=
          MAKE_TAG_ID (UNIV, PRIM, BITSTRING_TAG_CODE)) &&
         (tag != MAKE_TAG_ID (UNIV, CONS, BITSTRING_TAG_CODE)))
@@ -73,11 +94,11 @@ BDecAsnBits PARAMS ((b, result, bytesDecoded, env),
          Asn1Error ("BDecAsnBits: ERROR - wrong tag on BIT STRING.\n");
          longjmp (env, -40);
     }
-
     elmtLen = BDecLen (b, bytesDecoded, env);
     BDecAsnBitsContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnBits */
+#endif
 
 
 
@@ -149,12 +170,21 @@ BEncAsnBitsContent PARAMS ((b, bits),
  * construced bit string. sets unusedBitsG appropriately.
  * and strStkG.totalByteLenG to bytelen needed to hold the bitstring
  */
+
+#ifdef LDAP_COMPONENT
+static int 
+FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnLen elmtLen0 _AND_
+    AsnLen *bytesDecoded )
+#else
 static void
 FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
     GenBuf *b _AND_
     AsnLen elmtLen0 _AND_
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
+#endif
 {
     unsigned long refdLen;
     unsigned long totalRefdLen;
@@ -166,15 +196,27 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
 
     for (; (totalElmtsLen1 < elmtLen0) || (elmtLen0 == INDEFINITE_LEN); )
     {
+#ifdef LDAP_COMPONENT
+        tagId1 = BDecTag (b, &totalElmtsLen1 );
+#else
         tagId1 = BDecTag (b, &totalElmtsLen1, env);
+#endif
 
         if ((tagId1 == EOC_TAG_ID) && (elmtLen0 == INDEFINITE_LEN))
         {
+#ifdef LDAP_COMPONENT
+            BDEC_2ND_EOC_OCTET (b, &totalElmtsLen1 );
+#else
             BDEC_2ND_EOC_OCTET (b, &totalElmtsLen1, env);
+#endif
             break;
         }
 
+#ifdef LDAP_COMPONENT
+        elmtLen1 = BDecLen (b, &totalElmtsLen1 );
+#else
         elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
+#endif
         if (tagId1 == MAKE_TAG_ID (UNIV, PRIM, BITSTRING_TAG_CODE))
         {
             /*
@@ -192,7 +234,11 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
                  *  on last piece of bits string
                  */
                 Asn1Error ("FillBitStringStk: ERROR - a component of a constructed BIT STRING that is not the last has non-zero unused bits\n");
+#ifdef LDAP_COMPONENT
+                return -1;
+#else
                 longjmp (env, -1);
+#endif
             }
 
             if (elmtLen1 != 0)
@@ -204,8 +250,11 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
             while (1)
             {
                 strPtr = (char *)BufGetSeg (b, &refdLen);
-
+#ifdef LDAP_COMPONENT
+                PUSH_STR (strPtr, refdLen );
+#else
                 PUSH_STR (strPtr, refdLen, env);
+#endif
                 totalRefdLen += refdLen;
                 if (totalRefdLen == lenToRef)
                     break; /* exit this while loop */
@@ -213,7 +262,11 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
                 if (refdLen == 0) /* end of data */
                 {
                     Asn1Error ("FillBitStringStk: ERROR - expecting more data\n");
+#ifdef LDAP_COMPONENT
+                    return -1;
+#else
                     longjmp (env, -2);
+#endif
                 }
                 refdLen = lenToRef - totalRefdLen;
             }
@@ -227,17 +280,27 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
              * constructed octets string embedding in this constructed
              * octet string. decode it.
              */
+#ifdef LDAP_COMPONENT
+            FillBitStringStk (b, elmtLen1, &totalElmtsLen1 );
+#else
             FillBitStringStk (b, elmtLen1, &totalElmtsLen1, env);
+#endif
         }
         else  /* wrong tag */
         {
             Asn1Error ("FillBitStringStk: ERROR - decoded non-BIT STRING tag inside a constructed BIT STRING\n");
+#ifdef LDAP_COMPONENT
+            return -1;
+#else
             longjmp (env, -3);
+#endif
         }
     } /* end of for */
 
     (*bytesDecoded) += totalElmtsLen1;
-
+#ifdef LDAP_COMPONENT
+    return 1;
+#endif
 }  /* FillBitStringStk */
 
 
@@ -246,6 +309,40 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
  * encountered or the given len decoded.  Returns them in a
  * single concatenated bit string
  */
+#ifdef LDAP_COMPONENT
+static int
+BDecConsAsnBits PARAMS ((b, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnLen len _AND_
+    AsnBits *result _AND_
+    AsnLen *bytesDecoded )
+{
+    char *bufCurr;
+    unsigned long curr;
+
+    RESET_STR_STK();
+
+    /*
+     * decode each piece of the octet string, puting
+     * an entry in the octet/bit string stack for each
+     */
+    FillBitStringStk (b, len, bytesDecoded );
+
+    /* alloc single str long enough for combined bitstring */
+    result->bitLen = strStkG.totalByteLen*8 - unusedBitsG;
+
+    bufCurr = result->bits = Asn1Alloc (strStkG.totalByteLen);
+    if ( !result->bits ) return -1;
+
+    /* copy bit string pieces (buffer refs) into single block */
+    for (curr = 0; curr < strStkG.nextFreeElmt; curr++)
+    {
+        memcpy (bufCurr, strStkG.stk[curr].str, strStkG.stk[curr].len);
+        bufCurr += strStkG.stk[curr].len;
+    }
+    return 1;
+}  /* BDecConsAsnBits */
+#else
 static void
 BDecConsAsnBits PARAMS ((b, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -279,11 +376,48 @@ BDecConsAsnBits PARAMS ((b, len, result, bytesDecoded, env),
     }
 
 }  /* BDecConsAsnBits */
+#endif
 
 /*
  * Decodes the content of a BIT STRING (including the unused bits octet)
  * Always returns a single contiguous bit string
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag tagId _AND_
+    AsnLen len _AND_
+    AsnBits *result _AND_
+    AsnLen *bytesDecoded )
+{
+    /*
+     * tagId is encoded tag shifted into long int.
+     * if CONS bit is set then constructed bit string
+     */
+    if (TAG_IS_CONS (tagId))
+        BDecConsAsnBits (b, len, result, bytesDecoded );
+    else /* primitive octet string */
+    {
+        if (len == INDEFINITE_LEN)
+        {
+             Asn1Error ("BDecAsnBitsContent: ERROR - indefinite length on primitive\n");
+		return -1;
+        }
+        (*bytesDecoded) += len;
+        len--;
+        result->bitLen = (len * 8) - (unsigned int)BufGetByte (b);
+        result->bits =  Asn1Alloc (len);
+        if ( !result->bits ) return -1;
+        BufCopy (result->bits, b, len);
+        if (BufReadError (b))
+        {
+            Asn1Error ("BDecAsnBitsContent: ERROR - decoded past end of data\n");
+	    return -1;
+        }
+    }
+}  /* BDecAsnBitsContent */
+#else
 void
 BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -319,6 +453,7 @@ BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
         }
     }
 }  /* BDecAsnBitsContent */
+#endif
 
 
 

@@ -8,11 +8,15 @@ extern "C" {
 typedef AsnOcts TeletexString; /* [UNIVERSAL 20] IMPLICIT OCTET STRING */
 
 AsnLen BEncTeletexString PROTO ((GenBuf *b, TeletexString *v));
-
-void BDecTeletexString PROTO ((GenBuf *b, TeletexString *result, AsnLen *bytesDecoded, ENV_TYPE env));
 AsnLen BEncTeletexStringContent PROTO ((GenBuf *b, AsnOcts *octs));
 
+#ifdef LDAP_COMPONENT
+int BDecTeletexString PROTO ((GenBuf *b, TeletexString *result, AsnLen *bytesDecoded));
+int BDecTeletexStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded ));
+#else
+void BDecTeletexString PROTO ((GenBuf *b, TeletexString *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecTeletexStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 #define PrintTeletexString PrintAsnOcts
 

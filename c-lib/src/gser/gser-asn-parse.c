@@ -101,6 +101,7 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 		BufGetByte ( b );
 	   i = 1;
 	   *pos = peek_byte;
+	   break;
 	default : /* identifier and value are parsed */
 	   i = 1;
 	   len = INDEFINITE_LEN;
@@ -110,8 +111,8 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 			peek_byte[i] == ':' || (peek_byte[i] == ' ')||
 			peek_byte[i] == '\'' || (i >= len) ||
 			/* double quote is escaped with double quote */
-			( ( i < len - 2 ) && (peek_byte[i] == '\"')
-			&& (peek_byte[i+1] != '\"' ) ) ){
+			( ( i <= (len - 1) ) && (peek_byte[i-1] != '\"')
+			&& (peek_byte[i] == '\"' ) ) ){
 		   if ( mode == GSER_COPY ) {
 		      *pos = Asn1Alloc(i+1);
 		      BufCopy(*pos, b,(unsigned long)i);

@@ -81,6 +81,65 @@ GEncAsnBitsContent PARAMS ((b, bits),
 #define SIXTH_BIT	0x20
 #define SEVENTH_BIT	0x40
 #define EIGITH_BIT	0x80
+
+#ifdef LDAP_COMPONENT
+int
+GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    GAsnBits *result _AND_
+    AsnLen *bytesDecoded )
+{
+	long strLen, data_len, bit_pos, num_of_bits;
+        char* peek_head, *data;
+	unsigned char set;
+                                                                          
+        *bytesDecoded = 0;
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		return -1;
+        }
+
+	if ( peek_head[0] != '\'' ) {
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		return -1;
+	}
+
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		return -1;
+        }
+
+	data = peek_head;
+	data_len = strLen;
+
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		return -1;
+        }
+
+	if ( peek_head[0] != '\'' ||
+			!( peek_head[1] == 'H' || peek_head[1] == 'B') ) {
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		return -1;
+	}
+
+	bit_pos = 0;
+	num_of_bits = 8;
+	while ( data_len-- ) {
+		set = 1;
+		set = set << (bit_pos%num_of_bits-1);
+		if ( data[bit_pos] == '1' ) {
+			data[bit_pos/num_of_bits] = data[bit_pos/num_of_bits] | set;
+		}
+		else if ( data[bit_pos] == '0' ) {
+			data[bit_pos/num_of_bits] = data[bit_pos/num_of_bits] & ~set;
+		}
+		bit_pos++;
+		if ( bit_pos == num_of_bits ) bit_pos = 0;
+	}
+	return 1;
+}
+#else
 void
 GDecAsnBitsContent PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -137,3 +196,4 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded, env),
 		if ( bit_pos == num_of_bits ) bit_pos = 0;
 	}
 }
+#endif

@@ -269,8 +269,11 @@ typedef enum
 
 /* the following are protos for routines ins asn_tag.c */
 
-
+#ifdef LDAP_COMPONENT
+AsnTag BDecTag PROTO ((GenBuf *b, AsnLen *bytesDecoded ));
+#else
 AsnTag BDecTag PROTO ((GenBuf *b, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 #if TTBL
 AsnTag PeekTag PROTO ((GenBuf *b, ENV_TYPE env));
 #endif

@@ -44,6 +44,27 @@ BEncAsnRelativeOid PARAMS ((b, data),
 /*
  * decodes universal TAG LENGTH and Contents of and ASN.1 OBJECT ID
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnRelativeOid    *result _AND_
+    AsnLen *bytesDecoded )
+{
+    AsnTag tag;
+    AsnLen elmtLen;
+
+    if ((tag = BDecTag (b, bytesDecoded )) != MAKE_TAG_ID (UNIV, PRIM, RELATIVE_OID_TAG_CODE))
+    {
+         Asn1Error ("BDecAsnRelativeOid: ERROR - wrong tag on OBJECT IDENTIFIER.\n");
+	return -1;
+    }
+
+    elmtLen = BDecLen (b, bytesDecoded );
+    return BDecAsnRelativeOidContent (b, tag, elmtLen, result, bytesDecoded );
+
+}  /* BDecAsnRelativeOid */
+#else
 void
 BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -64,6 +85,7 @@ BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded, env),
     BDecAsnRelativeOidContent (b, tag, elmtLen, result, bytesDecoded, env);
 
 }  /* BDecAsnRelativeOid */
+#endif
 
 
 
@@ -71,6 +93,34 @@ BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded, env),
  * Decodes just the content of the RELATIVE_OID.
  * AsnRelativeOid is handled the same as a primtive octet string
  */
+#ifdef LDAP_COMPONENT
+int
+BDecAsnRelativeOidContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+    GenBuf *b _AND_
+    AsnTag tagId _AND_
+    AsnLen len _AND_
+    AsnRelativeOid *result _AND_
+    AsnLen *bytesDecoded )
+{
+    if (len == INDEFINITE_LEN)
+    {
+         Asn1Error ("BDecAsnRelativeOidContent: ERROR - indefinite length on primitive\n");
+	return -1;
+    }
+    result->octetLen = len;
+    result->octs =  Asn1Alloc (len);
+    CheckAsn1Alloc (result->octs);
+    BufCopy (result->octs, b, len);
+    if (BufReadError (b))
+    {
+         Asn1Error ("BDecAsnRelativeOidContent: ERROR - decoded past end of data\n");
+	return -1;
+    }
+    (*bytesDecoded) += len;
+    tagId=tagId;  /* referenced to avoid compiler warning. */
+    return 1;
+}  /* BDecAsnRelativeOidContent */
+#else
 void
 BDecAsnRelativeOidContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -97,8 +147,7 @@ BDecAsnRelativeOidContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     (*bytesDecoded) += len;
     tagId=tagId;  /* referenced to avoid compiler warning. */
 }  /* BDecAsnRelativeOidContent */
-
-
+#endif
 
 /*
  * Prints the given RELATIVE_OID to the given FILE * in ASN.1 Value Notation.

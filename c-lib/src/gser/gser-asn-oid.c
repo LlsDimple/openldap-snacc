@@ -24,6 +24,39 @@
  * The encoder is the same to the encoder of OCTS String
  */
 
+#ifdef LDAP_COMPONENT
+int
+GDecAsnOidContent PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    GAsnOid *result _AND_
+    AsnLen *bytesDecoded )
+{
+	char* peek_head;
+	unsigned long strLen = INDEFINITE_LEN;
+
+	peek_head = BufPeekSeg( b,&strLen );
+
+	if ( strLen == INDEFINITE_LEN ){
+		Asn1Error("Not in the format of GSER encoded Relative OID\"\n");
+		return -1;
+	}
+	result->value.octetLen = strLen;
+	result->value.octs = Asn1Alloc(strLen+1);
+	if ( !result->value.octs ) return -1;
+	BufCopy( result->value.octs, b, strLen );
+
+	if ( BufReadError(b) )
+	{
+		Asn1Error("BMP String Read Error\n");
+		return -1;
+	}
+
+	result->value.octs[strLen] = '\0';
+	*bytesDecoded = strLen;
+
+	return 1;
+}
+#else
 void
 GDecAsnOidContent PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -54,3 +87,4 @@ GDecAsnOidContent PARAMS ((b, result, bytesDecoded, env),
 	result->value.octs[strLen] = '\0';
 	*bytesDecoded = strLen;
 }
+#endif

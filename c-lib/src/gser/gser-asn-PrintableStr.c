@@ -22,5 +22,5 @@
  *                  = %xF0-E7 3(%x80-BF) /
  */
 
-#define GEncPrintableStringContent GEncAsnUTF8StringContent
-#define GDecPrintableStringContent GDecAsnUTF8StringContent
+#define GEncPrintableStringContent GEncUTF8StringContent
+#define GDecPrintableStringContent GDecUTF8StringContent

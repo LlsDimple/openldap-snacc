@@ -28,9 +28,22 @@ AsnLen BEncVisibleString(GenBuf *b, VisibleString *v)
     return l;
 } /* end of BEncVisibleString() */
 
-
+#ifdef LDAP_COMPONENT
+int BDecVisibleStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+				VisibleString *result, AsnLen *bytesDecoded )
+{
+	int rc;
+	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	if (chkVisibleString (result) < 0)
+	{
+        	Asn1Error ("BDecVisibleStringContent: ERROR - Format Error");
+		return -1;
+	}
+	return rc;
+} /* end of BDecVisibleStringContent() */
+#else
 void BDecVisibleStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
-								VisibleString *result, AsnLen *bytesDecoded,
+				VisibleString *result, AsnLen *bytesDecoded,
 								ENV_TYPE env)
 {
 	BDecAsnOctsContent (b, tagId, len, result, bytesDecoded, env);
@@ -40,14 +53,30 @@ void BDecVisibleStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
         longjmp (env, -40);
 	}
 } /* end of BDecVisibleStringContent() */
+#endif
 
-
-void BDecVisibleString(GenBuf *b, VisibleString *result,
-						 AsnLen *bytesDecoded, ENV_TYPE env)
+#ifdef LDAP_COMPONENT
+int BDecVisibleString(GenBuf *b, VisibleString *result,
+					 AsnLen *bytesDecoded )
 {
     AsnTag tag;
     AsnLen elmtLen1;
-
+    if (((tag = BDecTag (b, bytesDecoded )) != 
+		MAKE_TAG_ID (UNIV, PRIM, VISIBLESTRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, VISIBLESTRING_TAG_CODE)))
+    {
+        Asn1Error ("BDecVisibleString: ERROR - wrong tag\n");
+	return -1;
+    }
+    elmtLen1 = BDecLen (b, bytesDecoded );
+    return BDecVisibleStringContent (b, tag, elmtLen1, result, bytesDecoded );
+}  /* end of BDecVisibleString() */
+#else
+void BDecVisibleString(GenBuf *b, VisibleString *result,
+					 AsnLen *bytesDecoded, ENV_TYPE env)
+{
+    AsnTag tag;
+    AsnLen elmtLen1;
     if (((tag = BDecTag (b, bytesDecoded, env)) != 
 		MAKE_TAG_ID (UNIV, PRIM, VISIBLESTRING_TAG_CODE)) &&
 		(tag != MAKE_TAG_ID (UNIV, CONS, VISIBLESTRING_TAG_CODE)))
@@ -58,7 +87,7 @@ void BDecVisibleString(GenBuf *b, VisibleString *result,
     elmtLen1 = BDecLen (b, bytesDecoded, env);
     BDecVisibleStringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 }  /* end of BDecVisibleString() */
-
+#endif
 
 static int chkVisibleString(VisibleString *checkBuf)
 {

@@ -206,6 +206,13 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 
     fprintf (src,"\n\n");
 
+    SetEncRules(*GetEncRules());
+    if ( GetEncRulesType() == GSER ||
+	GetEncRulesType() == GSER_COMP ||
+	GetEncRulesType() == BER_COMP ) {
+	fprintf (hdr,"#include \"component.h\"\n");
+    }
+
     if (printValues)
     {
         /* put value defs at beginning of .c file */
@@ -224,10 +231,14 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 
         if (printTypes){
             PrintCTypeDef (hdr, r, m, td);
-            /* print C structures for identifiers used by GSER */
-//            if ( GetEncRulesType() == GSER )
-//                PrintCTypeIdDef (hdr, r, m, td);
         }
+
+	if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ) {
+		PrintMatchingRule( src, hdr, r, m ,td );
+		PrintComponentExtractor( src, hdr, r, m ,td );
+		if ( strcmp( m->modId->name,td->cTypeDefInfo->cTypeName )==0 )
+			PrintSyntaxLoader( src, hdr, r, m, td );
+	}
 
         /* for PDU type or types ref'd with ANY/ANY DEF BY */
         if (printEncoders && ((td->anyRefs != NULL) || td->cTypeDefInfo->isPdu))
@@ -249,13 +260,6 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
             PrintCContentDecoder (src, hdr, r, m, td, &longJmpVal);
 		//if (td->bHasTableConstraint)
 		//	PrintCTableConstraintDecoder (src, hdr, m, td);		// Deepak: 25/Mar/2003
-	}
-
-	if ( GetEncRulesType() == GSER ) {
-		PrintMatchingRule( src, hdr, r, m ,td );
-		PrintComponentExtractor( src, hdr, r, m ,td );
-		if ( strcmp( m->modId->name,td->cTypeDefInfo->cTypeName )==0 )
-			PrintSyntaxLoader( src, hdr, r, m, td );
 	}
 
         if (printPrinters)

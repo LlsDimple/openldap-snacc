@@ -127,7 +127,15 @@ typedef unsigned long AsnLen;
  */
 #define BEncDefLenTo127( b, len)\
     BufPutByteRvs (b, (unsigned char) len)
-
+#ifdef LDAP_COMPONENT
+#define BDEC_2ND_EOC_OCTET( b, bytesDecoded )\
+{\
+    if ((BufGetByte (b) != 0) || BufReadError (b)) {\
+        Asn1Error ("ERROR - second octet of EOC not zero\n");\
+        return -1;}\
+     (*bytesDecoded)++;\
+}
+#else
 #define BDEC_2ND_EOC_OCTET( b, bytesDecoded, env)\
 {\
     if ((BufGetByte (b) != 0) || BufReadError (b)) {\
@@ -135,16 +143,24 @@ typedef unsigned long AsnLen;
         longjmp (env, -28);}\
      (*bytesDecoded)++;\
 }
-
+#endif
 
 AsnLen BEncDefLen PROTO ((GenBuf *b, AsnLen len));
 AsnLen BEncDefLen2 PROTO ((GenBuf *b, long  len));
+#ifdef LDAP_COMPONENT
+AsnLen BDecLen PROTO ((GenBuf *b, AsnLen  *bytesDecoded ));
+#else
 AsnLen BDecLen PROTO ((GenBuf *b, AsnLen  *bytesDecoded, ENV_TYPE env));
+#endif
 
 #ifdef _DEBUG
 AsnLen BEncEoc PROTO ((GenBuf *b));
 #endif
+#ifdef LDAP_COMPONENT
+int BDecEoc PROTO ((GenBuf *b, AsnLen *bytesDecoded ));
+#else
 void BDecEoc PROTO ((GenBuf *b, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 #if TTBL
 int PeekEoc PROTO ((GenBuf *b));
@@ -173,7 +189,11 @@ int PeekEoc PROTO ((GenBuf *b));
 
 #define DEncDefLen BEncDefLen
 
+#ifdef LDAP_COMPONENT
+AsnLen DDecLen PROTO ((GenBuf *b, AsnLen  *bytesDecoded ));
+#else
 AsnLen DDecLen PROTO ((GenBuf *b, AsnLen  *bytesDecoded, ENV_TYPE env));
+#endif
 
 /* Error conditions */
 #define DDecEoc(a, b, env) longjmp(env, -666)

@@ -35,13 +35,15 @@ typedef AsnOcts AsnOid;  /* standard oid type  */
 #define ASNOID_PRESENT( aoid)	ASNOCTS_PRESENT (aoid)
 
 AsnLen BEncAsnOid PROTO ((GenBuf *b, AsnOid *data));
-
-void BDecAsnOid PROTO ((GenBuf *b, AsnOid *result, AsnLen *bytesDecoded, ENV_TYPE env));
-
 #define BEncAsnOidContent( b, oid)   BEncAsnOctsContent (b, oid)
 
-
+#ifdef LDAP_COMPONENT
+int BDecAsnOid PROTO ((GenBuf *b, AsnOid *result, AsnLen *bytesDecoded ));
+int BDecAsnOidContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnOid  *result, AsnLen *bytesDecoded ));
+#else
+void BDecAsnOid PROTO ((GenBuf *b, AsnOid *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecAsnOidContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnOid  *result, AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
 
 
 #define FreeAsnOid	FreeAsnOcts

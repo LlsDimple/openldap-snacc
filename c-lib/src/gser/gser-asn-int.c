@@ -64,6 +64,27 @@ GEncAsnIntContent PARAMS ((b, data),
  * Decodes content of GSER a INTEGER value.
  */
 #include <stdlib.h>
+#ifdef LDAP_COMPONENT
+int
+GDecAsnIntContent PARAMS ((b, result, bytesDecoded ),
+    GenBuf *b _AND_
+    GAsnInt    *result _AND_
+    AsnLen *bytesDecoded )
+{
+	long strLen;
+	char* peek_head;
+
+	*bytesDecoded = 0;
+	if( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
+		Asn1Error("INTEGER : Token Reading ERROR\n");
+		return -1;
+	}
+	result->value = atoi(peek_head);
+	Asn1Free(peek_head);
+	*bytesDecoded += strLen;
+	return 1;
+}
+#else
 void
 GDecAsnIntContent PARAMS ((b, result, bytesDecoded, env),
     GenBuf *b _AND_
@@ -83,3 +104,4 @@ GDecAsnIntContent PARAMS ((b, result, bytesDecoded, env),
 	Asn1Free(peek_head);
 	*bytesDecoded += strLen;
 }
+#endif

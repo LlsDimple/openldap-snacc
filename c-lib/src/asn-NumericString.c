@@ -29,7 +29,21 @@ AsnLen BEncNumericString(GenBuf *b, NumericString *v)
     return l;
 } /* end of BEncNumericString() */
 
-
+#ifdef LDAP_COMPONENT
+int
+BDecNumericStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+			  NumericString *result, AsnLen *bytesDecoded )
+{
+	int rc;
+	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded  );
+	if (chkNumericString (result) < 0)
+	{
+		Asn1Error ("BDecNumericStringContent: ERROR - Format Error");
+		return -1;
+	}
+	return rc;
+} /* end of BDecNumericStringContent() */
+#else
 void BDecNumericStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 							  NumericString *result, AsnLen *bytesDecoded, 
 							  ENV_TYPE env)
@@ -41,8 +55,28 @@ void BDecNumericStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
         longjmp (env, -40);
 	}
 } /* end of BDecNumericStringContent() */
+#endif
 
+#ifdef LDAP_COMPONENT
+int
+BDecNumericString(GenBuf *b, NumericString *result, AsnLen *bytesDecoded)
+{
+    AsnTag tag;
+    AsnLen elmtLen1;
 
+    if (((tag = BDecTag (b, bytesDecoded )) != 
+		MAKE_TAG_ID (UNIV, PRIM, NUMERICSTRING_TAG_CODE)) &&
+		(tag != MAKE_TAG_ID (UNIV, CONS, NUMERICSTRING_TAG_CODE)))
+    {
+        Asn1Error ("BDecNumericString: ERROR - wrong tag\n");
+	return -1;
+    }
+
+    elmtLen1 = BDecLen (b, bytesDecoded);
+    return BDecNumericStringContent (b, tag, elmtLen1, result, bytesDecoded );
+
+} /* end of BDecNumericString() */
+#else
 void BDecNumericString(GenBuf *b, NumericString *result, AsnLen *bytesDecoded,
 					   ENV_TYPE env)
 {
@@ -56,11 +90,12 @@ void BDecNumericString(GenBuf *b, NumericString *result, AsnLen *bytesDecoded,
         Asn1Error ("BDecNumericString: ERROR - wrong tag\n");
         longjmp (env, -100);
     }
+
     elmtLen1 = BDecLen (b, bytesDecoded, env);
     BDecNumericStringContent (b, tag, elmtLen1, result, bytesDecoded, env);
 
 } /* end of BDecNumericString() */
-
+#endif
 
 static int chkNumericString(NumericString *checkBuf)
 {
