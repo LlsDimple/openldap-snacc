@@ -33,9 +33,10 @@ GEncUniversalStringContent PARAMS ((b, octs),
     GenBuf *b _AND_
     GUniversalString *octs)
 {
-	UniversalStringtoUTF8(octs->value.octs,octs->value.octetLen);
-	GEncUTF8StringContent(b,(GUTF8String*)octs);
-	return octs->value.octetLen;
+	int rc;
+	rc = UniversalStringtoUTF8(octs->value.octs,octs->value.octetLen);
+	if ( rc < 0 ) return (-1);
+	return GEncUTF8StringContent(b,(GUTF8String*)octs);
 }
 #ifdef LDAP_COMPONENT
 int
@@ -45,8 +46,10 @@ GDecUniversalStringContent PARAMS (( mem_op, b, result, bytesDecoded ),
    GUniversalString *result _AND_
    AsnLen *bytesDecoded )
 {
-	GDecUTF8StringContent( mem_op, b, (GUTF8String*)result, bytesDecoded );
-	UTF8toUniversalString(result->value.octs, result->value.octetLen);
+	int rc;
+	rc = GDecUTF8StringContent( mem_op, b, (GUTF8String*)result, bytesDecoded );
+	if ( rc < 0 ) return(-1);
+	return UTF8toUniversalString(result->value.octs, result->value.octetLen);
 }
 #else
 void

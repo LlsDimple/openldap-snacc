@@ -323,6 +323,33 @@ void GDecVisibleStringContent PROTO ((GenBuf *b, GVisibleString *result,
 #define GDecISO646StringContent GDecUTF8StringContent
 #define GDecGeneralizedTimeContent GDecUTF8StringContent
 #define GDecUTCTimeContent GDecUTF8StringContent
+
+/*
+ * Directory String
+ */
+typedef enum stringtype {
+	teletexStr = 1,
+	printableStr,
+	bmpStr,
+	universalStr,
+	utf8Str
+} string_type;
+
+typedef struct GDirectoryString {
+	char* identifier;
+	string_type strType;
+	AsnOcts value;
+} GDirectoryString;
+
+AsnLen GEncDirectoryStringContent PROTO (( GenBuf *b, GDirectoryString *octs ));
+#ifdef LDAP_COMPONENT
+int GDecDirectoryStringContent PROTO ((void* mem_op, GenBuf *b,
+			GDirectoryString *result, AsnLen *bytesDecoded ));
+#else
+void GDecDirectoryStringContent PROTO ((GenBuf *b, GDirectoryString *result,
+				AsnLen *bytesDecoded, ENV_TYPE env));
+#endif
+
 /*
  * Utilitiies for GSER DEcoding
  */

@@ -76,6 +76,7 @@
 #include "str-stk.h"
 #include "asn-bits.h" /* for TO_HEX macro */
 #include "asn-octs.h"
+#include "nibble-alloc.h"
 #include <memory.h>
 
 

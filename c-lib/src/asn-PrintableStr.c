@@ -4,7 +4,7 @@
 
 
 /* Function Prototypes */
-static int chkPrintableString (PrintableString *checkBuf);
+int chkPrintableString (PrintableString *checkBuf);
 
 
 AsnLen BEncPrintableStringContent(GenBuf *b, PrintableString *octs)
@@ -93,7 +93,7 @@ void BDecPrintableString(GenBuf *b, PrintableString *result,
 }  /* end of BDecPrintableString() */
 #endif
 
-static int chkPrintableString(PrintableString *checkBuf)
+int chkPrintableString(PrintableString *checkBuf)
 {
 	unsigned int i;
 	char temp;

@@ -29,6 +29,7 @@
 #include "asn-tag.h"
 #include "str-stk.h"
 #include "asn-bits.h"
+#include "nibble-alloc.h"
 
 static unsigned short unusedBitsG;
 

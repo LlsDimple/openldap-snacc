@@ -10,13 +10,20 @@
  */
 #include "asn-gser.h"
 #include "gen-buf.h"
+
+#include "asn-PrintableStr.h"
+#define CheckTeletexString chkPrintableString
+
 AsnLen
 GEncTeletexStringContent PARAMS ((b, o),
     GenBuf *b _AND_
     GTeletexString *o)
 {
-	/* YET-To-Be-Implemented */
-	return 0;
+	int rc;
+	rc = CheckTeletexString ( &o->value );
+	if ( rc < 0 ) return rc;
+	rc = GEncUTF8StringContent ( b , o );
+	return rc;
 }
 
 /*
@@ -56,9 +63,14 @@ GDecTeletexStringContent PARAMS (( mem_op, b, result, bytesDecoded ),
 	result->value.octs = peek_head;
 	result->value.octetLen = strLen;
 
+	if ( CheckTeletexString ( &result->value ) < 0 ) {
+		Asn1Error("TeletexString : Invalid Teletex Format\n");
+		return (-1);
+	}
+
 	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("TeletexString : Token Reading ERROR\n");
-		return -1;
+		return (-1);
 	}
 	
 	*bytesDecoded += strLen;
@@ -102,6 +114,11 @@ GDecTeletexStringContent PARAMS ((b, result, bytesDecoded, env),
 
 	result->value.octs = peek_head;
 	result->value.octetLen = strLen;
+
+	if ( CheckTeletexString ( &result->value ) < 0 ) {
+		Asn1Error("TeletexString : Invalid Teletex Format\n");
+		longjmp( env, -20);
+	}
 
 	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("TeletexString : Token Reading ERROR\n");

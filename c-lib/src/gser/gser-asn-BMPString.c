@@ -29,9 +29,10 @@ static int TranslateUTF8toUCS2( char* octs, int len){
 
 AsnLen GEncBMPStringContent(GenBuf *b, GBMPString *result )
 {
-	TranslateUCS2toUTF8( result->value.octs, result->value.octetLen );
-	GEncUTF8StringContent( b,(GUTF8String*)result );
-	return 0;
+	int rc;
+	rc = TranslateUCS2toUTF8( result->value.octs, result->value.octetLen );
+	if ( rc < 0 ) return (-1);
+	return GEncUTF8StringContent( b,(GUTF8String*)result );
 } 
 
 #ifdef LDAP_COMPONENT

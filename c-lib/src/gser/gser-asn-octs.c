@@ -46,7 +46,7 @@ GEncAsnOctsContent PARAMS ((b, o),
 	else
 		buf[k+1] += '0';
     }
-    BufPutSegRvs (b, k, o->value.octetLen*2 );
+    BufPutSegRvs (b, buf, o->value.octetLen*2 );
     BufPutByteRvs (b, '\'' );
 
    if ( o->identifier != NULL ){

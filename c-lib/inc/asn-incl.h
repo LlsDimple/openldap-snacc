@@ -114,6 +114,7 @@
 #include "asn-TeletexString.h"
 #include "snaccCder.h"
 #include "print.h"
+#include "nibble-alloc.h"
 
 #define MAX_BUF 4096
 

@@ -22,6 +22,7 @@
 #include "asn-tag.h"
 #include "asn-octs.h"
 #include "asn-relative-oid.h"
+#include "nibble-alloc.h"
 
 
 /*

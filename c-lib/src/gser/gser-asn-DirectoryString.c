@@ -20,10 +20,37 @@ extern int UnEscapeDquote ( char* str, int* strLen );
 AsnLen
 GEncDirectoryStringContent PARAMS ((b, o),
     GenBuf *b _AND_
-    GAsnOcts *o)
+    GDirectoryString *o)
 {
-	/* Need to be Implemented */
-	return 1;
+	GTeletexString tel_str;
+	GPrintableString print_str;
+	GBMPString bmp_str;
+	GUniversalString uni_str;
+	GUTF8String utf_str;
+
+	int rc;
+	switch ( o->strType )
+	{
+		case teletexStr :
+			tel_str.value = o->value;
+			rc = GEncTeletexStringContent( b, &tel_str);
+		case printableStr:
+			print_str.value = o->value;
+			rc = GEncPrintableStringContent( b, &print_str);
+		case bmpStr:
+			bmp_str.value = o->value;
+			rc = GEncBMPStringContent( b, &bmp_str);
+		case universalStr:
+			uni_str.value = o->value;
+			rc = GEncUniversalStringContent( b, &uni_str);
+		case utf8Str:
+			utf_str.value = o->value;
+			rc = GEncUTF8StringContent( b, &utf_str);
+		default :
+			utf_str.value = o->value;
+			rc = GEncUTF8StringContent( b, &utf_str);
+	}
+	return rc;
 }
 
 /*
@@ -34,53 +61,41 @@ int
 GDecDirectoryStringContent PARAMS ((mem_op, b, result, bytesDecoded ),
     void* mem_op _AND_
     GenBuf *b _AND_
-    GAsnOcts *result _AND_
+    GDirectoryString *result _AND_
     AsnLen *bytesDecoded )
 {
 	int strLen;
-	char* peek_head;
+	char* peek_head, *separator;
 	
 	*bytesDecoded = 0;
 	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
-		return -1;
+		return (-1);
 	}
-
+	*bytesDecoded += strLen;
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &separator, GSER_NO_COPY )) ){
+		Asn1Error("DirectoryString : Token Reading ERROR\n");
+		return (-1);
+	}
+	if ( separator[0] != ':' ) {
+		Asn1Error("DirectoryString : Token Reading ERROR\n");
+		return (-1);
+	}
 	*bytesDecoded += strLen;
 
 	if ( strncmp ( peek_head, "teletexString", sizeof ("teletexString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			return -1;
-		}
 		GDecTeletexStringContent( mem_op, b, (GTeletexString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "printableString", sizeof ("printableString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			return -1;
-		}
 		GDecPrintableStringContent( mem_op,  b, (GPrintableString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "bmpString", sizeof ("bmpString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			return -1;
-		}
 		GDecBMPStringContent( mem_op, b, (GBMPString*)result, bytesDecoded);
 	} 
 	else if ( strncmp ( peek_head, "universalString", sizeof ("universalString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			return -1;
-		}
 		GDecUniversalStringContent( mem_op, b, (GUniversalString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "uTF8String", sizeof ("uTF8String") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			return -1;
-		}
 		GDecUTF8StringContent( mem_op, b, (GUTF8String*)result, bytesDecoded );
 	}
 	else {
@@ -125,51 +140,39 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded, env),
     AsnLen *bytesDecoded _AND_
     jmp_buf env)
 {
-	long strLen;
-	char* peek_head;
+	int strLen;
+	char* peek_head, *separator;
 	
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		longjmp( env, -20);
 	}
-
+	*bytesDecoded += strLen;
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &separator, GSER_NO_COPY )) ){
+		Asn1Error("DirectoryString : Token Reading ERROR\n");
+		longjmp( env, -20);
+	}
+	if ( separator[0] != ':' ) {
+		Asn1Error("DirectoryString : Token Reading ERROR\n");
+		longjmp( env, -20);
+	}
 	*bytesDecoded += strLen;
 
 	if ( strncmp ( peek_head, "teletexString", sizeof ("teletexString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			longjmp( env, -20);
-		}
-		GDecTeletexStringContent( b, (GTeletexString*)result, bytesDecoded, env );
+		GDecTeletexStringContent( mem_op, b, (GTeletexString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "printableString", sizeof ("printableString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			longjmp( env, -20);
-		}
-		GDecPrintableStringContent( b, (GPrintableString*)result, bytesDecoded, env );
+		GDecPrintableStringContent( mem_op,  b, (GPrintableString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "bmpString", sizeof ("bmpString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			longjmp( env, -20);
-		}
-		GDecBMPStringContent( b, (GBMPString*)result, bytesDecoded, env );
+		GDecBMPStringContent( mem_op, b, (GBMPString*)result, bytesDecoded);
 	} 
 	else if ( strncmp ( peek_head, "universalString", sizeof ("universalString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			longjmp( env, -20);
-		}
-		GDecUniversalStringContent( b, (GUniversalString*)result, bytesDecoded, env );
+		GDecUniversalStringContent( mem_op, b, (GUniversalString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "uTF8String", sizeof ("uTF8String") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
-			Asn1Error("DirectoryString : Token Reading ERROR\n");
-			longjmp( env, -20);
-		}
-		GDecUTF8StringContent( b, (GUTF8String*)result, bytesDecoded, env );
+		GDecUTF8StringContent( mem_op, b, (GUTF8String*)result, bytesDecoded );
 	}
 	else {
 		if ( *peek_head != '\"'){
@@ -177,7 +180,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded, env),
 			longjmp( env, -20);
 		}
 		/* Read StringValue */
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("StringValue : Token Reading ERROR\n");
 			longjmp( env, -20);
 		}
@@ -191,7 +194,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded, env),
 			longjmp( env, -20);
 		}
 
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("StringValue : Token Reading ERROR\n");
 			longjmp( env, -20);
 		}

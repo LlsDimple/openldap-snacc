@@ -26,8 +26,11 @@ GEncUTF8StringContent PARAMS ((b, o),
     GenBuf *b _AND_
     GUTF8String *o)
 {
-	/* Need to be Implemented */
-	return 1;
+	if ( !IsValidUTF8String( &o->value ) ) {
+		return (-1);
+	}
+	BufPutSegRvs( b, o->value.octs, o->value.octetLen );
+	return o->value.octetLen;
 }
 
 int

@@ -63,6 +63,7 @@
 #include "asn-tag.h"
 #include "asn-octs.h"
 #include "asn-oid.h"
+#include "nibble-alloc.h"
 
 
 /*
