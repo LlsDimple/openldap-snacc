@@ -594,4 +594,5 @@ AsnListMove PARAMS ((s_list, t_list),
     t_list->first = s_list->first;
     t_list->last = s_list->last;
     t_list->curr = t_list->first;
+    t_list->count = s_list->count;
 }
