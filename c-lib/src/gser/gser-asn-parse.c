@@ -113,14 +113,21 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 			/* double quote is escaped with double quote */
 			( ( i <= (len - 1) ) && (peek_byte[i-1] != '\"')
 			&& (peek_byte[i] == '\"' ) ) ){
-		   if ( mode == GSER_COPY ) {
-			*pos = Asn1Alloc(i+1);
-			BufCopy(*pos, b,(unsigned long)i);
-			(*pos)[i] = '\0';
-		   }
-		   else {
-			*pos = peek_byte;
-		   	BufGetSeg(b, &i);
+		   switch ( mode ) {
+			case GSER_COPY :
+				*pos = Asn1Alloc(i+1);
+				BufCopy(*pos, b,(unsigned long)i);
+				(*pos)[i] = '\0';
+				break;
+			case GSER_PEEK :
+				*pos = peek_byte;
+				break;
+			case GSER_NO_COPY :
+				*pos = peek_byte;
+			   	BufGetSeg(b, &i);
+				break;
+			default :
+				return 0;
 		   }
 		   break;
 		}
