@@ -134,8 +134,8 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
  */
 AsnInt
 GMatchingAsnOctsContent PARAMS ((a, b),
-	GAsnOid *a _AND_
-	GAsnOid *b)
+	GAsnOcts *a _AND_
+	GAsnOcts *b)
 {
 	assert ( a );
 	assert ( b );
