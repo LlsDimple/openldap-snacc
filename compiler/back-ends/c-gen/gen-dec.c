@@ -806,9 +806,9 @@ PrintCExtractorDefine PARAMS ((hdr, td),
     FILE *hdr _AND_
     TypeDef *td)
 {
-    fprintf(hdr, "#define %s%s %s%s", 
-	    GetEncRulePrefix(), td->cTypeDefInfo->compExtractorName, 
-	    GetEncRulePrefix(), td->type->cTypeRefInfo->compExtractorName);
+    fprintf(hdr, "#define %s %s", 
+	    td->cTypeDefInfo->compExtractorName, 
+	    td->type->cTypeRefInfo->compExtractorName);
 }
 
 /*
@@ -3299,9 +3299,9 @@ PrintComponentExtractor PARAMS (( src, hdr, r, m ,td ),
     switch (rhsTypeId) {
       case C_ANY:
       case C_ANYDEFINEDBY:
-	fprintf(hdr, "#define %s%s %s%s\n", 
-		GetEncRulePrefix(), td->cTypeDefInfo->compExtractorName, 
-		GetEncRulePrefix(), td->type->cTypeRefInfo->compExtractorName);
+	fprintf(hdr, "#define %s %s\n", 
+		td->cTypeDefInfo->compExtractorName, 
+		td->type->cTypeRefInfo->compExtractorName);
 	fprintf (hdr,"\n\n");
 	break;
 	
@@ -3319,7 +3319,7 @@ PrintComponentExtractor PARAMS (( src, hdr, r, m ,td ),
 	PrintCExtractorLocals (src, td);
 	fprintf (src,"\n\n");
 	PrintCChoiceExtractorCode (src, td, td->type, valueArgNameG);
-	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
+	fprintf (src,"}  /* %sContent */",
 		 td->cTypeDefInfo->compExtractorName);
 	fprintf (src,"\n\n");
 	break;
@@ -3340,7 +3340,7 @@ PrintComponentExtractor PARAMS (( src, hdr, r, m ,td ),
 		PrintCSeqExtractorCode ( src, td, td->type,
 					td->type->basicType->a.sequence,
 					valueArgNameG );
-	fprintf (src,"}  /* %s%s */", GetEncRulePrefix(),
+	fprintf (src,"}  /* %s */",
 		 td->cTypeDefInfo->compExtractorName);
 	fprintf (src,"\n\n");
 	break;
