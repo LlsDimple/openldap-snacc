@@ -349,8 +349,14 @@ void PrintCInitModuleCode(FILE *src, FILE *hdr, CRules *r, ModuleList *mods,
 	modName = m->modId->name;
 
 	fprintf (src,"void init_module_%s() {\n", modName);
-	fprintf (src,"\tadd_OD_entry(\"/*Replace ME with OID*/\",GDecComponent/*Replace Me with Outermost ASN.1 Type*/,BDecComponent/*Me Either*/,NULL);\n");
-	fprintf (src,"\tInitAny%s();\n",modName);
+	fprintf (src,"\t/* Register Certificate OID and its decoder */\n");
+	fprintf (src,"\tInstallOidDecoderMapping( "/*Replace ME with OID*/", NULL,\n");
+	fprintf (src,"\t\tGDecComponent/*Replace Me with the modules GSER decoder name*/\n");
+	fprintf (src,"\t\tBDecComponent/*BER Top decoder*/\n");
+	fprintf (src,"\t\tExtractingComponent/*Me either*/\n");
+	fprintf (src,"\t\tMatchingComponent/*Me either*/)\n");
+
+	fprintf (src,"\tInitAny%s(/*If None of ANY types, then Remove Me*/);\n",modName);
 	fprintf (src,"}\n\n");
 }
 void
