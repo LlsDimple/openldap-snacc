@@ -1913,16 +1913,28 @@ PrintCSetDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
     if ( GetEncRulesType() == BER_COMP ) {
 	FOR_EACH_LIST_ELMT (e, elmts)
 	{
+		int offset;
 		if (!e->type->defaultVal)
 			continue;
 		ctri = e->type->cTypeRefInfo;
 		MakeVarPtrRef (genDecCRulesG,td, parent,e->type,"k",tmpVarName);
 		if ( strncmp( ctri->optTestRoutineName , "Asn" , 3) == 0 ) 
-			fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
-				ctri->optTestRoutineName+3, tmpVarName);
+			offset = 3;
 		else 
-			fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
-				ctri->optTestRoutineName, tmpVarName);
+			offset = 0;
+
+		fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
+				ctri->optTestRoutineName+offset, tmpVarName);
+		if ( strncmp( ctri->cTypeName, "Asn" , 3) == 0 ) 
+			offset = 3;
+		else 
+			offset = 0;
+		fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName, ctri->cTypeName+offset);
+
+		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
+		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
+		fprintf (src,"\t\t%s->identifier.bv_len = strlen(\"%s\");\n",tmpVarName, e->type->cTypeRefInfo->cFieldName);
+		fprintf (src,"\t\tstrcpy( %s->identifier.bv_val, \"%s\");\n",tmpVarName, e->type->cTypeRefInfo->cFieldName);
 
 		sprintf (tmpVarName2,"%s->value",tmpVarName);
 		PrintDefaultValue(src, tmpVarName2, e->type->defaultVal->value);
@@ -2110,6 +2122,10 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 	if ( e->type->defaultVal ) {
 		fprintf (src,"\telse {\n");
 		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k" ,tmpVarName);
+		if ( strncmp( ctri->cTypeName, "Asn" , 3) == 0 ) 
+			fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName, ctri->cTypeName+3);
+		else
+			fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName,ctri->cTypeName);
 		sprintf (tmpVarName2,"\t\t%s->value",tmpVarName);
 		PrintDefaultValue(src, tmpVarName2, e->type->defaultVal->value);
 		fprintf (src,"\t}\n");
@@ -2249,6 +2265,11 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 	else 
 		fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
 			ctri->optTestRoutineName, tmpVarName);
+
+	if ( strncmp( ctri->cTypeName, "Asn" , 3) == 0 ) 
+		fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName, ctri->cTypeName+3);
+	else
+		fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName,ctri->cTypeName);
 
 	sprintf (tmpVarName2,"%s->value",tmpVarName);
 	PrintDefaultValue(src, tmpVarName2, e->type->defaultVal->value);
@@ -3036,16 +3057,25 @@ PrintCSeqDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
     if ( GetEncRulesType() == BER_COMP ) {
 	FOR_EACH_LIST_ELMT (e, elmts)
 	{
+		int offset;
 		if (!e->type->defaultVal)
 			continue;
 		ctri = e->type->cTypeRefInfo;
 		MakeVarPtrRef (genDecCRulesG,td, parent,e->type,"k",tmpVarName);
-		if ( strncmp( ctri->optTestRoutineName , "Asn" , 3) == 0 ) 
-			fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
-				ctri->optTestRoutineName+3, tmpVarName);
+		if ( strncmp( ctri->optTestRoutineName , "Asn" , 3) == 0 )
+			offset = 3;
 		else 
-			fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
-				ctri->optTestRoutineName, tmpVarName);
+			offset = 0;
+		fprintf (src, "\tif(!COMPONENT%s (%s))\n\t{\n",
+			ctri->optTestRoutineName+offset, tmpVarName);
+		if ( strncmp( ctri->cTypeName, "Asn" , 3) == 0 ) 
+			offset = 3;
+		else 
+			offset = 0;
+		fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName, ctri->cTypeName+offset);
+		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
+		fprintf (src,"\t\t%s->identifier.bv_len = strlen(\"%s\");\n",tmpVarName, e->type->cTypeRefInfo->cFieldName);
+		fprintf (src,"\t\tstrcpy( %s->identifier.bv_val, \"%s\");\n",tmpVarName, e->type->cTypeRefInfo->cFieldName);
 
 		sprintf (tmpVarName2,"%s->value",tmpVarName);
 		PrintDefaultValue(src, tmpVarName2, e->type->defaultVal->value);
