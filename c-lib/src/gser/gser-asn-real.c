@@ -42,3 +42,13 @@ GDecAsnRealContent PARAMS ((b, result, bytesDecoded, env),
     jmp_buf env)
 {
 }
+
+AsnInt
+GMatchingAsnRealContent PARAMS ((a, b),
+	GAsnReal *a _AND_
+	GAsnReal *b)
+{
+	assert( a );
+	assert( b );
+	return ( a->value == b->value );
+}

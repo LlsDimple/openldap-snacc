@@ -530,3 +530,68 @@ GetAsnListElmt PARAMS ((list, index),
 
 }  /* GetAsnListElmt */
 #endif /* TTBL */
+
+/*
+ * Move the node in s_list pointed by curr to the end of t_list
+ */
+void
+AsnElmtMove PARAMS ((s_list, t_list),
+    AsnList *s_list _AND_
+    AsnList *t_list)
+{
+    AsnListNode *node, *newNode;
+    
+    /* Take off the node from s_list */
+    if (s_list->curr)
+    {
+	if (s_list->curr->next)
+	    s_list->curr->next->prev = s_list->curr->prev;
+	else
+	    s_list->last = s_list->curr->prev;
+
+	if (s_list->curr->prev)
+	    s_list->curr->prev->next = s_list->curr->next;
+	else
+	    s_list->first = s_list->curr->next;
+
+	node       = s_list->curr;
+
+	s_list->curr = s_list->curr->next;
+	s_list->count--;
+    }
+    else return;
+
+    newNode = node;
+    /* Append the node above into the t_list */
+    newNode->next = NULL;
+
+    if (t_list->last == NULL)
+    {
+        newNode->prev = NULL;
+        t_list->first   = t_list->last = newNode;
+    }
+    else
+    {
+        newNode->prev     = t_list->last;
+        t_list->last->next  = newNode;
+        t_list->last        = newNode;
+    }
+
+    t_list->curr = newNode;
+    t_list->count++;
+
+}
+
+/*
+ * t_list's pointers are updated with s_list's
+ * All nodes in the s_list are moved to t_list
+ */
+void
+AsnListMove PARAMS ((s_list, t_list),
+    AsnList *s_list _AND_
+    AsnList *t_list)
+{
+    t_list->first = s_list->first;
+    t_list->last = s_list->last;
+    t_list->curr = t_list->first;
+}

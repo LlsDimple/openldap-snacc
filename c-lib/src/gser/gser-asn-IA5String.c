@@ -23,3 +23,4 @@
  */
 #define GEncIA5StringContent GEncAsnOctsContent
 #define GDecIA5StringContent GDecAsnOctsContent
+#define GMatchingIA5StringContent GMatchingAsnOctsContent

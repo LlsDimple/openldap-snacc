@@ -54,3 +54,17 @@ GDecAsnNullContent PARAMS ((b, result, bytesDecoded, env),
 	result->value = (int) NULL;
 	*bytesDecoded = 4;
 }
+
+/*
+ * Matching Rule for NULL
+ * always the same, unconditionally
+ */
+AsnInt
+GMatchingAsnNullContent PARAMS ((a, b),
+	GAsnNull *a _AND_
+	GAsnNull *b)
+{
+	assert( a );
+	assert( b );
+	return 1;
+}

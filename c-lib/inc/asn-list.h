@@ -104,6 +104,15 @@ typedef struct AsnList
   else\
     for ((al)->curr = (al)->first; (al)->curr && (((elmt) = (al)->curr->data) != NULL); (al)->curr = (al)->curr->next)
 
+#define FOR_EACH_LIST_PAIR_ELMT( elmt1, elmt2,  a1, a2)\
+  if (!(a1||a2))\
+    ;\
+  else\
+    for ((a1)->curr = (a1)->first, (a2)->curr = (a2)->first;\
+	 (a1)->curr && (((elmt1) = (a1)->curr->data) != NULL) && (a2)->curr && (((elmt2) = (a2)->curr->data) != NULL);\
+	 (a1)->curr = (a1)->curr->next, (a2)->curr = (a2)->curr->next )
+
+
 #define FOR_EACH_LIST_ELMT_RVS( elmt,  al)\
   if (!(al))\
     ;\

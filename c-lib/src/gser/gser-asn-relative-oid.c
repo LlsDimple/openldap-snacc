@@ -9,6 +9,8 @@
  * 2004/06/18	03:20:00	slim@OpenLDAP.org
  */
 
+#include <string.h>
+
 #include "asn-config.h"
 #include "asn-gser.h"
 
@@ -48,4 +50,20 @@ GDecAsnRelativeOidContent PARAMS ((b, result, bytesDecoded, env),
 	result->value.octs[strLen] = '\0';
 	*bytesDecoded = strLen;
 
+}
+
+/*
+ * Matching Rule for Relative OID
+ * If and only if the values have the same number of arcs and 
+ * corresponding arcs are the same
+ */
+AsnInt GMatchingAsnRelativeOidContent PARAMS (( a, b ),
+	GAsnRelativeOid *a _AND_
+	GAsnRelativeOid  *b)
+{
+	assert( a );
+	assert( b );
+	assert( a->value.octs );
+	assert( b->value.octs );
+	return ( strcmp ( a->value.octs, b->value.octs ) == 0 );
 }

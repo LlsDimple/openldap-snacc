@@ -24,3 +24,4 @@
  */
 #define GEncVisibleStringContent GEncAsnOctsContent
 #define GDecVisibleStringContent GDecAsnOctsContent
+#define GMatchingVisibleStringContent GMatchingAsnOctsContent

@@ -24,3 +24,4 @@
 
 #define GEncPrintableStringContent GEncAsnOctsContent
 #define GDecPrintableStringContent GDecAsnOctsContent
+#define GMatchingPrintableStringContent GMatchingAsnOctsContent

@@ -13,3 +13,4 @@
 
 #define GEncUTF8StringContent GEncAsnOctsContent
 #define GDecUTF8StringContent GDecAsnOctsContent
+#define GMatchingUTF8StringContent GMatchingAsnOctsContent

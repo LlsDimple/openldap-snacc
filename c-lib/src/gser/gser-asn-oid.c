@@ -12,6 +12,7 @@
 
 #include "asn-config.h"
 #include "asn-gser.h"
+#include <string.h>
 
 /*
  * GSER Decodes just the content of the OID.
@@ -52,4 +53,22 @@ GDecAsnOidContent PARAMS ((b, result, bytesDecoded, env),
 
 	result->value.octs[strLen] = '\0';
 	*bytesDecoded = strLen;
+}
+
+/*
+ * Matching Rule for OBJECT IDENTIFIER
+ * RFC 3687 : 6.2. k)
+ * the same if and only if the values have the same number of arcs
+ * and corresponding arcs are the same.
+ */
+AsnInt
+GMatchingAsnOidContent PARAMS ((a, b),
+	GAsnOid *a _AND_
+	GAsnOid  *b)
+{
+	assert( a );
+	assert( b );
+	assert( a->value.octs );
+	assert( b->value.octs );
+	return ( strcmp( a->value.octs, b->value.octs ) == 0 );
 }

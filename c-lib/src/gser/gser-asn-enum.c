@@ -54,3 +54,20 @@ GDecAsnEnumContent PARAMS ((b, result, bytesDecoded, env),
 	result->value_identifier = peek_head;
 	*bytesDecoded += strLen;
 }
+
+/*
+ * Matching Rule for ENUMERATE
+ * if and only if the enumeration item identifiers are the same
+ */
+AsnInt
+GMatchingAsnEnumContent PARAMS ((a, b),
+	GAsnEnum *a _AND_
+	GAsnEnum* b)
+{
+	assert( a );
+	assert( b );
+	assert( a->identifier );
+	assert( b->identifier );
+
+	return ( strcmp( a->identifier, b->identifier ) == 0) ;
+}

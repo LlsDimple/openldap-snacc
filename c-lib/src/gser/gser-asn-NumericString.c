@@ -13,3 +13,4 @@
 
 #define GEncAsnNumericStringContent GEncAsnOctsContent
 #define GDecAsnNumericStringContent GDecAsnOctsContent
+#define GMatchingAsnNumericStringContent GMatchingAsnOctsContent

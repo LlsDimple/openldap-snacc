@@ -16,7 +16,7 @@
  * Return the next token and its length, skipping sp and msp
  * Token : identifier, value , {, }, 'H, 'B, ', \, :
  *
- * Mode : GSER_COPY, GSER_NO_COPY
+ * Mode : GSER_COPY, GSER_NO_COPY, GSER_PEEK
  * GSER_COPY mode :
  *	identifier and value are copied into
  *	new memory areas and the pointers are returned.

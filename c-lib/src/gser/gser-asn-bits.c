@@ -80,3 +80,17 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded, env),
     jmp_buf env)
 {
 }
+
+/*
+ * Matching Rule for BIT STRING
+ */
+AsnInt
+GMatchingAsnBitsContent PARAMS ((bits1, bits2),
+	GAsnBits *bits1 _AND_ 
+	GAsnBits *bits2)
+{
+	/* Need to be Implemented */
+	assert( bits1 );
+	assert( bits2 );
+	return 1;
+}

@@ -78,3 +78,16 @@ GDecAsnBoolContent PARAMS ((b, result, bytesDecoded, env),
 	longjmp(env, -20);
     }
 }
+
+/*
+ *
+ */
+AsnInt
+GMatchingAsnBoolContent PARAMS ((a, b),
+	GAsnBool *a _AND_
+	GAsnBool *b)
+{
+	assert( a );
+	assert( b );
+	return 1;/* yet to be implemented*/
+}

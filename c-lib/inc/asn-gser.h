@@ -13,6 +13,7 @@
 #define _H_ASN_GSER
 
 #include "asn-incl.h"
+#include <assert.h>
 
 /*
  * BIT STRING
@@ -27,6 +28,7 @@ typedef struct GAsnBits
 AsnLen GEncAsnBitsContent PROTO ((GenBuf *b, GAsnBits *bits));
 void GDecAsnBitsContent PROTO ((GenBuf *b, GAsnBits *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnBitsContent PROTO ((GAsnBits *bits1 , GAsnBits* bits2));
 
 /*
  * BMP String
@@ -40,6 +42,7 @@ typedef struct GBMPSting
 AsnLen GEncBMPStringContent PROTO ((GenBuf *b, GBMPString *octs));
 void GDecBMPStringContent PROTO ((GenBuf *b, GBMPString *result,
 				 AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingBMPStringContent PROTO ((GBMPString *octs1, GBMPString *octs2));
 
 /*
  * BOOLEAN
@@ -52,6 +55,7 @@ typedef struct GAsnBool{
 AsnLen GEncAsnBoolContent PROTO ((GenBuf *b, GAsnBool *data));
 void GDecAsnBoolContent PROTO ((GenBuf *b, GAsnBool *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnBoolContent PROTO ((GAsnBool *a, GAsnBool *b));
 
 /*
  * ENUMERTED
@@ -65,6 +69,7 @@ typedef struct GAsnEnum{
 AsnLen GEncAsnEnumContent PROTO ((GenBuf *a, GAsnEnum* data));
 void GDecAsnEnumContent PROTO ((GenBuf *a, GAsnEnum *result,
 				AsnLen *bytesDecoded,ENV_TYPE env));
+AsnInt GMatchingAsnEnumContent PROTO ((GAsnEnum *a, GAsnEnum* b));
 
 /*
  * IA5 String
@@ -77,6 +82,7 @@ typedef struct GIA5String{
 AsnLen GEncIA5StringContent PROTO ((GenBuf *b, GIA5String *octs));
 void GDecIA5StringContent PROTO ((GenBuf *b, GIA5String *result,
 				 AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingIA5StringContent PROTO ((GIA5String *octs1, GIA5String *octs2));
 
 
 /*
@@ -92,6 +98,7 @@ typedef struct GAsnInt{
 AsnLen GEncAsnIntContent PROTO ((GenBuf *b, GAsnInt *data));
 void GDecAsnIntContent PROTO ((GenBuf *b, GAsnInt *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnIntContent PROTO ((GAsnInt *a, GAsnInt *b));
 
 /*
  * LIST Data Structure for C_LIST
@@ -108,7 +115,8 @@ typedef struct GAsnNull{
 
 AsnLen GEncAsnNullContent PROTO ((GenBuf *b, GAsnNull *data));
 void GDecAsnNullContent PROTO ((GenBuf *b, GAsnNull *result,
-								AsnLen *bytesDecoded, ENV_TYPE env));
+				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnNullContent PROTO ((GAsnNull *a, GAsnNull *b));
 
 /*
  * Numeric String
@@ -120,7 +128,8 @@ typedef struct GNumericString{
 
 AsnLen GEncNumericStringContent PROTO ((GenBuf *b, GNumericString *octs));
 void GDecNumericStringContent PROTO ((GenBuf *b, GNumericString *result,
-									AsnLen *bytesDecoded, ENV_TYPE env));
+					AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingNumericStringContent PROTO ((GNumericString *a, GNumericString *b));
 
 /*
  * OCTETS STRING
@@ -134,7 +143,8 @@ typedef struct GAsnOcts{
 
 AsnLen GEncAsnOctsContent PROTO ((GenBuf *b, GAsnOcts *octs));
 void GDecAsnOctsContent PROTO ((GenBuf *b, GAsnOcts *result,
-								AsnLen *bytesDecoded, ENV_TYPE env));
+				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnOctsContent PROTO ((GAsnOcts *a, GAsnOcts *b));
 
 /*
  * OID
@@ -148,7 +158,8 @@ typedef struct GAsnOid{
 
 #define GEncAsnOidContent( b, oid)   GEncAsnOctsContent (b, oid)
 void GDecAsnOidContent PROTO ((GenBuf *b, GAsnOid  *result,
-								AsnLen *bytesDecoded, ENV_TYPE env));
+				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnOidContent PROTO ((GAsnOid *a, GAsnOid  *b));
 
 /*
  * Printable String
@@ -160,7 +171,9 @@ typedef struct GPrintableString{
 
 AsnLen GEncPrintableStringContent PROTO ((GenBuf *b, GPrintableString *octs));
 void GDecPrintableStringContent PROTO ((GenBuf *b, GPrintableString *result,
-										AsnLen *bytesDecoded, ENV_TYPE env));
+					AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingPrintableStringContent PROTO ((GPrintableString *a,
+						GPrintableString *b));
 
 /*
  * REAL
@@ -172,7 +185,8 @@ typedef struct GAsnReal{
 
 AsnLen GEncAsnRealContent PROTO ((GenBuf *b, GAsnReal *data));
 void GDecAsnRealContent PROTO ((GenBuf *b, GAsnReal *result,
-								AsnLen *bytesDecoded, ENV_TYPE env));
+				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnRealContent PROTO ((GAsnReal *a, GAsnReal *b));
 
 /*
  * Relative OID
@@ -185,7 +199,9 @@ typedef struct GAsnRelativeOid{
 
 #define GEncAsnRelativeOidContent( b, oid)   GEncAsnOctsContent (b, oid)
 void GDecAsnRelativeOidContent PROTO ((GenBuf *b, GAsnRelativeOid  *result,
-									  AsnLen *bytesDecoded, ENV_TYPE env));
+					  AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingAsnRelativeOidContent PROTO ((GAsnRelativeOid *a,
+						GAsnRelativeOid  *b));
 
 /*
  * Teletex String
@@ -198,7 +214,8 @@ typedef struct GTeletexString
 
 AsnLen GEncTeletexStringContent PROTO ((GenBuf *b, GAsnOcts *octs));
 void GDecTeletexStringContent PROTO ((GenBuf *b, GAsnOcts *result,
-									  AsnLen *bytesDecoded, ENV_TYPE env));
+				  AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingTeletexStringContent PROTO ((GAsnOcts *a, GAsnOcts *b));
 
 
 /*
@@ -211,7 +228,9 @@ typedef struct GUniversalString{
 
 AsnLen GEncUniversalStringContent PROTO ((GenBuf *b, GUniversalString *octs));
 void GDecUniversalStringContent PROTO ((GenBuf *b, GUniversalString *result,
-										AsnLen *bytesDecoded, ENV_TYPE env));
+					AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingUniversalStringContent PROTO ((GUniversalString* a,
+						GUniversalString *b));
 
 /*
  * UTF8 String
@@ -223,7 +242,8 @@ typedef struct GUTF8String{
 
 AsnLen GEncUTF8StringContent PROTO ((GenBuf *b, GUTF8String *octs));
 void GDecUTF8StringContent PROTO ((GenBuf *b, GUTF8String *result,
-									AsnLen *bytesDecoded, ENV_TYPE env));
+				AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingUTF8StringContent PROTO ((GUTF8String *a, GUTF8String *b));
 
 /*
  * Visible String
@@ -235,7 +255,8 @@ typedef struct GVisibleString{
 
 AsnLen GEncVisibleStringContent PROTO ((GenBuf *b, GVisibleString *octs));
 void GDecVisibleStringContent PROTO ((GenBuf *b, GVisibleString *result,
-									  AsnLen *bytesDecoded, ENV_TYPE env));
+					  AsnLen *bytesDecoded, ENV_TYPE env));
+AsnInt GMatchingVisibleStringContent PROTO ((GVisibleString *a, GVisibleString *b));
 
 /*
  * Utilitiies for GSER DEcoding

@@ -83,3 +83,17 @@ GDecAsnIntContent PARAMS ((b, result, bytesDecoded, env),
 	Asn1Free(peek_head);
 	*bytesDecoded += strLen;
 }
+
+/*
+ * Matching Rule for INTEGER
+ * If and only if the integers are equal RFC 3687 6.2.h)
+ */
+AsnInt
+GMatchingAsnIntContent PARAMS ((a, b),
+	GAsnInt *a _AND_
+	GAsnInt *b)
+{
+	assert( a );
+	assert( b );
+	return ( a->value == b->value );
+}

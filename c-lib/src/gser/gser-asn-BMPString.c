@@ -37,3 +37,5 @@ void GDecBMPStringContent(GenBuf *b, GBMPString *result,
 				 AsnLen *bytesDecoded, ENV_TYPE env)
 {
 }
+
+#define GMatchingBMPStringContent GMatchingAsnOctsContent
