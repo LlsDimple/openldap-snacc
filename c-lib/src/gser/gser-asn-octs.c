@@ -113,7 +113,7 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
 
 	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("OCTET String :  Token(\"H) read ERROR\n");
-		Asn1Free(peek_head);
+		Asn1Free(data);
 		return -1;
 	}
 
@@ -121,7 +121,7 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
 
 	if ( peek_head[0] != '\'' || peek_head[1] != 'H' ){
 		Asn1Error("OCTET String :  Should End with \"H\n");
-		Asn1Free(peek_head);
+		Asn1Free(data);
 		return -1;
 	}
 	return 1;
@@ -181,7 +181,7 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
 
 	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("OCTET String :  Token(\"H) read ERROR\n");
-		Asn1Free(peek_head);
+		Asn1Free(data);
 		longjmp( env, -20);
 	}
 
@@ -189,7 +189,7 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
 
 	if ( peek_head[0] != '\'' || peek_head[1] != 'H' ){
 		Asn1Error("OCTET String :  Should End with \"H\n");
-		Asn1Free(peek_head);
+		Asn1Free(data);
 		longjmp( env, -20);
 	}
 }

@@ -44,7 +44,7 @@ GDecAsnRelativeOidContent PARAMS ((b, result, bytesDecoded ),
 
 	if ( BufReadError(b) )
 	{
-		Asn1Error("BMP String Read Error\n");
+		Asn1Error("Relative Oid Read Error\n");
 		return -1;
 	}
 
@@ -76,7 +76,7 @@ GDecAsnRelativeOidContent PARAMS ((b, result, bytesDecoded, env),
 
 	if ( BufReadError(b) )
 	{
-		Asn1Error("BMP String Read Error\n");
+		Asn1Error("Relative Oid Read Error\n");
 		longjmp( env, -20);
 	}
 

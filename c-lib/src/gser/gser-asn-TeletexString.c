@@ -45,7 +45,7 @@ GDecTeletexStringContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 	/* Read StringValue */
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
 		Asn1Error("TeletexString : Token Reading ERROR\n");
 		return -1;
 	}

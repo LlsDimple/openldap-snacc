@@ -79,7 +79,7 @@ GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 	/* Read StringValue */
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		return -1;
 	}
@@ -135,7 +135,7 @@ GDecUTF8StringContent PARAMS ((b, result, bytesDecoded, env),
 		longjmp( env, -20);
 	}
 	/* Read StringValue */
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		longjmp( env, -20);
 	}

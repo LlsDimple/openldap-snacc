@@ -73,15 +73,6 @@ GEncAsnBitsContent PARAMS ((b, bits),
  * GSER Decodes the content of a BIT STRING (including the unused bits octet)
  * Always returns a single contiguous bit string
  */
-#define FIRST_BIT	0x01
-#define SECOND_BIT	0x02
-#define THRID_BIT 	0x04
-#define FOURTH_BIT	0x08
-#define FIFTH_BIT	0x10
-#define SIXTH_BIT	0x20
-#define SEVENTH_BIT	0x40
-#define EIGITH_BIT	0x80
-
 #ifdef LDAP_COMPONENT
 int
 GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
@@ -109,10 +100,10 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
         }
 
-	data = peek_head;
-	data_len = strLen;
+	result->value.bits = data = peek_head;
+	result->value.bitLen = data_len = strLen;
 
-        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		return -1;
         }
@@ -167,10 +158,10 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded, env),
 		longjmp( env, -20);
         }
 
-	data = peek_head;
-	data_len = strLen;
+	result->value.bits = data = peek_head;
+	result->value.bitLen = data_len = strLen;
 
-        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		longjmp( env, -20);
         }

@@ -114,13 +114,13 @@ LocateNextGSERToken PARAMS (( b, pos, mode),
 			( ( i <= (len - 1) ) && (peek_byte[i-1] != '\"')
 			&& (peek_byte[i] == '\"' ) ) ){
 		   if ( mode == GSER_COPY ) {
-		      *pos = Asn1Alloc(i+1);
-		      BufCopy(*pos, b,(unsigned long)i);
-		      (*pos)[i] = '\0';
+			*pos = Asn1Alloc(i+1);
+			BufCopy(*pos, b,(unsigned long)i);
+			(*pos)[i] = '\0';
 		   }
 		   else {
 			*pos = peek_byte;
-			BufGetSeg(b, &i);
+		   	BufGetSeg(b, &i);
 		   }
 		   break;
 		}

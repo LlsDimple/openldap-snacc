@@ -33,6 +33,9 @@ int GDecAsnBitsContent PROTO ((GenBuf *b, GAsnBits *result,
 void GDecAsnBitsContent PROTO ((GenBuf *b, GAsnBits *result,
 				AsnLen *bytesDecoded, ENV_TYPE env));
 #endif
+
+#define GFreeAsnBits(v);
+
 /*
  * BMP String
  */
