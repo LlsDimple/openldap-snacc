@@ -43,7 +43,7 @@ static const char rcsid[] = "@(#)$RCSfile: enc-rules.c,v $ $Revision: 1.2 $";
 /* Static variables. */
 static EncRulesType rulesG;
 static char* prefixG;
-static EncRulesType rulesListG[3] = {NOP, NOP, NOP};
+static EncRulesType rulesListG[4] = {NOP, NOP, NOP, NOP};
 
 /* Set the encoding rule to be used */
 int SetEncRules PARAMS ((encoding), EncRulesType encoding)
@@ -65,6 +65,11 @@ int SetEncRules PARAMS ((encoding), EncRulesType encoding)
     
     /* Set the encodings for each lib type */
     SET_DER_LIBTYPE();
+    return 1;
+  case GSER :
+    rulesG = GSER;
+    prefixG = "G";
+    SET_BER_LIBTYPE();
     return 1;
   default:
     /* No such rule */

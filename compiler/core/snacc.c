@@ -524,6 +524,12 @@ int main PARAMS ((argc, argv),
 					encRulesSet = TRUE;
 					currArg+=2;
 				}
+				else if (strcmp(argv[currArg+1],"GSER") == 0)
+				{
+					AddEncRules(GSER);
+					encRulesSet = TRUE;
+					currArg += 2;
+				}
 				else
 				{
 					fprintf (errFileG, "%s: ERROR---no such encoding rule \"%s\". Try BER or DER\n",

@@ -95,6 +95,7 @@ typedef struct AsnList
     AsnListNode		*curr;
     int			count;		/* number of elements in list               */
     int			dataSize;	/* space required in each node for the data */
+    char		*identifier;
 } AsnList;
 
 #define FOR_EACH_LIST_ELMT( elmt,  al)\

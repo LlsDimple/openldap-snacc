@@ -7,7 +7,7 @@ TOP		= ..
 CPPFLAGS	+= -I$(TOP) -Iinc $(bufFLAGS) $(compilerFLAGS)
 
 HFILES = $(wildcard inc/*.h)
-CFILES = $(wildcard src/*.c)
+CFILES = $(wildcard src/*.c src/gser/*.c)
 #CFILES1 = $(wildcard src/*.c)
 #CFILES = $(CFILES1:src/sbuf.c= )
 OFILES = $(CFILES:.c=.o)

@@ -50,13 +50,14 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 
 #include "asn-incl.h"
 #include "asn1module.h"
 #include "rules.h"
 #include "str-util.h"
 #include "print.h"
-
+#include "enc-rules.h"
 
 // Deepak: 26/Mar/2003
 extern char *valueArgNameG;
@@ -92,8 +93,8 @@ static void PrintCMacroRosOperationElmts PROTO ((FILE *f, CRules *r, Module *m,
 												TypeDef *td, Type *parent,
 												Type *t,
 												RosOperationMacroType *op));
-
-
+extern EncRulesType GetEncRulesType();
+#include <string.h>
 void
 PrintCTypeDef PARAMS ((f, r, m, td),
     FILE *f _AND_
@@ -122,6 +123,12 @@ PrintCTypeDef PARAMS ((f, r, m, td),
         case C_ANYDEFINEDBY:
         case C_LIST:	// Deepak: following three stmts writes the equivalent C code in header file.
             fprintf (f, "typedef ");
+	    if ( (GetEncRulesType() == GSER) &&
+		strcmp(ctdi->defaultFieldName, "enum")!=0 &&
+		ctri->cTypeId != C_TYPEREF ){
+		    fprintf(f,"%s",GetEncRulePrefix());
+            }
+
             PrintCType (f, r, m, td, NULL, t);	// Deepak: Prints Basic ASN Data Type like NumericString or PrintableString or ENUMERATED etc...
             fprintf (f, " %s;", ctdi->cTypeName);	// Deepak: Prints User Defined ASN Data Type like Order-number, Item-code etc...
             PrintTypeComment (f, td, t);	// Deepak: actual asn code line is written in comments here
@@ -138,6 +145,8 @@ PrintCTypeDef PARAMS ((f, r, m, td),
             fprintf (f,"%s %s", "struct", t->cTypeRefInfo->cTypeName);
             PrintTypeComment (f, td, t);
             fprintf (f,"\n{\n");
+            if ( GetEncRulesType() == GSER )
+		fprintf(f, "%s","\tchar* identifier;\n");
             PrintCStructElmts (f, r, m, td, NULL, t);
             fprintf (f, "} %s;", ctdi->cTypeName);
             fprintf (f, "\n\n");
@@ -219,6 +228,27 @@ PrintCType PARAMS ((f, r, m, td, parent, t),
         case C_ANYDEFINEDBY:
         case C_LIST:
         case C_LIB:
+	    if ( GetEncRulesType() == GSER &&
+			t->basicType->choiceId == BASICTYPE_ENUMERATED ){
+		fprintf (f,"struct _%s{\n",td->cTypeDefInfo->cTypeName);
+		fprintf (f,"char* identifier;\n");
+                fprintf (f,"%s", ctri->cTypeName);
+                fprintf (f, "\n    {\n");
+		FOR_EACH_LIST_ELMT(n, ctri->cNamedElmts)
+		{
+		    fprintf(f, "%s = %d",n->name, n->value);
+                    if ( n != (CNamedElmt*)LAST_LIST_ELMT (ctri->cNamedElmts) ){
+                        fprintf (f,",");
+		    }
+		    fprintf(f,"\n");
+		}
+                fprintf (f, "    }");
+		fprintf (f," value;\n");
+		fprintf (f, "char* value_identifier;\n");
+		fprintf (f, "}");
+		break;
+	    }
+
             fprintf (f,"%s", ctri->cTypeName);
             /*
              * print enum constant defs
@@ -278,6 +308,11 @@ PrintCStructElmts PARAMS ((f, r, m, td, parent, t),
 
         ctri =  et->type->cTypeRefInfo;
         fprintf (f,"\t");  /* cheap, fixed indent */
+	if ( GetEncRulesType() == GSER && ctri->cTypeId == C_LIB &&
+	    t->basicType->choiceId != BASICTYPE_ENUMERATED ){
+		fprintf(f,"%s",GetEncRulePrefix());
+	}
+
         PrintCType (f, r, m, td, t, et->type);
         fprintf (f, " %s;", ctri->cFieldName);	// Deepak: identifier of the structure
         PrintTypeComment (f, td, et->type);	// Deepak: actual asn code line is written in comments here
@@ -510,6 +545,8 @@ PrintCChoiceTypeDef PARAMS ((f, r, m, td),
     fprintf (f, "struct %s", choiceName);
     PrintTypeComment (f, td, t);
     fprintf (f,"\n{\n");
+    if ( GetEncRulesType() == GSER )
+	fprintf(f, "%s","\tchar* identifier;\n");
     PrintCChoiceIdEnum (f, r, m, td, NULL, t);
     fprintf (f,"\n");
     PrintCChoiceUnion (f, r, m, td, NULL, t);

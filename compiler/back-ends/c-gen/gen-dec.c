@@ -58,7 +58,10 @@ static int RecCountVariableLevels PROTO ((Type *t));
 static int CountVariableLevels PROTO ((Type *t));
 static void PrintCDecoderLocals PROTO ((FILE *src, TypeDef *td));
 /*static void PrintCListDecoderLocals PROTO ((FILE *src));*/
-
+static void PrintCSeqGSERDecodeCode PROTO((FILE *src, TypeDef *td,
+										  Type *parent, NamedTypeList *elmts,
+										  int elmtLevel, int totalLevel,
+										  int tagLevel, char *varName));
 static void PrintCSetDecodeCode PROTO ((FILE *src, TypeDef *td, Type *parent,
 									   NamedTypeList *e, int elmtLevel,
 									   int totalLevel, int tagLevel,
@@ -82,6 +85,11 @@ static void PrintCElmtDecodeCode PROTO ((FILE *src, TypeDef *td, Type *parent,
 										int tagLevel, char *parnetVarName,
 										char *elmtVarName, int stoleChoiceTags));
 
+static void PrintCListGSERDecoderCode PROTO ((FILE *src, TypeDef *td,
+											  Type *list, int elmtLevel,
+											  int totalLevel, int tagLevel,
+											  char *varName));
+extern EncRulesType GetEncRulesType();
 
 void
 PrintCDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
@@ -233,6 +241,82 @@ PrintCDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
     r = r;    /* AVOIDS warning. */
 }  /*  PrintCDecoder */
 
+/*
+ * GSER Decoder generations routine for CHOICE type
+ * Written by Sang Seok Lim
+ */
+static void
+PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *t _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    NamedType *e;
+    CTRI *ctri;
+    enum BasicTypeChoiceId builtinType;
+    char  tmpVarName[MAX_VAR_REF];
+    char  choiceIdVarName[MAX_VAR_REF];
+    CTRI *parentCtri;
+    int   stoleChoiceTags=0;
+    void *tmp;
+    int initialTagLevel;
+    int initialElmtLevel;
+
+    initialTagLevel = tagLevel;
+    initialElmtLevel = elmtLevel;
+
+    parentCtri = t->cTypeRefInfo;
+    
+    fprintf (src, "\tchar* peek_head2;\n");
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_COPY)) ){\n");
+    fprintf (src, "\t   Asn1Error(\"Error during Reading identifier\");\n");
+    fprintf (src, "\t   longjmp(env, -20);\n");
+    fprintf (src, "\t}\n");
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b,&peek_head2,GSER_NO_COPY)) ){\n");
+    fprintf (src, "\t   Asn1Error(\"Error during Reading identifier\");\n");
+    fprintf (src, "\t   longjmp(env, -20);\n");
+    fprintf (src, "\t}\n");
+    fprintf (src, "\tif(*peek_head2 != \':\'){\n");
+    fprintf (src, "\t   Asn1Error(\"Missing : in encoded data\");\n");
+    fprintf (src, "\t   longjmp(env, -20);\n");
+    fprintf (src, "\t}\n");
+
+    FOR_EACH_LIST_ELMT (e,  t->basicType->a.choice)
+    {
+        tmp = (void*)CURR_LIST_NODE (t->basicType->a.choice);
+
+        tagLevel = initialTagLevel;
+        elmtLevel = initialElmtLevel;
+
+        ctri =  e->type->cTypeRefInfo;
+
+        builtinType = GetBuiltinType (e->type);
+
+        fprintf(src, "\tif( strcmp(\"%s\",peek_head) == 0){\n",
+				ctri->cFieldName);
+
+        MakeChoiceIdValueRef (genDecCRulesG, td, t, e->type, varName,
+				choiceIdVarName);
+        fprintf (src, "        %s = %s;\n", choiceIdVarName,
+				ctri->choiceIdSymbol);
+        MakeVarPtrRef (genDecCRulesG, td, t, e->type, varName, tmpVarName);
+
+        PrintCElmtDecodeCode (src, td, t, e->type, elmtLevel, totalLevel,
+				tagLevel, varName, tmpVarName, stoleChoiceTags);
+        fprintf (src, "\t%s->identifier = peek_head;\n",tmpVarName);
+        fprintf (src, "\treturn;");
+        fprintf (src, "\t}\n");
+        /* reset curr list node to value remember at beg of loop */
+        SET_CURR_LIST_NODE (t->basicType->a.choice, tmp);
+    }
+    fprintf (src, "\tAsn1Error(\"Error - Unexpected identifier\");\n");
+}
+
+
 
 void
 PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
@@ -301,9 +385,16 @@ PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
 	fprintf (src,"{\n");
 	PrintCDecoderLocals (src, td);
 	fprintf (src,"\n\n");
-	PrintCChoiceDecodeCode (src, td, td->type, FIRST_LEVEL-1, FIRST_LEVEL,FIRST_LEVEL-1, valueArgNameG);
+	if ( GetEncRulesType() == GSER )
+		PrintCChoiceGSERDecodeCode (src, td, td->type, FIRST_LEVEL-1,
+			FIRST_LEVEL,FIRST_LEVEL-1, valueArgNameG);
+	else
+		PrintCChoiceDecodeCode (src, td, td->type, FIRST_LEVEL-1,
+			FIRST_LEVEL,FIRST_LEVEL-1, valueArgNameG);
 	
-	fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+	if ( GetEncRulesType() != GSER )
+		fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+
 	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
 		 td->cTypeDefInfo->decodeRoutineName);
 	fprintf (src,"\n\n");
@@ -316,12 +407,26 @@ PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
 	fprintf (src,"{\n");
 	PrintCDecoderLocals (src, td);
 	fprintf (src,"\n\n");
-	if (td->type->basicType->choiceId == BASICTYPE_SET)
-	  PrintCSetDecodeCode (src, td, td->type, td->type->basicType->a.set, FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1, valueArgNameG);
-	else
-	  PrintCSeqDecodeCode (src, td, td->type, td->type->basicType->a.sequence, FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1, valueArgNameG);
+	if ( td->type->basicType->choiceId == BASICTYPE_SET &&
+			GetEncRulesType() != GSER) {
+		PrintCSetDecodeCode (src, td, td->type,
+			td->type->basicType->a.set, FIRST_LEVEL-1,
+			FIRST_LEVEL, FIRST_LEVEL-1, valueArgNameG);
+	} else {
+		if ( (GetEncRulesType() == GSER) )
+			  PrintCSeqGSERDecodeCode (src, td, td->type,
+				td->type->basicType->a.sequence,
+				FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1,
+				valueArgNameG);
+		else
+			  PrintCSeqDecodeCode (src, td, td->type,
+				td->type->basicType->a.sequence,
+				FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1,
+				valueArgNameG);
+	}
+	if ( (GetEncRulesType() != GSER) )
+		fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
 
-	fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
 	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
 		 td->cTypeDefInfo->decodeRoutineName);
 	fprintf (src,"\n\n");
@@ -336,9 +441,17 @@ PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
 	fprintf (src,"{\n");
 	PrintCDecoderLocals (src, td);
 	fprintf (src,"\n\n");
-	PrintCListDecoderCode (src, td, td->type,  FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1, valueArgNameG);
+	if ( (GetEncRulesType() == GSER) )
+		PrintCListGSERDecoderCode (src, td, td->type,  FIRST_LEVEL-1,
+					   FIRST_LEVEL, FIRST_LEVEL-1,
+					   valueArgNameG);
+	else
+	PrintCListDecoderCode (src, td, td->type,  FIRST_LEVEL-1,
+				FIRST_LEVEL, FIRST_LEVEL-1, valueArgNameG);
 
-	fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+	if ( (GetEncRulesType() != GSER) )
+		fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+
 	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
 		 td->cTypeDefInfo->decodeRoutineName);
 	fprintf (src,"\n\n");
@@ -374,7 +487,13 @@ PrintCDecoderPrototype PARAMS ((hdr, td),
     CTDI *ctdi;
 
     ctdi =  td->cTypeDefInfo;
-    fprintf (hdr,"void %s%sContent PROTO ((%s b, %s tagId%d, %s elmtLen%d, %s *v, %s *bytesDecoded, %s env));\n", GetEncRulePrefix(),
+    if ( (GetEncRulesType() == GSER) ){
+	    fprintf (hdr,"void %s%sContent PROTO ((%s b, %s *v, %s *bytesDecoded, %s env));\n",
+		     GetEncRulePrefix(), ctdi->decodeRoutineName,
+		     bufTypeNameG, ctdi->cTypeName, lenTypeNameG, envTypeNameG);
+    }
+    else
+    	fprintf (hdr,"void %s%sContent PROTO ((%s b, %s tagId%d, %s elmtLen%d, %s *v, %s *bytesDecoded, %s env));\n", GetEncRulePrefix(),
 	     ctdi->decodeRoutineName, bufTypeNameG, tagTypeNameG, 
 	     FIRST_LEVEL-1, lenTypeNameG, FIRST_LEVEL-1, ctdi->cTypeName,
 	     lenTypeNameG, envTypeNameG);
@@ -395,6 +514,15 @@ PrintCDecoderDeclaration PARAMS ((src,td),
 
     ctdi =  td->cTypeDefInfo;
     fprintf (src,"void\n");
+    if ( (GetEncRulesType() == GSER) ) {
+    fprintf (src,"%s%sContent PARAMS ((b, v, bytesDecoded, env),\n", 
+	     GetEncRulePrefix(), ctdi->decodeRoutineName);
+    fprintf (src,"%s b _AND_\n", bufTypeNameG);
+    fprintf (src,"%s *v _AND_\n", ctdi->cTypeName);
+    fprintf (src,"%s *bytesDecoded _AND_\n", lenTypeNameG);
+    fprintf (src,"%s env)\n", envTypeNameG);
+    }
+    else {
     fprintf (src,"%s%sContent PARAMS ((b, tagId%d, elmtLen%d, v, bytesDecoded, env),\n", 
 	     GetEncRulePrefix(), ctdi->decodeRoutineName, FIRST_LEVEL -1,
 	     FIRST_LEVEL -1);
@@ -404,6 +532,7 @@ PrintCDecoderDeclaration PARAMS ((src,td),
     fprintf (src,"%s *v _AND_\n", ctdi->cTypeName);
     fprintf (src,"%s *bytesDecoded _AND_\n", lenTypeNameG);
     fprintf (src,"%s env)\n", envTypeNameG);
+    }
 
 }  /*  PrintCDecoderDeclaration */
 
@@ -549,8 +678,14 @@ PrintCDecoderLocals PARAMS ((src,td),
 
     levels = CountVariableLevels (td->type);
 
-    fprintf (src, "    int seqDone = FALSE;\n");
+    if ( (GetEncRulesType() != GSER) )
+	    fprintf (src, "    int seqDone = FALSE;\n");
 
+    if ( (GetEncRulesType() == GSER) ) {
+        fprintf (src, "\t char* peek_head;\n");
+        fprintf (src, "\t int i, strLen;\n");
+    }
+    else
     for (i = 0; i < levels; i++)
     {
         fprintf (src, "    %s totalElmtsLen%d = 0;\n", lenTypeNameG, i + FIRST_LEVEL);
@@ -638,6 +773,12 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
     {
         case C_LIB:
         case C_TYPEREF:
+            if( (GetEncRulesType() == GSER) ){
+                 fprintf (src,"\t%s%sContent (b, %s, &%s, env);\n", 
+		          GetEncRulePrefix(), ctri->decodeRoutineName, 
+		          elmtVarName,"bytesDecoded");
+	         break;
+            }
             /*
              * choices and octet/bit str types need tagId argument
              */
@@ -700,12 +841,25 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
 
 
         case C_STRUCT:
-            if (t->basicType->choiceId == BASICTYPE_SET)
-                PrintCSetDecodeCode (src, td, t, t->basicType->a.set, elmtLevel, totalLevel+1, tagLevel, elmtVarName);
+            if (t->basicType->choiceId == BASICTYPE_SET){
+                PrintCSetDecodeCode (src, td, t, t->basicType->a.set,
+				     elmtLevel, totalLevel+1, tagLevel,
+				     elmtVarName);
+	    }
             else
             {
-                PrintCSeqDecodeCode (src, td, t, t->basicType->a.sequence, elmtLevel,totalLevel+1, tagLevel, elmtVarName);
-                fprintf (src,"    seqDone = FALSE;\n");
+	        if ( (GetEncRulesType() == GSER) ) {
+	            PrintCSeqGSERDecodeCode (src, td, td->type,
+			   	            td->type->basicType->a.sequence,
+					    FIRST_LEVEL-1, FIRST_LEVEL,
+					    FIRST_LEVEL-1, valueArgNameG);
+	        }
+	        else {
+                    PrintCSeqDecodeCode (src, td, t, t->basicType->a.sequence,
+		  	                 elmtLevel,totalLevel+1, tagLevel,
+					 elmtVarName);
+                    fprintf (src,"    seqDone = FALSE;\n");
+	        }
             }
             fprintf (src,"             %s%d += %s%d;\n", decodedLenVarNameG, totalLevel, decodedLenVarNameG, totalLevel+1);
         break;
@@ -1026,6 +1180,107 @@ PrintCSetDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
 }  /*  PrintCSetDecodeCode */
 
 
+/*
+ * Prints code for decoding the elmts of a SEQUENCE in GSER
+ * This Routine is orginally developed by sang seok lim
+ */
+static void
+PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *parent _AND_
+    NamedTypeList *elmts _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    CTRI *ctri;
+    NamedType *e;
+    NamedType *last;
+    enum BasicTypeChoiceId tmpTypeId;
+    char  tmpVarName[MAX_VAR_REF];
+    int   stoleChoiceTags=0;
+    char *routineName;
+    int   inTailOptElmts = FALSE;
+    int   initialElmtLevel;
+    int   initialTagLevel;
+    int   count=0;
+
+
+    initialTagLevel = tagLevel;
+    initialElmtLevel = elmtLevel;
+
+
+    routineName = td->cTypeDefInfo->decodeRoutineName;
+
+    AsnListFirst (elmts);
+    inTailOptElmts = IsTailOptional (elmts);
+    e = (NamedType*)FIRST_LIST_ELMT (elmts);
+    tmpTypeId = GetBuiltinType (e->type);
+/*
+ * Print codes for reading '{' in GSER encoded data stream,
+ */
+    fprintf (src,"\t*bytesDecoded = 0;\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\t  Asn1Error(\"Error during Reading{ in encoded data\");\n");
+    fprintf (src,"\t  longjmp(env,-20);\n");
+    fprintf (src,"\t}\n");
+    fprintf (src,"\tif(*peek_head != \'{\'){\n");
+    fprintf (src,"\t  Asn1Error(\"Missing { in encoded data\");\n");
+    fprintf (src,"\t longjmp(env, -20);\n");
+    fprintf (src,"\t}\n");
+    last = (NamedType*)LAST_LIST_ELMT (elmts);
+    FOR_EACH_LIST_ELMT (e, elmts)
+    {
+	elmtLevel = initialElmtLevel;
+	tagLevel = initialTagLevel+1;
+	ctri = e->type->cTypeRefInfo;
+
+/*
+ * Print code for reading comma separator between Named Value
+ */
+    if ( count != 0 ) {
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\t  Asn1Error(\"Error during Reading{ in encoded data\");\n");
+    fprintf (src,"\t  longjmp(env,-20);\n");
+    fprintf (src,"\t}\n");
+    fprintf (src,"\tif(*peek_head != \',\'){\n");
+    fprintf (src,"\t  Asn1Error(\"Missing , in encoded data\");\n");
+    fprintf (src,"\t  longjmp(env, -20);\n");
+    fprintf (src,"\t}\n\n");
+    }
+    else{
+	count =1;
+    }
+
+/*
+ * Print codes for reading identifier in GSER encoded data stream,
+ */
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_COPY)) ){\n");
+    fprintf (src,"\t  Asn1Error(\"Error during Reading identifier\");\n");
+    fprintf (src,"\t  longjmp(env,-20);\n");
+    fprintf (src,"\t}\n");
+
+    MakeVarPtrRef (genDecCRulesG, td, parent, e->type, varName, tmpVarName);
+
+    fprintf (src,"\t%s->identifier = peek_head;\n",tmpVarName);
+    PrintCElmtDecodeCode (src, td, parent, e->type, elmtLevel,
+			  totalLevel, tagLevel, varName, tmpVarName,
+			  stoleChoiceTags);
+    }
+/*
+ * Print codes for reading '}' in GSER encoded data stream,
+ */
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\t  Asn1Error(\"Error during Reading } in encoded data\");\n");
+    fprintf (src,"\t  longjmp(env,-20);\n");
+    fprintf (src,"\t}\n");
+    fprintf (src,"\tif(*peek_head != \'}\'){\n");
+    fprintf (src,"\t  Asn1Error(\"Missing { in encoded data\");\n");
+    fprintf (src,"\t  longjmp(env, -20);\n");
+    fprintf (src,"\t}\n");
+}
 
 
 /*
@@ -1708,6 +1963,64 @@ PrintCListDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, v
 
 }  /*  PrintCListDecodeCode */
 
+/*
+ * GSER C_LIST Decoder Generation Routine Written by Sang Seok Lim
+ */
+static void
+PrintCListGSERDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *list _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    CTRI *ctri;
+    enum BasicTypeChoiceId builtinType;
+    char tmpVarName[MAX_VAR_REF];
+    int  stoleChoiceTags;
+    char *routineName;
+    int initialTagLevel;
+    int initialElmtLevel;
+    TagList *tags;
+
+    initialTagLevel = tagLevel;
+    initialElmtLevel = elmtLevel;
+
+
+    routineName = td->cTypeDefInfo->decodeRoutineName;
+    ctri = list->basicType->a.setOf->cTypeRefInfo;
+    tags  = GetTags (list->basicType->a.setOf, &stoleChoiceTags);
+    builtinType = GetBuiltinType (list->basicType->a.setOf);
+    
+    fprintf (src, "\tAsnLen totalElmtsLen1, elmtLen0;\n");
+    fprintf (src, "\tbytesDecoded = 0;\n");
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_PEEK)) ){\n");
+    fprintf (src, "\tAsn1Error(\"Error during Reading{ in encoded data\");\n");
+    fprintf (src, "\tlongjmp(env,-20);\n");
+    fprintf (src, "\t}\n");
+
+    fprintf (src, "\tfor (totalElmtsLen%d = 0; (totalElmtsLen%d < elmtLen%d) || (elmtLen%d == INDEFINITE_LEN);)\n", totalLevel, totalLevel, elmtLevel, elmtLevel);
+    fprintf (src, "\t{\n");
+    fprintf (src,"\t%s **tmpVar;\n", ctri->cTypeName);
+
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_NO_COPY)) ){\n");
+    fprintf (src, "\tAsn1Error(\"Error during Reading{ in encoded data\");\n");
+    fprintf (src, "\tlongjmp(env,-20);\n");
+    fprintf (src, "\t}\n");
+    fprintf (src, "if(*peek_head == \'}\') break;\n");
+
+    strcpy (tmpVarName, "(*tmpVar)");
+    fprintf (src,"\ttmpVar = (%s**) AsnListAppend (%s);\n", ctri->cTypeName, varName);
+    fprintf (src, "\t%s = (%s*) Asn1Alloc (sizeof (%s));\n", tmpVarName, ctri->cTypeName, ctri->cTypeName);
+
+    fprintf (src,"\tCheckAsn1Alloc (%s, env);\n", tmpVarName);
+    PrintCElmtDecodeCode (src, td, list, list->basicType->a.setOf, elmtLevel, totalLevel, tagLevel, varName, tmpVarName, stoleChoiceTags);
+
+    fprintf (src, "\t} /* end of for */\n\n");
+}
+
 
 
 /*
@@ -1951,6 +2264,7 @@ PrintCChoiceDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, var
     fprintf (src, "    } /* end switch */\n");
 
 }  /* PrintCChoiceDecodeCode */
+
 
 
 

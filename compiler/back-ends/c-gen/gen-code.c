@@ -211,6 +211,8 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 
     FOR_EACH_LIST_ELMT (td, m->typeDefs)
     {
+	SetEncRules(*GetEncRules());
+
         if (printTypes)
             PrintCTypeDef (hdr, r, m, td);
 
