@@ -1022,7 +1022,7 @@ PrintCDecoderLocals PARAMS ((src,td),
 	fprintf (src, "\tComponent%s *k,*t, c_temp;\n",td->cTypeDefInfo->cTypeName);
     }
     else if ( GetEncRulesType() == BER || GetEncRulesType() == BER_COMP ) {
-	fprintf (src, "    int seqDone = FALSE, old_mode = mode;\n");
+	fprintf (src, "\tint seqDone = FALSE;\n");
 	for (i = 0; i < levels; i++)
 	{
 		fprintf (src, "\t%s totalElmtsLen%d = 0;\n", lenTypeNameG, i + FIRST_LEVEL);
@@ -1032,6 +1032,8 @@ PrintCDecoderLocals PARAMS ((src,td),
 			fprintf (src, "\tint mandatoryElmtCount%d = 0;\n", i + FIRST_LEVEL);
 	}
 	if ( GetEncRulesType() == BER_COMP ){
+		fprintf (src, "\tint old_mode = mode;\n");
+		fprintf (src, "\tint rc;\n");
 		fprintf (src, "\tComponent%s *k, *t, c_temp;\n", td->cTypeDefInfo->cTypeName);
 	}
     }
@@ -1140,11 +1142,11 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
         {
 	    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
             MakeVarPtrRef (genDecCRulesG, td, parent, idNamedType->type, "k" , idVarRef);
-            fprintf (src, "    SetAnyTypeByComponentOid (%s, %s);\n", elmtVarName, idVarRef);
+            fprintf (src, "SetAnyTypeByComponentOid (%s, %s);\n", elmtVarName, idVarRef);
 	    }
 	    else {
             MakeVarPtrRef (genDecCRulesG, td, parent, idNamedType->type, parentVarName, idVarRef);
-            fprintf (src, "    SetAnyTypeByOid (%s, %s);\n", elmtVarName, idVarRef);
+            fprintf (src, "SetAnyTypeByOid (%s, %s);\n", elmtVarName, idVarRef);
 	    }
         }
         else
@@ -1157,11 +1159,11 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
             fprintf (src, "    SetAnyTypeByInt (%s, %s);\n", elmtVarName, idVarRef);
         }
 	if ( GetEncRulesType() == BER_COMP ) {
-        fprintf (src,"    %sDecComponentAnyDefinedBy (mem_op,b, %s, &%s%d, mode );\n", 
+        fprintf (src," \trc = %sDecComponentAnyDefinedBy (mem_op,b, %s, &%s%d, mode );\n", 
 		 GetEncRulePrefix(),/* ctri->decodeRoutineName, */
 		 elmtVarName, decodedLenVarNameG, totalLevel);
 	} else if ( GetEncRulesType() == GSER || GetEncRulesType() == GSER_COMP ){
-        fprintf (src,"    %sDecComponentAnyDefinedBy (mem_op, b, %s, bytesDecoded, mode );\n", 
+        fprintf (src,"\trc = %sDecComponentAnyDefinedBy (mem_op, b, %s, bytesDecoded, mode );\n", 
 		 GetEncRulePrefix(), elmtVarName );
 	} else {
         fprintf (src,"    %s%s (b, %s, &%s%d, env);\n", 
@@ -1829,11 +1831,14 @@ PrintCSetDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
         /*
          * allocate mem for decoding result
          */
-	if ( GetEncRulesType() != BER_COMP )
+	if ( GetEncRulesType() != BER_COMP ) {
         	PrintElmtAllocCode (src, e->type, tmpVarName);
+	}
+	else fprintf (src, "\t\trc = ");
 
         PrintCElmtDecodeCode (src, td, parent, e->type, elmtLevel, totalLevel, tagLevel, varName, tmpVarName, NULL, stoleChoiceTags);
 	if ( GetEncRulesType() == BER_COMP ) {
+		fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
 		if ( ctri->isPtr ) {
 		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k", tmpVarName);
 		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
@@ -2075,8 +2080,10 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k" ,tmpVarName);
 
 	fprintf (src, "\tif ( strncmp( peek_head, \"%s\", strlen(\"%s\") ) == 0 ) {\n",ctri->cFieldName,ctri->cFieldName);
+	fprintf (src, "\t\trc = ");
 	PrintCElmtDecodeCode (src, td, parent, e->type, 0, 0, 0, varName,
 				tmpVarName,(char*)NULL, 0);
+	fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
 	if( ctri->isPtr )
 		tmpVarName[1] = ' ';
 	fprintf (src,"\t%s->identifier.bv_val = peek_head;\n",tmpVarName);
@@ -2188,8 +2195,10 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k" ,tmpVarName);
 
 	fprintf (src, "\tif ( strncmp( peek_head, \"%s\", strlen(\"%s\") ) == 0 ) {\n\t",ctri->cFieldName,ctri->cFieldName);
+	fprintf (src, "\t\trc = ");
 	PrintCElmtDecodeCode (src, td, parent, e->type, 0, 0, 0, varName,
 				tmpVarName,(char*)NULL, 0);
+	fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
 	if( ctri->isPtr )
 		tmpVarName[1] = ' ';
 	fprintf (src,"\t\t%s->identifier.bv_val = peek_head;\n",tmpVarName);
@@ -2834,11 +2843,14 @@ PrintCSeqDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
         /*
          * allocate mem for decoding result
          */
-	if ( GetEncRulesType() != BER_COMP )
+	if ( GetEncRulesType() != BER_COMP ) {
         	PrintElmtAllocCode (src, e->type, tmpVarName);
+	}
+	else fprintf (src, "\t\trc = ");
 
         PrintCElmtDecodeCode (src, td, parent, e->type, elmtLevel, totalLevel, tagLevel, varName, tmpVarName, NULL, stoleChoiceTags);
 	if ( GetEncRulesType() == BER_COMP ) {
+		fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
 		if ( ctri->isPtr ) {
 		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k", tmpVarName);
 		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
@@ -3268,16 +3280,20 @@ PrintCListDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, v
 
     strcpy (tmpVarName, "(*tmpVar)");
     if ( GetEncRulesType() == BER_COMP )
-    fprintf (src,"    tmpVar = (Component%s**) AsnListAppend (&%s->comp_list);\n", ctri->cTypeName, varName);
+    fprintf (src,"    tmpVar = (Component%s**) CompAsnListAppend (mem_op,&%s->comp_list);\n", ctri->cTypeName, varName);
     else
-    fprintf (src,"    tmpVar = (%s**) AsnListAppend (Component%s);\n", ctri->cTypeName, varName);
+    fprintf (src,"    tmpVar = (%s**) CompAsnListAppend (mem_op,Component%s);\n", ctri->cTypeName, varName);
     if ( GetEncRulesType() == BER_COMP ) {
 	strcpy (tmpVarName, "tmpVar");
+	fprintf (src, "\t\trc = ");
     } else {
     fprintf (src, "    %s = (%s*) Asn1Alloc (sizeof (%s));\n", tmpVarName, ctri->cTypeName, ctri->cTypeName);
     fprintf (src,"    CheckAsn1Alloc (%s, env);\n", tmpVarName);
     }
     PrintCElmtDecodeCode (src, td, list, list->basicType->a.setOf, elmtLevel, totalLevel, tagLevel, varName, tmpVarName, NULL, stoleChoiceTags);
+    if ( GetEncRulesType() == BER_COMP ) {
+	fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
+    }
 
     /*
      * must check for another EOC for ANYs
@@ -3386,16 +3402,18 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
     fprintf (src, "\t\t}\n");
 
     if ( strncmp ( ctri->cTypeName, "Asn", 3 ) == 0 )
-    fprintf (src, "\t\ttmpVar = (Component%s**) AsnListAppend (&k->comp_list);\n",ctri->cTypeName+3);
+    fprintf (src, "\t\ttmpVar = (Component%s**) CompAsnListAppend (mem_op, &k->comp_list);\n",ctri->cTypeName+3);
     else
-    fprintf (src, "\t\ttmpVar = (Component%s**) AsnListAppend (&k->comp_list);\n",ctri->cTypeName);
+    fprintf (src, "\t\ttmpVar = (Component%s**) CompAsnListAppend (mem_op, &k->comp_list);\n",ctri->cTypeName);
     fprintf (src, "\t\tif ( tmpVar == NULL ) {\n");
     fprintf (src, "\t\t\tAsn1Error(\"Error during Reading{ in encoding\");\n");
     fprintf (src, "\t\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t\t}\n");
 
+    fprintf (src, "\t\trc = ");
     PrintCElmtDecodeCode (src, td, list, list->basicType->a.setOf, 0, 0, 0,
 				varName, "tmpVar", NULL, 0);
+    fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
 
     fprintf (src, "\t} /* end of for */\n\n");
 
@@ -3842,12 +3860,15 @@ PrintCChoiceDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, var
 		MakeVarPtrRef (genDecCRulesG, td, t, e->type, varName, tmpVarName);
 	}
 
-	if ( GetEncRulesType() != BER_COMP )
+	if ( GetEncRulesType() != BER_COMP ) {
         	PrintElmtAllocCode (src, e->type, tmpVarName);
+	}
+	else fprintf (src, "\t\trc = ");
 
         PrintCElmtDecodeCode (src, td, t, e->type, elmtLevel, totalLevel, tagLevel, varName, tmpVarName, NULL, stoleChoiceTags);
 
 	if ( GetEncRulesType() == BER_COMP ) {
+		fprintf (src,"\t\tif ( rc != LDAP_SUCCESS ) return rc;\n" );
 		if ( ctri->isPtr ) {
 		MakeVarPtrRef (genDecCRulesG,td, t, e->type, "k", tmpVarName);
 		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
