@@ -322,11 +322,10 @@ Type *t)
     fprintf (src, "\tif ( !t->comp_desc ) {\n");
     fprintf (src, "\t\tfree ( t );\n");
     fprintf (src, "\t\treturn -1;\n\t}\n");
-    fprintf (src, "\tt->comp_desc->cd_malloced = !(DEC_ALLOC_MODE_1 & old_mode);\n");
     fprintf (src, "\tt->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_free = (comp_free_func*)FreeComponent%s ;\n", name);
-    fprintf (src, "\tt->comp_desc->cd_extract_i = ExtractingComponent%s;\n", name);
+    fprintf (src, "\tt->comp_desc->cd_extract_i = (extract_component_from_id_func*)ExtractingComponent%s;\n", name);
     fprintf (src, "\tt->comp_desc->cd_type = ASN_COMPOSITE;\n");
     fprintf (src, "\tt->comp_desc->cd_type_id = COMPOSITE_ASN1_TYPE;\n");
     fprintf (src, "\tt->comp_desc->cd_all_match = (allcomponent_matching_func*)MatchingComponent%s;\n", name);
@@ -632,6 +631,8 @@ PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
 	
 	if ( GetEncRulesType() != GSER )
 		fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+	if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP )
+		fprintf (src, "\treturn LDAP_SUCCESS;\n");
 
 	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
 		 td->cTypeDefInfo->decodeRoutineName);
@@ -667,6 +668,8 @@ PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
 	}
 	if ( (GetEncRulesType() != GSER) )
 		fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+	if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP )
+		fprintf (src, "\treturn LDAP_SUCCESS;\n");
 
 	fprintf (src,"}  /* %s%s*/", GetEncRulePrefix(),
 		 td->cTypeDefInfo->decodeRoutineName);
@@ -690,6 +693,8 @@ PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
 
 	if ( (GetEncRulesType() != GSER) )
 		fprintf (src, "    (*bytesDecoded) += totalElmtsLen1;\n");
+	if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP )
+		fprintf (src, "\treturn LDAP_SUCCESS;\n");
 
 	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
 		 td->cTypeDefInfo->decodeRoutineName);
@@ -2159,8 +2164,8 @@ PrintCSeqMatchingRuleCode PARAMS ((src, td, parent, elmts, varName),
 		PrintCElmtMatchingRuleCode (src, td, parent, e->type,
 					varName, tmpVarName, tmpVarName2);
 		fprintf (src, "\tif ( rc");
-		fprintf (src, " == LDAP_COMPARE_FALSE )\n");
-		fprintf (src, "\t\treturn LDAP_COMPARE_FALSE;\n");
+		fprintf (src, " != LDAP_COMPARE_TRUE )\n");
+		fprintf (src, "\t\treturn rc;\n");
 	}
 
 	fprintf (src, "\treturn LDAP_COMPARE_TRUE;\n");
@@ -2263,8 +2268,8 @@ PrintCSetMatchingRuleCode PARAMS ((src, td, parent, elmts, varName),
 		PrintCElmtMatchingRuleCode (src, td, parent, e->type,
 					varName, tmpVarName, tmpVarName2);
 		fprintf (src, "\tif ( rc ");
-		fprintf (src, " == LDAP_COMPARE_FALSE )\n");
-		fprintf (src, "\t\treturn LDAP_COMPARE_FALSE;\n");
+		fprintf (src, " != LDAP_COMPARE_TRUE )\n");
+		fprintf (src, "\t\treturn rc;\n");
 	}
 
 	fprintf (src, "\treturn LDAP_COMPARE_TRUE;\n");
@@ -3317,12 +3322,12 @@ PrintCListSeqOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf (src, "\t\tk = (ComponentInt*)malloc(sizeof(ComponentInt));\n");
 	fprintf (src, "\t\tk->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
 	fprintf (src, "\t\tk->comp_desc->cd_tag = NULL;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = GDecComponentInt;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = BDecComponentInt;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_extract_i = NULL;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponentInt;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponentInt;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_extract_i = (extract_component_from_id_func*)NULL;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_type = ASN_BASIC;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_type_id = BASICTYPE_INTEGER;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_all_match = MatchingComponentInt;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_all_match = (allcomponent_matching_func*)MatchingComponentInt;\n");
 	fprintf (src, "\t\tk->value = AsnListCount(v);\n");
 	fprintf ( src, "\t\treturn k;\n");
 	fprintf ( src, "\tdefault :\n");
@@ -3431,12 +3436,12 @@ PrintCListSetOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf (src, "\t\tk = (ComponentInt*)malloc(sizeof(ComponentInt));\n");
 	fprintf (src, "\t\tk->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
 	fprintf (src, "\t\tk->comp_desc->cd_tag = NULL;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = GDecComponentInt;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = BDecComponentInt;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_extract_i = NULL;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponentInt;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponentInt;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_extract_i = (extract_component_from_id_func*)NULL;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_type = ASN_BASIC;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_type_id = BASICTYPE_INTEGER;\n");
-	fprintf (src, "\t\tk->comp_desc->cd_all_match = MatchingComponentInt;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_all_match = (allcomponent_matching_func*)MatchingComponentInt;\n");
 	fprintf (src, "\t\tk->value = AsnListCount(v);\n");
 	fprintf ( src, "\t\treturn k;\n");
 	fprintf ( src, "\tdefault :\n");
@@ -3883,9 +3888,9 @@ PrintMatchingRule PARAMS ((src, hdr, r, m,  td ),
 	
       case C_LIB:
       case C_TYPEREF:
-		PrintCMatchingRuleDefine ( hdr, td );
-	        fprintf (hdr,"\n\n");
-	        break;
+	PrintCMatchingRuleDefine ( hdr, td );
+        fprintf (hdr,"\n\n");
+        break;
 	
       case C_CHOICE:
 	PrintCMatchingRulePrototype (hdr, td);

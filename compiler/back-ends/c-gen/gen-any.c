@@ -532,8 +532,8 @@ REN -- 1/13/98 -- added the following: */
 						if ( strncmp( typeName, "Asn", 3) == 0 ) typeName = typeName+3;
 						fprintf(src, "sizeof (Component%s), (EncodeFcn)B%s, ", typeName, 
 							encRoutineName);
-						fprintf(src, "(CDecodeFcn)GDecComponent%s, ", typeName);
-						fprintf(src, "(CDecodeFcn)BDecComponent%sTag, ", typeName);
+						fprintf(src, "(gser_decoder_func*)GDecComponent%s, ", typeName);
+						fprintf(src, "(ber_tag_decoder_func*)BDecComponent%sTag, ", typeName);
 						fprintf(src, "(ExtractFcn)NULL,");
 						fprintf(src, "(MatchFcn)MatchingComponent%s,",typeName);
 						fprintf(src, "(FreeFcn)FreeComponent%s, ", typeName);
