@@ -295,13 +295,12 @@ TypeDef *td _AND_
 Type *t _AND_
 char *varName)
 { 
-    fprintf (src, "\tk = &c_T1;\n");
     fprintf (src, "\tif ( mode ==2 || mode == 3) {\n");
     fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading identifier\");\n");
     fprintf (src, "\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t}\n");
-    fprintf (src, "\tif(strncmp( peek_head, id ,strLen ) != 0 ){\n");
+    fprintf (src, "\tif(strncmp( peek_head, \"%s\" ,strLen ) != 0 ){\n",t->cTypeRefInfo->cFieldName);
     fprintf (src, "\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t}\n");
     fprintf (src, "\tk->identifier.bv_val = peek_head;\n");
@@ -322,7 +321,7 @@ Type *t)
     fprintf (src, "\t*v = t = (Component%s*)malloc(sizeof(Component%s));\n",
 		name, name);
     fprintf (src, "\t*t = *k;\n");
-    fprintf (src, "\tif ( mode == 1 || mode == 3 ) {\n");
+    fprintf (src, "\tif ( mode == 1 ) {\n");
     fprintf (src, "\t\tt->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
     fprintf (src, "\t\tt->comp_desc->cd_tag = ASN_%s;\n", name);
     fprintf (src, "\t\tt->comp_desc->cd_identifier = NULL;\n");
@@ -353,7 +352,7 @@ PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, varName),
 
     parentCtri = t->cTypeRefInfo;
 
-    PrintIdentifierParsingCode (src, td, t, varName);
+    fprintf (src, "\tk = &c_T1;\n");
 
     fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading identifier\");\n");
@@ -382,7 +381,10 @@ PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, varName),
         MakeChoiceIdValueRef (genDecCRulesG, td, t, e->type, varName,
 				choiceIdVarName);
         fprintf (src, "\t\t%s = %s;\n", choiceIdVarName, ctri->choiceIdSymbol);
-        MakeVarPtrRef (genDecCRulesG, td, t, e->type, varName, tmpVarName);
+	if ( ctri->isPtr )
+		MakeVarPtrRef (genDecCRulesG,td, t, e->type, "&k", tmpVarName);
+	else
+		MakeVarPtrRef (genDecCRulesG,td, t, e->type, "k", tmpVarName);
 
 	fprintf (src, "\t\trc = ");
         PrintCElmtDecodeCode (src, td, t, e->type, 0, 0, 0,
@@ -1700,8 +1702,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     inTailOptElmts = IsTailOptional (elmts);
     e = (NamedType*)FIRST_LIST_ELMT (elmts);
     tmpTypeId = GetBuiltinType (e->type);
-
-    PrintIdentifierParsingCode (src, td, parent, varName);
+    fprintf (src, "\tk = &c_T1;\n");
 /*
  * Print codes for reading '{' in GSER encoded data stream,
  */
@@ -1730,7 +1731,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 	fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 	fprintf (src,"\t}\n");
 	fprintf (src,"\tif(*peek_head != \',\'){\n");
-	fprintf (src,"\tAsn1Error(\"Missing , in encoding\");\n");
+	fprintf (src,"\t\tAsn1Error(\"Missing , in encoding\");\n");
 	fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 	fprintf (src,"\t}\n");
 	}
@@ -1742,20 +1743,19 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 	 * Print codes for reading identifier of basic types in GSER encodings
 	 * identifier of composite types will be read in their decoers
 	 */
-	if ( !ctri->isPtr ) {
-	MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k" ,tmpVarName);
+	if ( !ctri->isPtr )
+		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k" ,tmpVarName);
+	else
+		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "&k" ,tmpVarName);
 	fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_COPY)) ){\n");
 	fprintf (src,"\t  Asn1Error(\"Error during Reading identifier\");\n");
 	fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 	fprintf (src,"\t}\n");
-	fprintf (src,"\t%s->identifier.bv_val = peek_head;\n",tmpVarName);
-	fprintf (src,"\t%s->identifier.bv_len = strLen;\n",tmpVarName);
-	}
-	else {
-	MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "&k" ,tmpVarName);
-	}
 	PrintCElmtDecodeCode (src, td, parent, e->type, 0, 0, 0, varName,
 				tmpVarName,(char*)NULL, 0);
+	if( ctri->isPtr ) tmpVarName[1] = ' ';
+	fprintf (src,"\t%s->identifier.bv_val = peek_head;\n",tmpVarName);
+	fprintf (src,"\t%s->identifier.bv_len = strLen;\n",tmpVarName);
 
     } /* End of For */
 
@@ -1801,7 +1801,7 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     inTailOptElmts = IsTailOptional (elmts);
     e = (NamedType*)FIRST_LIST_ELMT (elmts);
     tmpTypeId = GetBuiltinType (e->type);
-    PrintIdentifierParsingCode (src, td, parent, varName);
+    fprintf (src, "\tk = &c_T1;\n");
 /*
  * Print codes for reading '{' in GSER encoded data stream,
  */
@@ -1842,19 +1842,20 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 	 * Print codes for reading identifier of basic types in GSER encodings
 	 * identifier of composite types will be read in their decoers
 	 */
-	if ( !ctri->isPtr ) {
+	if ( !ctri->isPtr )
+		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "k" ,tmpVarName);
+	else
+		MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "&k" ,tmpVarName);
 	fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_COPY)) ){\n");
 	fprintf (src,"\t  Asn1Error(\"Error during Reading identifier\");\n");
 	fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 	fprintf (src,"\t}\n");
-	fprintf (src,"\t%s->identifier.bv_val = peek_head;\n",tmpVarName);
-	fprintf (src,"\t%s->identifier.bv_len = strLen;\n",tmpVarName);
-	}
-	else {
-	MakeVarPtrRef (genDecCRulesG,td, parent, e->type, "&k" ,tmpVarName);
-	}
 	PrintCElmtDecodeCode (src, td, parent, e->type, 0, 0, 0, varName,
 				tmpVarName,(char*)NULL, 0);
+	if( ctri->isPtr ) tmpVarName[1] = ' ';
+	fprintf (src,"\t%s->identifier.bv_val = peek_head;\n",tmpVarName);
+	fprintf (src,"\t%s->identifier.bv_len = strLen;\n",tmpVarName);
+
     } /* End of For */
 
     /*
@@ -2785,7 +2786,7 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
     fprintf (src, "\tAsnListInit(&k->comp_list, sizeof( Component%s ) );\n", td->cTypeDefInfo->cTypeName);
     fprintf (src, "\tbytesDecoded = 0;\n");
 
-    PrintIdentifierParsingCode (src, td, list, varName);
+    fprintf (src, "\tk = &c_T1;\n");
 
     fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading { in encoding\");\n");
