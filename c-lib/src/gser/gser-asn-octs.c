@@ -133,7 +133,7 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
  * and corresponding octets are the same.
  */
 AsnInt
-GMatchingAsnOctsontent PARAMS ((a, b),
+GMatchingAsnOctsContent PARAMS ((a, b),
 	GAsnOid *a _AND_
 	GAsnOid *b)
 {
