@@ -94,7 +94,7 @@ GDecAsnOidContent PARAMS ((b, result, bytesDecoded ),
     AsnLen *bytesDecoded )
 {
 	char* peek_head;
-	unsigned long strLen = INDEFINITE_LEN;
+	int strLen = INDEFINITE_LEN;
 
 
 	strLen = LocateNextGSERToken(b,&peek_head, GSER_NO_COPY);

@@ -607,6 +607,7 @@ MAKE_TAG_ID (UNIV, CONS, EXTERNAL_TAG_CODE)))
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
     BDecEXTERNALContent (b, tag, elmtLen1, result, bytesDecoded );
+    return 1;
 }  /* BDecEXTERNAL */
 #else
 void BDecEXTERNAL PARAMS ((b, result, bytesDecoded, env),
@@ -801,6 +802,9 @@ ENV_TYPE env)
 #endif
 	tagId0 = tagId0;
     (*bytesDecoded) += totalElmtsLen1;
+#ifdef LDAP_COMPONENT
+    return 1;
+#endif
 }  /* BDecEXTERNALContent */
 
 void

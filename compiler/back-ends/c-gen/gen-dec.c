@@ -3217,7 +3217,7 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
     fprintf (src, "\t\t}\n");
 
     PrintCElmtDecodeCode (src, td, list, list->basicType->a.setOf, 0, 0, 0,
-				varName, "tmpVar", (char*)NULL, NULL);
+				varName, "tmpVar", NULL, 0);
 
     fprintf (src, "\t} /* end of for */\n\n");
 

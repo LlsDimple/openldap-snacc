@@ -84,19 +84,7 @@ void PrintCOidValue PROTO ((FILE *f, CRules *r, AsnOid *oid));
 /* REN -- 1/13/98 -- added following prototype */
 TypeDef* GetTypeDef PROTO ((Type *t));
 
-
-void PrintCInitModuleCode(FILE *src, FILE *hdr, CRules *r, ModuleList *mods, 
-				   Module *m, int printEncoders, int printDecoders, 
-				   int printPrinters, int printFree) {
-	char *modName;
-
-	modName = m->modId->name;
-
-	fprintf (src,"void init_module_%s() {\n", modName);
-	fprintf (src,"\tadd_OD_entry(\"/*Replace ME with OID*/\",GDecComponent/*Replace Me with Outermost ASN.1 Type*/,BDecComponent/*Me Either*/,NULL);\n");
-	fprintf (src,"\tInitAny%s();\n",modName);
-	fprintf (src,"}\n\n");
-}
+extern EncRulesType GetEncRulesType();
 
 void PrintCAnyCode(FILE *src, FILE *hdr, CRules *r, ModuleList *mods, 
 				   Module *m, int printEncoders, int printDecoders, 

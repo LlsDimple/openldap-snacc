@@ -30,7 +30,7 @@ static int TranslateUTF8toUCS2( char* octs, int len){
 AsnLen GEncBMPStringContent(GenBuf *b, GBMPString *result )
 {
 	TranslateUCS2toUTF8( result->value.octs, result->value.octetLen );
-	GEncUTF8StringContent( b,result );
+	GEncUTF8StringContent( b,(GUTF8String*)result );
 	return 0;
 } 
 
@@ -40,7 +40,7 @@ int GDecBMPStringContent(GenBuf *b, GBMPString *result,
 {
 	int rc;
 	/* UTF-8, a Transformation format of ISO RFC 2279 */
-	rc = GDecUTF8StringContent(b,result,bytesDecoded );
+	rc = GDecUTF8StringContent(b,(GUTF8String*)result,bytesDecoded );
 	if ( rc < 0 ) return rc;
 	return TranslateUTF8toUCS2( result->value.octs, result->value.octetLen);
 }

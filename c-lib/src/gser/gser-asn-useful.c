@@ -19,6 +19,8 @@
  * GSER Decoder of a DirectoryString ASN.1 type
  */
 
+extern int UnEscapeDquote ( char* str, int* strLen );
+
 #ifdef LDAP_COMPONENT
 int
 GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
@@ -26,7 +28,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
     GAsnOcts *result _AND_
     AsnLen *bytesDecoded )
 {
-	long strLen;
+	int strLen;
 	char* peek_head;
 	
 	*bytesDecoded = 0;

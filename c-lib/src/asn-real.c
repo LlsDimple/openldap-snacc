@@ -819,7 +819,11 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
     if (len == 0)
     {
         *result = 0.0;
+#ifdef LDAP_COMPONENT
+        return 1;
+#else
         return;
+#endif
     }
     else if (len == INDEFINITE_LEN)
     {
@@ -947,7 +951,9 @@ BDecAsnRealContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
         }
     }
     tagId = tagId;  /* referenced to avoid compiler warning. */
-
+#ifdef LDAP_COMPONENT
+    return 1;
+#endif
 }  /* BDecAsnRealContent */
 
 

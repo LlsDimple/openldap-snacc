@@ -15,6 +15,8 @@
 #include "asn-config.h"
 #include "asn-gser.h"
 
+extern int UnEscapeDquote ( char* str, int* strLen );
+
 AsnLen
 GEncDirectoryStringContent PARAMS ((b, o),
     GenBuf *b _AND_
@@ -34,7 +36,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
     GAsnOcts *result _AND_
     AsnLen *bytesDecoded )
 {
-	long strLen;
+	int strLen;
 	char* peek_head;
 	
 	*bytesDecoded = 0;

@@ -421,6 +421,9 @@ BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
         result->octs[len] = '\0';
         (*bytesDecoded) += len;
     }
+#ifdef LDAP_COMPONENT
+            return 1;
+#endif
 }  /* BDecAsnOctsContent */
 
 

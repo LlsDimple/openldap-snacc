@@ -94,6 +94,10 @@ static void PrintCMacroRosOperationElmts PROTO ((FILE *f, CRules *r, Module *m,
 												Type *t,
 												RosOperationMacroType *op));
 extern EncRulesType GetEncRulesType();
+static void PrintCChoiceIdTypeDef PROTO (( FILE *f, CRules *r, Module *m,
+					TypeDef *td));
+static void PrintCStructIdElmts PROTO (( FILE *f, CRules *r, Module *m,
+					TypeDef *td, Type *parent, Type *t));
 #include <string.h>
 void
 PrintCTypeDef PARAMS ((f, r, m, td),

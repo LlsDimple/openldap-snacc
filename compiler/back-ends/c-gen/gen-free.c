@@ -67,6 +67,7 @@
 #include "str-util.h"
 #include "util.h"
 #include "enc-rules.h"
+#include <string.h>
 
 #ifdef WIN32
 //#pragma  warning( disable : 4706 )  /* IGNORE assign w/in conditional expression. */
@@ -95,6 +96,10 @@ static void PrintCFreeChoiceElmts PROTO ((FILE *src, TypeDef *td, Type *t, char 
 static void PrintCFreeMacroElmts PROTO ((FILE *src, TypeDef *td, Type *parent, MacroType *mt, char *varName));
 static void PrintCRosOperationElmtsFree PROTO ((FILE *src, TypeDef *td, Type *parent, MacroType *elmts, RosOperationMacroType *op, char *varName));
 
+extern EncRulesType GetEncRulesType();
+
+extern void MakeVarRef ( CRules *r, TypeDef *td, Type *parent,
+		Type *fieldType, char *parentVarName,char *newVarName);
 
 void
 PrintCFree PARAMS ((src, hdr, r, mods, m, td),

@@ -147,7 +147,9 @@ static void PrintCHdrComment PROTO ((FILE *hdr, Module *m));
 static void PrintCHdrObjectDeclaration_and_Init PROTO ((FILE *hdr, Module *m, CRules *r));
 extern void PrintCTypeIdDef PROTO ((FILE*, CRules*, Module*, TypeDef*));
 extern void PrintSyntaxLoader PROTO ((FILE*, FILE*, CRules*, Module*, TypeDef*));
-
+void PrintCInitModuleCode(FILE *src, FILE *hdr, CRules *r, ModuleList *mods, 
+			  Module *m, int printEncoders, int printDecoders, 
+				   int printPrinters, int printFree);
 //RWC;static void PrintCHdrObjectField PROTO ((FILE *hdr, Module *m, CRules *r, char *objName, ObjectAssignmentField *oaf));
 //extern short ImportedFilesG;
 /*
@@ -339,6 +341,18 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 
 } /* PrintCCode */
 
+void PrintCInitModuleCode(FILE *src, FILE *hdr, CRules *r, ModuleList *mods, 
+				   Module *m, int printEncoders, int printDecoders, 
+				   int printPrinters, int printFree) {
+	char *modName;
+
+	modName = m->modId->name;
+
+	fprintf (src,"void init_module_%s() {\n", modName);
+	fprintf (src,"\tadd_OD_entry(\"/*Replace ME with OID*/\",GDecComponent/*Replace Me with Outermost ASN.1 Type*/,BDecComponent/*Me Either*/,NULL);\n");
+	fprintf (src,"\tInitAny%s();\n",modName);
+	fprintf (src,"}\n\n");
+}
 void
 PrintConstraintValueCheckingCode PARAMS ((src, td, t, nt),
 	FILE *src _AND_

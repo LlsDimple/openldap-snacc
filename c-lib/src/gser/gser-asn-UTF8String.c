@@ -15,6 +15,7 @@
 #include "asn-config.h"
 #include "asn-gser.h"
 
+extern int IsValidUTF8String(UTF8String* octs);
 /*
  * GSER encodes just the content of an UTF8String
  * StringValue	= dquote *SafeUTF8Character dquote
@@ -26,6 +27,7 @@ GEncUTF8StringContent PARAMS ((b, o),
     GUTF8String *o)
 {
 	/* Need to be Implemented */
+	return 1;
 }
 
 int
@@ -63,7 +65,7 @@ GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
     GUTF8String *result _AND_
     AsnLen *bytesDecoded )
 {
-	long strLen;
+	int strLen;
 	char* peek_head;
 	
 	*bytesDecoded = 0;

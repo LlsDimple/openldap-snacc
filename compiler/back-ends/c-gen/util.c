@@ -56,6 +56,8 @@
 #include <string.h>
 
 
+extern EncRulesType GetEncRulesType();
+
 void
 MakeVarPtrRef PARAMS ((r, td, parent, fieldType, parentVarName, newVarName),
     CRules *r _AND_

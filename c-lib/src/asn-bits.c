@@ -416,6 +416,7 @@ BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
 	    return -1;
         }
     }
+    return 1;
 }  /* BDecAsnBitsContent */
 #else
 void
