@@ -3094,11 +3094,7 @@ PrintCListDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, v
     else
     fprintf (src,"    tmpVar = (%s**) AsnListAppend (Component%s);\n", ctri->cTypeName, varName);
     if ( GetEncRulesType() == BER_COMP ) {
-	if ( ctri->isPtr ) {
-		fprintf (src,"*tmpVar = tmpVar+1;\n");
-	} else {
-		strcpy (tmpVarName, "tmpVar");
-	}
+	strcpy (tmpVarName, "tmpVar");
     } else {
     fprintf (src, "    %s = (%s*) Asn1Alloc (sizeof (%s));\n", tmpVarName, ctri->cTypeName, ctri->cTypeName);
     fprintf (src,"    CheckAsn1Alloc (%s, env);\n", tmpVarName);
@@ -3183,7 +3179,7 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
 	else
 	fprintf (src, "\tAsnListInit( &k->comp_list, sizeof( Component%s ) );\n", ctri->cTypeName );
     }
-    fprintf (src, "\tbytesDecoded = 0;\n");
+    fprintf (src, "\t*bytesDecoded = 0;\n");
     fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_PEEK)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading { in encoding\");\n");
     fprintf (src, "\t\treturn LDAP_PROTOCOL_ERROR;\n");
@@ -3215,19 +3211,13 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
     fprintf (src, "\t\ttmpVar = (Component%s**) AsnListAppend (&k->comp_list);\n",ctri->cTypeName+3);
     else
     fprintf (src, "\t\ttmpVar = (Component%s**) AsnListAppend (&k->comp_list);\n",ctri->cTypeName);
-    if ( !ctri->isPtr )
-	fprintf (src, "\t\t*tmpVar = (tmpVar+1);\n");
     fprintf (src, "\t\tif ( tmpVar == NULL ) {\n");
     fprintf (src, "\t\t\tAsn1Error(\"Error during Reading{ in encoding\");\n");
     fprintf (src, "\t\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t\t}\n");
 
-    if ( ctri->isPtr )
     PrintCElmtDecodeCode (src, td, list, list->basicType->a.setOf, 0, 0, 0,
 				varName, "tmpVar", (char*)NULL, NULL);
-    else
-    PrintCElmtDecodeCode (src, td, list, list->basicType->a.setOf, 0, 0, 0,
-				varName, "*tmpVar", (char*)NULL, NULL);
 
     fprintf (src, "\t} /* end of for */\n\n");
 
