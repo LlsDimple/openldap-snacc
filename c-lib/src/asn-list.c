@@ -368,6 +368,39 @@ AsnListAppend PARAMS ((list),
     return dataAddr;
 }
 
+#ifdef LDAP_COMPONENT
+void*
+CompAsnListAppend PARAMS ((mem_op, list),
+    void  *mem_op _AND_
+    AsnList *list)
+{
+    AsnListNode *newNode;
+    void      *dataAddr;
+
+    newNode  = (AsnListNode *) CompAlloc ( mem_op, sizeof (AsnListNode) + list->dataSize);
+    dataAddr = (void *) &(newNode->data);
+
+    newNode->next = NULL;
+
+    if (list->last == NULL)
+    {
+        newNode->prev = NULL;
+        list->first   = list->last = newNode;
+    }
+    else
+    {
+        newNode->prev     = list->last;
+        list->last->next  = newNode;
+        list->last        = newNode;
+    }
+
+    list->curr = newNode;
+    list->count++;
+
+    return dataAddr;
+}
+#endif
+
 void*
 AsnListCurr PARAMS ((list),
     AsnList *list)
