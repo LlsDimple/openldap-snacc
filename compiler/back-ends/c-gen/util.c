@@ -97,6 +97,38 @@ MakeVarPtrRef PARAMS ((r, td, parent, fieldType, parentVarName, newVarName),
 
 }  /* MakeVarPtrRef */
 
+void
+MakeVarRef PARAMS ((r, td, parent, fieldType, parentVarName, newVarName),
+    CRules *r _AND_
+    TypeDef *td _AND_
+    Type *parent _AND_
+    Type *fieldType _AND_
+    char *parentVarName _AND_
+    char *newVarName)
+{
+    CTRI *ctri;
+
+    ctri = fieldType->cTypeRefInfo;
+
+    strcpy (newVarName, "(");
+
+    strcat (newVarName, parentVarName);
+
+    if ((td->type == parent) || (parent->cTypeRefInfo->isPtr))
+        strcat (newVarName, "->");
+    else
+        strcat (newVarName, ".");
+
+    if (parent->basicType->choiceId == BASICTYPE_CHOICE)
+    {
+        strcat (newVarName, r->choiceUnionFieldName);
+        strcat (newVarName, ".");
+    }
+
+    strcat (newVarName, ctri->cFieldName);
+    strcat (newVarName, ")");
+
+}
 
 
 

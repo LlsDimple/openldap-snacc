@@ -306,14 +306,15 @@ Type *t)
     fprintf (src, "\tif ( !t ) return -1;\n");
     fprintf (src, "\t*t = *k;\n");
     fprintf (src, "\t}\n");
-
+    fprintf (src, "\tt->syntax = (Syntax*)NULL;\n");
     fprintf (src, "\tt->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
     fprintf (src, "\tif ( !t->comp_desc ) {\n");
     fprintf (src, "\t\tfree ( t );\n");
     fprintf (src, "\t\treturn -1;\n\t}\n");
-    fprintf (src, "\tt->comp_desc->cd_tag = -1;\n");
+    fprintf (src, "\tt->comp_desc->cd_malloced = !(DEC_ALLOC_MODE_1 & old_mode);\n");
     fprintf (src, "\tt->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponent%s ;\n", name);
+    fprintf (src, "\tt->comp_desc->cd_free = (comp_free_func*)FreeComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_extract_i = ExtractingComponent%s;\n", name);
     fprintf (src, "\tt->comp_desc->cd_type = ASN_COMPOSITE;\n");
     fprintf (src, "\tt->comp_desc->cd_type_id = COMPOSITE_ASN1_TYPE;\n");
@@ -3751,44 +3752,6 @@ PrintCChoiceDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, var
 	varName = "v";
     }
 }  /* PrintCChoiceDecodeCode */
-
-void
-PrintSyntaxLoader PARAMS (( src, hdr, r, m ,td ),
-    FILE *src _AND_
-    FILE *hdr _AND_
-    CRules *r _AND_
-    Module *m _AND_
-    TypeDef *td )
-{
-	CTDI *ctdi;
-	CTypeId rhsTypeId;
-	ctdi =  td->cTypeDefInfo;
-	rhsTypeId = td->type->cTypeRefInfo->cTypeId;
-
-	fprintf ( src, "void*\n");
-	fprintf ( src, "asn_attr_to_comp_%s ( struct berval *bv )\n",
-		ctdi->cTypeName);
-	fprintf ( src, "{\n");
-	fprintf ( src, "\tchar* peek_head;\n");
-	fprintf ( src, "\tint i, strLen;\n");
-	fprintf ( src, "\tGenBuf* b;\n");
-	fprintf ( src, "\tExpBuf* buf;\n");
-	fprintf ( src, "\tint bytesDecoded;\n");
-	fprintf ( src, "\tComponent%s *c_temp;\n",ctdi->cTypeName );
-	fprintf ( src, "\tint mode;\n");
-	fprintf ( src, "\tExpBufInit ( 1024 );\n");
-	fprintf ( src, "\tbuf = ExpBufAllocBufAndData ();\n");
-	fprintf ( src, "\tExpBufResetInWriteRvsMode ( buf )\n");
-	fprintf ( src, "\tExpBuftoGenBuf( buf, &n );\n");
-	fprintf ( src, "\tBufPutSegRvs( b, bv->bv_val, bv->bv_len );\n");
-	fprintf ( src, "\tBufResetInReadMode ( b );\n");
-	fprintf ( src, "\tmode = 1;\n");
-	fprintf ( src, "\tif ( GDec%s ( b, &c_temp, &bytesDecoded, mode ) == LDAP_PROTOCOL_ERROR)\n",ctdi->cTypeName );
-	fprintf ( src, "\t\treturn NULL;\n");
-	fprintf ( src, "\telse\n");
-	fprintf ( src, "\t\tc_temp;\n");
-	fprintf ( src, "}\n");
-}
 
 /*
  * Print Component Extractor codes

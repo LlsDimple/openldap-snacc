@@ -66,6 +66,7 @@
 #include "rules.h"
 #include "str-util.h"
 #include "util.h"
+#include "enc-rules.h"
 
 #ifdef WIN32
 //#pragma  warning( disable : 4706 )  /* IGNORE assign w/in conditional expression. */
@@ -137,6 +138,7 @@ PrintCFree PARAMS ((src, hdr, r, mods, m, td),
             PrintCFreeLocals (src, td);
             fprintf (src,"\tif(%s == NULL)\n", valueArgNameG);
             fprintf (src,"\t\treturn;\n");
+	    fprintf (src,"\t");
             PrintCFreeChoiceElmts (src, td, td->type, valueArgNameG);
             fprintf (src,"}  /* %s */",td->cTypeDefInfo->freeRoutineName);
             fprintf (hdr,"\n\n");
@@ -171,7 +173,7 @@ PrintCFree PARAMS ((src, hdr, r, mods, m, td),
             break;
 
 
-		case C_MACROTYPE:
+	case C_MACROTYPE:
             PrintCFreePrototype (hdr, td);
             PrintCFreeDeclaration (src, td);
             fprintf (src,"{\n");
@@ -258,11 +260,18 @@ PrintCFreePrototype PARAMS ((hdr, td),
     FILE *hdr _AND_
     TypeDef *td)
 {
+    char* name;
     CTDI *ctdi;
-
+   
     ctdi = td->cTypeDefInfo;
-    //fprintf (hdr,"%s %s PROTO ((%s *v));\n", returnTypeG, ctdi->freeRoutineName, ctdi->cTypeName);
-	fprintf (hdr,"%s %s(%s *v);\n", returnTypeG, ctdi->freeRoutineName, ctdi->cTypeName);
+    name = ctdi->cTypeName;
+    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+	if ( strncmp( name, "Asn", 3) == 0 ) name = name+3;
+	fprintf (hdr,"%s FreeComponent%s(Component%s *v);\n", returnTypeG, name, name);
+    } else {
+	fprintf (hdr,"%s %s(%s *v);\n", returnTypeG, ctdi->freeRoutineName,
+	ctdi->cTypeName);
+    }
 
 }  /*  PrintCFreePrototype */
 
@@ -276,11 +285,17 @@ PrintCFreeDeclaration PARAMS ((src, td),
     FILE *src _AND_
     TypeDef *td)
 {
+    char* name;
     CTDI *ctdi;
 
     ctdi =  td->cTypeDefInfo;
-//	fprintf (src,"%s\n%s PARAMS ((v),\n%s *v)\n", returnTypeG, ctdi->freeRoutineName,  ctdi->cTypeName);
-    fprintf (src,"%s %s(%s *v)\n", returnTypeG, ctdi->freeRoutineName,  ctdi->cTypeName);
+    name = td->cTypeDefInfo->cTypeName;
+    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+	if ( strncmp(name,"Asn",3) == 0 ) name = name+3;
+	fprintf (src,"%s FreeComponent%s(Component%s *v)\n", returnTypeG, name, name);
+    } else {
+	fprintf (src,"%s %s(%s *v)\n", returnTypeG, ctdi->freeRoutineName,  ctdi->cTypeName);
+    }
 
 }  /*  PrintCFreeDeclaration */
 
@@ -292,8 +307,15 @@ PrintCFreeDefine PARAMS ((hdr, td),
     FILE *hdr _AND_
     TypeDef *td)
 {
-
-    fprintf(hdr, "#define %s %s ", td->cTypeDefInfo->freeRoutineName, td->type->cTypeRefInfo->freeRoutineName);
+    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+	if ( strncmp ( td->type->cTypeRefInfo->cTypeName, "Asn", 3 ) == 0 )
+	fprintf(hdr, "#define FreeComponent%s FreeComponent%s ", td->cTypeDefInfo->cTypeName, td->type->cTypeRefInfo->cTypeName+3);
+	else
+	fprintf(hdr, "#define FreeComponent%s FreeComponent%s ", td->cTypeDefInfo->cTypeName, td->type->cTypeRefInfo->cTypeName);
+    } else {
+	fprintf(hdr, "#define %s %s ", td->cTypeDefInfo->freeRoutineName,
+	td->type->cTypeRefInfo->freeRoutineName);
+    }
 
 /*
     fprintf(hdr, "#define %s(v)  ", td->cTypeDefInfo->freeRoutineName);
@@ -356,6 +378,7 @@ PrintCElmtFree PARAMS ((src, td, parent, e, varName),
     Type *e _AND_
     char *varName)
 {
+    char *name;
     CTRI *ctri;
     char elmtVarRef[MAX_VAR_REF];
 
@@ -378,7 +401,14 @@ PrintCElmtFree PARAMS ((src, td, parent, e, varName),
         case C_ANYDEFINEDBY:
         case C_LIB:
         case C_TYPEREF:
-            fprintf (src,"\t%s%s;", ctri->freeRoutineName, elmtVarRef);
+	    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+		if ( strncmp(ctri->cTypeName, "Asn", 3) == 0 )
+			name = ctri->cTypeName + 3 ;
+		else
+			name = ctri->cTypeName;
+		fprintf (src,"\tFreeComponent%s(%s);\n", name, elmtVarRef);
+	     } else
+		fprintf (src,"\t%s%s;", ctri->freeRoutineName, elmtVarRef);
             break;
 
         case C_LIST:
@@ -398,7 +428,7 @@ PrintCElmtFree PARAMS ((src, td, parent, e, varName),
             PrintCFreeElmts (src, td, e, e->basicType->a.set, elmtVarRef);
             break;
 
-		case C_MACROTYPE:
+	case C_MACROTYPE:
             break;
 
         case C_NO_TYPE:
@@ -410,8 +440,20 @@ PrintCElmtFree PARAMS ((src, td, parent, e, varName),
     }
 
     /* free elmt itself if it is ref'd by ptr */
-    if(ctri->isPtr)
-        fprintf (src,"\n\tAsn1Free (%s);\n",elmtVarRef);
+    if(ctri->isPtr) {
+	if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ){
+		fprintf (src,"\tfree (%s->comp_desc);\n",elmtVarRef);
+		fprintf (src,"\tfree (%s);\n",elmtVarRef);
+	} else {
+		fprintf (src,"\n\tAsn1Free (%s);\n",elmtVarRef);
+	}
+    }
+    else {
+	if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+    		MakeVarRef (genFreeCRulesG, td, parent, e, varName, elmtVarRef);
+		fprintf (src,"\tfree (%s.comp_desc);\n",elmtVarRef);
+	}
+    } 
 
     /* write closing brkt for NULL check for optional elmts */
     if(e->optional || (e->defaultVal != NULL))
@@ -442,7 +484,11 @@ PrintCFreeListRoutineBody PARAMS ((src, td, t, varName),
     Type *e;
     CTRI *ctri;
     char *elmtVarRef;
+    char *name;
 
+    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER )
+    fprintf (src,"\tfor (l = FIRST_LIST_NODE (&%s->comp_list); l != NULL; )\n", varName);
+    else
     fprintf (src,"\tfor (l = FIRST_LIST_NODE (%s); l != NULL; )\n", varName);
     fprintf (src,"\t{\n");
 
@@ -451,10 +497,15 @@ PrintCFreeListRoutineBody PARAMS ((src, td, t, varName),
     elmtVarRef = "(l->data)";
     switch(ctri->cTypeId)
     {
-		case C_ANY:
+	case C_ANY:
         case C_LIB:
         case C_TYPEREF:
-            fprintf (src,"\t\t%s (%s);\n", ctri->freeRoutineName, elmtVarRef);
+	    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+		name = ctri->cTypeName;
+		if ( strncmp ( name, "Asn", 3 ) == 0 ) name += 3;
+		fprintf (src,"\t\tFreeComponent%s (%s);\n", name, elmtVarRef);
+	    } else 
+            	fprintf (src,"\t\t%s (%s);\n", ctri->freeRoutineName, elmtVarRef);
             break;
 
         case C_LIST:
@@ -486,8 +537,14 @@ PrintCFreeListRoutineBody PARAMS ((src, td, t, varName),
     }
 
     fprintf (src,"\t\ttmp = l->next;\n");
-    fprintf (src,"\t\tAsn1Free (l->data);\n");
-    fprintf (src,"\t\tAsn1Free (l);\n");
+    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+	fprintf (src,"\t\tfree (((ComponentSyntaxInfo*)l->data)->csi_comp_desc);\n");
+	fprintf (src,"\t\tfree (l->data);\n");
+	fprintf (src,"\t\tfree (l);\n");
+    } else {
+	fprintf (src,"\t\tAsn1Free (l->data);\n");
+	fprintf (src,"\t\tAsn1Free (l);\n");
+    }
     fprintf (src,"\t\tl = tmp;\n");
     fprintf (src,"\t}\n");
 }
@@ -502,6 +559,7 @@ PrintCFreeListElmts PARAMS ((src, td, t, varName),
     Type *e;
     CTRI *ctri;
     char *elmtVarRef;
+    char *name;
 
     fprintf (src,"\t{\n");
     fprintf (src,"\t\tAsnListNode *l;\n");
@@ -517,7 +575,12 @@ PrintCFreeListElmts PARAMS ((src, td, t, varName),
     {
         case C_LIB:
         case C_TYPEREF:
-            fprintf (src,"\t\t%s (%s);\n", ctri->freeRoutineName, elmtVarRef);
+	    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+		name = ctri->cTypeName;
+		if ( strncmp ( name, "Asn", 3 ) == 0 ) name += 3;
+            	fprintf (src,"\t\tFreeComponent%s (%s);\n", name, elmtVarRef);
+	    } else
+            	fprintf (src,"\t\t%s (%s);\n", ctri->freeRoutineName, elmtVarRef);
             break;
 
         case C_LIST:
@@ -549,8 +612,13 @@ PrintCFreeListElmts PARAMS ((src, td, t, varName),
     }
 
     fprintf (src,"\t\t   tmp = l->next;\n");
-    fprintf (src,"\t\t   Asn1Free (l->data);\n");
-    fprintf (src,"\t\t   Asn1Free (l);\n");
+    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+	fprintf (src,"\t\t   free (l->data);\n");
+	fprintf (src,"\t\t   free (l);\n");
+    } else {
+	fprintf (src,"\t\t   Asn1Free (l->data);\n");
+	fprintf (src,"\t\t   Asn1Free (l);\n");
+    }
     fprintf (src,"\t\t   l = tmp;\n");
     fprintf (src,"\t\t}\n");
     fprintf (src,"\t}\n");
@@ -590,6 +658,13 @@ PrintCFreeChoiceElmts PARAMS ((src, td, t, varName),
             PrintCElmtFree (src, td, t, e->type, varName);
             fprintf (src,"\tbreak;\n\n");
         }
+	else {
+	    if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
+		fprintf (src, "\t   case %s:\n", ctri->choiceIdSymbol);
+		PrintCElmtFree (src, td, t, e->type, varName);
+		fprintf (src,"\tbreak;\n\n");
+	    }
+	}
 
         SET_CURR_LIST_NODE (t->basicType->a.choice, tmp);
     }

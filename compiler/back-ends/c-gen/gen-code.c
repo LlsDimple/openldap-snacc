@@ -222,6 +222,13 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
         }
     }
 
+    if ( GetEncRulesType() == GSER ||
+	GetEncRulesType() == GSER_COMP ||
+	GetEncRulesType() == BER_COMP ) {
+	PrintCInitModuleCode (src, hdr, r, mods, m, printEncoders, printDecoders, 
+		printPrinters, printFree);
+    }
+
     PrintCAnyCode (src, hdr, r, mods, m, printEncoders, printDecoders, 
 		printPrinters, printFree);
 
@@ -236,8 +243,6 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 	if ( GetEncRulesType() == GSER || GetEncRulesType() == BER_COMP ) {
 		PrintMatchingRule( src, hdr, r, m ,td );
 		PrintComponentExtractor( src, hdr, r, m ,td );
-		if ( strcmp( m->modId->name,td->cTypeDefInfo->cTypeName )==0 )
-			PrintSyntaxLoader( src, hdr, r, m, td );
 	}
 
         /* for PDU type or types ref'd with ANY/ANY DEF BY */
@@ -262,10 +267,10 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 		//	PrintCTableConstraintDecoder (src, hdr, m, td);		// Deepak: 25/Mar/2003
 	}
 
-        if (printPrinters)
+        if (printPrinters && (GetEncRulesType() != BER_COMP || GetEncRulesType() != GSER ))
             PrintCPrinter (src, hdr, r, mods, m, td);
 
-        if (printFree)
+        if (printFree || (GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER))
             PrintCFree (src, hdr, r, mods, m, td);
 
         /* only print new lines for normal types */
