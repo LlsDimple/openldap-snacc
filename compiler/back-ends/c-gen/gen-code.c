@@ -213,7 +213,7 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
     if ( GetEncRulesType() == GSER ||
 	GetEncRulesType() == GSER_COMP ||
 	GetEncRulesType() == BER_COMP ) {
-	fprintf (hdr,"#include \"component.h\"\n");
+	fprintf (hdr,"#include \"componentlib.h\"\n");
     }
 
     if (printValues)

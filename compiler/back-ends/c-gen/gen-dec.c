@@ -377,10 +377,10 @@ PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, varName),
         builtinType = GetBuiltinType (e->type);
 	if( count == 0 ) {
 		fprintf ( src,
-		"\tif( strncmp(\"%s\",peek_head,sizeof(\"%s\")-1) == 0){\n", ctri->cFieldName,ctri->cFieldName);
+		"\tif( strncmp(\"%s\",peek_head, strlen(\"%s\")) == 0){\n", ctri->cFieldName,ctri->cFieldName);
 		count = 1;
 	} else {
-		fprintf ( src, "\telse if( strncmp(\"%s\",peek_head,sizeof(\"%s\")-1) == 0){\n", ctri->cFieldName,ctri->cFieldName);
+		fprintf ( src, "\telse if( strncmp(\"%s\",peek_head,strlen(\"%s\")) == 0){\n", ctri->cFieldName,ctri->cFieldName);
 	}
 
         MakeChoiceIdValueRef (genDecCRulesG, td, t, e->type, "k",
