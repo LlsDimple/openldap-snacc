@@ -124,7 +124,11 @@ PrintCTypeDef PARAMS ((f, r, m, td),
         case C_LIST:	// Deepak: following three stmts writes the equivalent C code in header file.
             fprintf (f, "typedef ");
             PrintCType (f, r, m, td, NULL, t);	// Deepak: Prints Basic ASN Data Type like NumericString or PrintableString or ENUMERATED etc...
-            fprintf (f, " %s;", ctdi->cTypeName);// Deepak: Prints User Defined ASN Data Type like Order-number, Item-code etc...
+	    if ( GetEncRulesType() == GSER ) {
+            	fprintf (f, " Component%s;", ctdi->cTypeName);// Deepak: Prints User Defined ASN Data Type like Order-number, Item-code etc...
+	    } else {
+            	fprintf (f, " %s;", ctdi->cTypeName);
+	    }
             PrintTypeComment (f, td, t);	// Deepak: actual asn code line is written in comments here
             fprintf (f, "\n\n");
             break;
@@ -272,13 +276,19 @@ PrintCType PARAMS ((f, r, m, td, parent, t),
              * defined from a struct type (set/seq/choice)
              * but only if not a ref of a ref
              */
+	    if ( GetEncRulesType() == GSER ) {
+            	fprintf (f,"Component%s", ctri->cTypeName);
+		if (ctri->isPtr) fprintf (f,"*");
+		break;
+	    }
+
             if ((t->basicType->a.localTypeRef->link->type->cTypeRefInfo->cTypeId == C_STRUCT)||
                  (t->basicType->a.localTypeRef->link->type->cTypeRefInfo->cTypeId == C_CHOICE))
             {
                 fprintf (f,"struct ");
             }
 
-            fprintf (f,"%s", ctri->cTypeName);
+	    fprintf (f,"%s", ctri->cTypeName);
 
             if (ctri->isPtr)
                 fprintf (f,"*");
