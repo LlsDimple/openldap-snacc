@@ -135,6 +135,16 @@ int IsPrimitiveType ( Type* t );
 
 extern EncRulesType GetEncRulesType();
 
+int IsAnyType ( Type* t );
+
+int IsBITStringType ( Type* t );
+
+int IsOCTETStringType ( Type* t );
+
+int IsPtrType ( Type* t );
+
+static void PrintDefaultValue ( FILE* src, char* tmpVarName, struct Value* defaultVal );
+
 static
 void PrintCompDecodeHead( FILE* src ) {
     fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) ) {\n");
@@ -322,6 +332,9 @@ Type *t)
     fprintf (src, "\tif ( !t->comp_desc ) {\n");
     fprintf (src, "\t\tfree ( t );\n");
     fprintf (src, "\t\treturn -1;\n\t}\n");
+    fprintf (src, "\tt->comp_desc->cd_ldap_encoder = (encoder_func*)NULL;\n");
+    fprintf (src, "\tt->comp_desc->cd_gser_encoder = (encoder_func*)NULL;\n");
+    fprintf (src, "\tt->comp_desc->cd_ber_encoder = (encoder_func*)NULL;\n");
     fprintf (src, "\tt->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_free = (comp_free_func*)NULL;\n");
@@ -1980,7 +1993,7 @@ PrintCSetDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
 			offset = 3;
 		else 
 			offset = 0;
-		fprintf(src,"%s = CompAlloc( mem_op, sizeof(Component%s));\n",tmpVarName, ctri->cTypeName+offset);
+		
 
 		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
 		fprintf (src,"\t\t%s->identifier.bv_val = %s->id_buf;\n",tmpVarName,tmpVarName);
@@ -2006,7 +2019,7 @@ PrintDefaultValue PARAMS ((src, tmpVarName, defaultVal),
 	char* tmpVarName _AND_
 	struct Value* defaultVal )
 {
-	char* buf[512];
+	char buf[512];
 	char* max_int="2147483648";
 	char* min_int="0";
 	struct BasicValue* basicValue = defaultVal->basicValue;
@@ -2044,11 +2057,11 @@ PrintDefaultValue PARAMS ((src, tmpVarName, defaultVal),
             case BASICVALUE_ASCIIHEX:
             case BASICVALUE_ASCIITEXT:
 		fprintf( src,"\t%s.octs = malloc(%d);\n",
-				tmpVarName, basicValue->a.asciiText->octetLen);
+				tmpVarName, (int)basicValue->a.asciiText->octetLen);
 		strncpy( buf, basicValue->a.asciiText->octs, basicValue->a.asciiText->octetLen );
 		fprintf( src,"\tstrncpy(%s.octs,\"%s\",%d);\n",tmpVarName, buf, strlen(buf));
 		fprintf( src,"\t%s.octetLen = %d;\n",
-				tmpVarName, basicValue->a.asciiText->octetLen);
+				tmpVarName, (int)basicValue->a.asciiText->octetLen);
 		break;
             case BASICVALUE_LINKEDOID:
 		/*OID *linkedOid*/
