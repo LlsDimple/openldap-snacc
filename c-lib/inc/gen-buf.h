@@ -52,7 +52,7 @@ typedef unsigned char	*(*BufGetSegFcn) PROTO ((void *b, unsigned long *lenPtr));
 typedef long 	(*BufCopyFcn) PROTO ((char *dst, void *b, unsigned long len));
 typedef void		(*BufSkipFcn) PROTO ((void *b, unsigned long len));
 typedef unsigned char	(*BufPeekByteFcn) PROTO ((void *b));
-typedef unsigned char	*(*BufPeekSegFcn) PROTO ((void *b, unsigned long lenPtr));
+typedef unsigned char	*(*BufPeekSegFcn) PROTO ((void *b, unsigned long *lenPtr));
 typedef long 	(*BufPeekCopyFcn) PROTO ((char *dst, void *b, unsigned long len));
 typedef void		(*BufPutByteRvsFcn) PROTO ((void *b, unsigned char byte));
 typedef void		(*BufPutSegRvsFcn) PROTO ((void *b, char *data, unsigned long len));
