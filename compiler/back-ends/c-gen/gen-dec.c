@@ -3633,7 +3633,7 @@ PrintCListSeqOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\tcase LDAP_COMPREF_COUNT :\n");
 	fprintf (src, "\t\tk = (ComponentInt*)CompAlloc( mem_op, sizeof(ComponentInt));\n");
 	fprintf (src, "\t\tk->comp_desc = CompAlloc( mem_op, sizeof( ComponentDesc ) );\n");
-	fprintf (src, "\t\tk->comp_desc->cd_tag = NULL;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_tag = (-1);\n");
 	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponentInt;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponentInt;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_extract_i = (extract_component_from_id_func*)NULL;\n");
@@ -3750,7 +3750,7 @@ PrintCListSetOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\tcase LDAP_COMPREF_COUNT :\n");
 	fprintf (src, "\t\tk = (ComponentInt*)CompAlloc( mem_op, sizeof(ComponentInt));\n");
 	fprintf (src, "\t\tk->comp_desc = CompAlloc( mem_op, sizeof( ComponentDesc ) );\n");
-	fprintf (src, "\t\tk->comp_desc->cd_tag = NULL;\n");
+	fprintf (src, "\t\tk->comp_desc->cd_tag = (-1);\n");
 	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponentInt;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponentInt;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_extract_i = (extract_component_from_id_func*)NULL;\n");
