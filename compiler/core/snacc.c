@@ -304,6 +304,8 @@ int main PARAMS ((argc, argv),
     int			genPrintCode = FALSE;
     int			genValueCode = FALSE;
     int			genFreeCode = FALSE;
+    int 		genMatchingCode = FALSE;
+    int			genExtractCode = FALSE;
 #if META
     MetaNameStyle	genMetaCode = META_off;
     MetaPDU		*meta_pdus = NULL;
@@ -864,7 +866,6 @@ error:
 		
 		return 8;
 	}
-
 
 	/*
 	 * STEP 9

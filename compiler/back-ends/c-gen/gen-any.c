@@ -243,6 +243,7 @@ void PrintCAnyHashInitRoutine(FILE *src, FILE *hdr, ModuleList *mods,
     char *encRoutineName=NULL;
     char *decRoutineName=NULL;
     char *matchingRuleName=NULL;
+    char *compExtractorName=NULL;
     char *freeRoutineName=NULL;
     char *printRoutineName=NULL;
     int installedSomeHashes = FALSE;
@@ -453,6 +454,8 @@ REN -- 1/13/98 -- added the following: */
 							r->typeConvTbl[typeId].decodeRoutineName;
 						matchingRuleName = 
 							r->typeConvTbl[typeId].matchingRuleName;
+						compExtractorName = 
+							r->typeConvTbl[typeId].compExtractorName;
 						printRoutineName = 
 							r->typeConvTbl[typeId].printRoutineName;
 						switch (typeId)
@@ -484,6 +487,8 @@ REN -- 1/13/98 -- added the following: */
 							encRoutineName = ctdi->encodeRoutineName;
 							decRoutineName = ctdi->decodeRoutineName;
 							matchingRuleName = ctdi->matchingRuleName;
+							compExtractorName = ctdi->compExtractorName;
+							printRoutineName = ctdi->printRoutineName;
 							printRoutineName = ctdi->printRoutineName;
 							freeRoutineName = ctdi->freeRoutineName;
 							typeName = ctdi->cTypeName;

@@ -129,7 +129,9 @@ void PrintCValueInstantiation PROTO ((FILE *hdr, CRules *r, Value *v));
 void PrintConditionalIncludeOpen PROTO ((FILE *f, char *fileName));
 void PrintConditionalIncludeClose PROTO ((FILE *f, char *fileName));
 void PrintMatchingRule PROTO ((FILE* src, FILE* hdr, CRules* r,
-				Module* m ,TypeDef* td,long *longJmpVal));
+				Module* m ,TypeDef* td));
+void PrintComponentExtractor PROTO ((FILE* src, FILE* hdr, CRules* r,
+				Module* m ,TypeDef* td));
 
 extern EncRulesType GetEncRulesType();
 
@@ -143,6 +145,9 @@ static void PrintCSrcComment PROTO ((FILE *src, Module *m));
 static void PrintCSrcIncludes PROTO ((FILE *src, Module *m, ModuleList *mods));
 static void PrintCHdrComment PROTO ((FILE *hdr, Module *m));
 static void PrintCHdrObjectDeclaration_and_Init PROTO ((FILE *hdr, Module *m, CRules *r));
+extern void PrintCTypeIdDef PROTO ((FILE*, CRules*, Module*, TypeDef*));
+extern void PrintSyntaxLoader PROTO ((FILE*, FILE*, CRules*, Module*, TypeDef*));
+
 //RWC;static void PrintCHdrObjectField PROTO ((FILE *hdr, Module *m, CRules *r, char *objName, ObjectAssignmentField *oaf));
 //extern short ImportedFilesG;
 /*
@@ -217,8 +222,12 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
     {
 	SetEncRules(*GetEncRules());
 
-        if (printTypes)
+        if (printTypes){
             PrintCTypeDef (hdr, r, m, td);
+            /* print C structures for identifiers used by GSER */
+//            if ( GetEncRulesType() == GSER )
+//                PrintCTypeIdDef (hdr, r, m, td);
+        }
 
         /* for PDU type or types ref'd with ANY/ANY DEF BY */
         if (printEncoders && ((td->anyRefs != NULL) || td->cTypeDefInfo->isPdu))
@@ -229,21 +238,25 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
             PrintCDecoder (src, hdr, r, m, td, &longJmpVal);
 
         if (printEncoders)
-		{
+	{
             PrintCContentEncoder (src, hdr, r, m, td);
 			//if (td->bHasTableConstraint)
 			//	PrintCTableConstraintEncoder (src, hdr, m, td);		// Deepak: 25/Mar/2003
-		}
+	}
 
         if (printDecoders)
-		{
+	{
             PrintCContentDecoder (src, hdr, r, m, td, &longJmpVal);
-			//if (td->bHasTableConstraint)
-			//	PrintCTableConstraintDecoder (src, hdr, m, td);		// Deepak: 25/Mar/2003
-		}
+		//if (td->bHasTableConstraint)
+		//	PrintCTableConstraintDecoder (src, hdr, m, td);		// Deepak: 25/Mar/2003
+	}
 
-	if ( GetEncRulesType() == GSER )
-		PrintMatchingRule(src, hdr, r, m ,td, &longJmpVal);
+	if ( GetEncRulesType() == GSER ) {
+		PrintMatchingRule( src, hdr, r, m ,td );
+		PrintComponentExtractor( src, hdr, r, m ,td );
+		if ( strcmp( m->modId->name,td->cTypeDefInfo->cTypeName )==0 )
+			PrintSyntaxLoader( src, hdr, r, m, td );
+	}
 
         if (printPrinters)
             PrintCPrinter (src, hdr, r, mods, m, td);
@@ -259,8 +272,8 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
             case BASICTYPE_CHOICE:
             case BASICTYPE_SET:
             case BASICTYPE_SEQUENCE:
-			case BASICTYPE_SEQUENCET:	// Deepak: 30/Nov/2002
-			case BASICTYPE_OBJECTCLASS:	// Deepak: 14/Mar/2003
+		case BASICTYPE_SEQUENCET:	// Deepak: 30/Nov/2002
+		case BASICTYPE_OBJECTCLASS:	// Deepak: 14/Mar/2003
                 fprintf (src, "\n");
                 /* fall through */
 
@@ -277,13 +290,13 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
             case BASICTYPE_ENUMERATED:  /* library type */
             case BASICTYPE_ANYDEFINEDBY:  /* ANY types */
             case BASICTYPE_ANY:
-			case BASICTYPE_NUMERIC_STR:		/* library type */
-			case BASICTYPE_PRINTABLE_STR:	/* library type */
-			case BASICTYPE_IA5_STR:			/* library type */
-			case BASICTYPE_BMP_STR:			/* library type */
-			case BASICTYPE_UNIVERSAL_STR:	/* library type */
-			case BASICTYPE_UTF8_STR:		/* library type */
-			case BASICTYPE_T61_STR:			/* library type */
+		case BASICTYPE_NUMERIC_STR:		/* library type */
+		case BASICTYPE_PRINTABLE_STR:	/* library type */
+		case BASICTYPE_IA5_STR:			/* library type */
+		case BASICTYPE_BMP_STR:			/* library type */
+		case BASICTYPE_UNIVERSAL_STR:	/* library type */
+		case BASICTYPE_UTF8_STR:		/* library type */
+		case BASICTYPE_T61_STR:			/* library type */
                 fprintf (hdr, "\n");
                 break;
 		

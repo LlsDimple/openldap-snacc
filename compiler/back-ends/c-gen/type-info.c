@@ -200,6 +200,7 @@ FillCTypeDefInfo PARAMS ((r, m, td),
     ctdi->encodeRoutineName = NULL;
     ctdi->decodeRoutineName = NULL;
     ctdi->matchingRuleName = NULL;
+    ctdi->compExtractorName = NULL;
     ctdi->freeRoutineName = NULL;
 
 
@@ -264,6 +265,14 @@ FillCTypeDefInfo PARAMS ((r, m, td),
             Malloc (strlen (ctdi->cTypeName) + strlen (r->matchingRuleBaseName) + 1);
         strcpy (ctdi->matchingRuleName, r->matchingRuleBaseName);
         strcat (ctdi->matchingRuleName, ctdi->cTypeName);
+    }
+
+    if (ctdi->compExtractorName == NULL)
+    {
+        ctdi->compExtractorName =
+            Malloc (strlen (ctdi->cTypeName) + strlen (r->compExtractorBaseName) + 1);
+        strcpy (ctdi->compExtractorName, r->compExtractorBaseName);
+        strcat (ctdi->compExtractorName, ctdi->cTypeName);
     }
 
     if (ctdi->printRoutineName == NULL)
@@ -333,6 +342,7 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
     ctri->encodeRoutineName = tmpCtdi->encodeRoutineName;
     ctri->decodeRoutineName = tmpCtdi->decodeRoutineName;
     ctri->matchingRuleName = tmpCtdi->matchingRuleName;
+    ctri->compExtractorName = tmpCtdi->compExtractorName;
     ctri->freeRoutineName = tmpCtdi->freeRoutineName;
     ctri->isEncDec = tmpCtdi->isEncDec;
 
@@ -419,6 +429,7 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
             ctri->encodeRoutineName = tmpCtdi->encodeRoutineName;
             ctri->decodeRoutineName = tmpCtdi->decodeRoutineName;
             ctri->matchingRuleName = tmpCtdi->matchingRuleName;
+            ctri->compExtractorName = tmpCtdi->compExtractorName;
             ctri->freeRoutineName = tmpCtdi->freeRoutineName;
             ctri->isEncDec = tmpCtdi->isEncDec;
             ctri->optTestRoutineName = tmpCtdi->optTestRoutineName;
@@ -449,6 +460,10 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
             ctri->matchingRuleName = Malloc (strlen (r->matchingRuleBaseName)+ strlen (ctri->cTypeName) + 1);
             strcpy (ctri->matchingRuleName, r->matchingRuleBaseName);
             strcat (ctri->matchingRuleName, ctri->cTypeName);
+
+            ctri->compExtractorName = Malloc (strlen (r->matchingRuleBaseName)+ strlen (ctri->cTypeName) + 1);
+            strcpy (ctri->compExtractorName, r->matchingRuleBaseName);
+            strcat (ctri->compExtractorName, ctri->cTypeName);
 
             ctri->freeRoutineName = Malloc (strlen (ctri->cTypeName) + strlen (r->freeRoutineBaseName) + 1);
             strcpy (ctri->freeRoutineName, r->freeRoutineBaseName);
@@ -502,6 +517,10 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
             ctri->matchingRuleName = Malloc (strlen (r->matchingRuleBaseName)+ strlen (ctri->cTypeName) + 1);
             strcpy (ctri->matchingRuleName, r->matchingRuleBaseName);
             strcat (ctri->matchingRuleName, ctri->cTypeName);
+
+            ctri->compExtractorName = Malloc (strlen (r->matchingRuleBaseName)+ strlen (ctri->cTypeName) + 1);
+            strcpy (ctri->compExtractorName, r->matchingRuleBaseName);
+            strcat (ctri->compExtractorName, ctri->cTypeName);
 
             ctri->freeRoutineName = Malloc (strlen (ctri->cTypeName) + strlen (r->freeRoutineBaseName) + 1);
             strcpy (ctri->freeRoutineName, r->freeRoutineBaseName);
@@ -937,6 +956,10 @@ void ParseTypeDefAttribs PARAMS ((ctdi, attrList),
 			ctdi->matchingRuleName = pDirective->value.stringVal;
 			break;
 
+		case CompExtractorName:
+			ctdi->compExtractorName = pDirective->value.stringVal;
+			break;
+
 		case FreeRoutineName:
 			ctdi->freeRoutineName = pDirective->value.stringVal;
 			break;
@@ -1040,6 +1063,10 @@ void ParseTypeRefAttribs PARAMS ((ctri, attrList),
 			ctri->matchingRuleName = pDirective->value.stringVal;
 			break;
 
+		case CompExtractorName:
+			ctri->compExtractorName = pDirective->value.stringVal;
+			break;
+
 		case FreeRoutineName:
 			ctri->freeRoutineName = pDirective->value.stringVal;
 			break;
@@ -1056,6 +1083,7 @@ void ParseTypeRefAttribs PARAMS ((ctri, attrList),
 				ctri->encodeRoutineName = "EncAsnBigInt";
 				ctri->decodeRoutineName = "DecAsnBigInt";
 				ctri->matchingRuleName = "MatchingAsnBigInt";
+				ctri->compExtractorName = "ExtractingAsnBigInt";
 				ctri->freeRoutineName = "FreeAsnBigInt";
 			}
 			break;

@@ -98,9 +98,9 @@ typedef enum
         C_TYPEREF = 6,
         C_NO_TYPE = 7,
         C_TYPEDEF = 8,
-		C_OBJECTCLASSFIELDTYPE = 9,			// Deepak: 05/Feb/2003
-		C_OBJECTCLASS = 10,					// Deepak: 11/Mar/2003
-		C_MACROTYPE = 11					// Deepak: 17/Apr/2003
+	C_OBJECTCLASSFIELDTYPE = 9,// Deepak: 05/Feb/2003
+	C_OBJECTCLASS = 10,// Deepak: 11/Mar/2003
+	C_MACROTYPE = 11// Deepak: 17/Apr/2003
     } CTypeId; /* ENUMERATED { C_CHOICE (0), C_LIST (1), C_ANY (2), C_ANYDEFINEDBY (3), C_LIB (4), C_STRUCT (5), C_TYPEREF (6), C_NO_TYPE (7), C_TYPEDEF (8), C_OBJECTCLASSFIELDTYPE (9), C_OBJECTCLASS (10), C_MACROTYPE (11) }  */
 
 
@@ -154,6 +154,7 @@ typedef enum
 	EncodeRoutineName,			/* String value */
 	DecodeRoutineName,			/* String value */
 	MatchingRuleName,			/* String value */
+	CompExtractorName,			/* String value */
 	FreeRoutineName,			/* String value */
 	IsEncDec,					/* Boolean value */
 	GenTypeDef,					/* Boolean value */
@@ -972,6 +973,7 @@ typedef struct CTDI /* SEQUENCE */
     MyString encodeRoutineName; /* MyString */
     MyString decodeRoutineName; /* MyString */
     MyString matchingRuleName; /* MyString */
+    MyString compExtractorName; /* MyString */
     MyString freeRoutineName; /* MyString */
     AsnBool genPrintRoutine; /* BOOLEAN */
     AsnBool genEncodeRoutine; /* BOOLEAN */
@@ -1073,6 +1075,7 @@ typedef struct CTRI /* SEQUENCE */
     MyString encodeRoutineName; /* MyString */
     MyString decodeRoutineName; /* MyString */
     MyString matchingRuleName; /* MNyString */
+    MyString compExtractorName; /* MNyString */
     MyString freeRoutineName; /* MyString */
     AsnBool isEncDec; /* BOOLEAN */
 } CTRI;

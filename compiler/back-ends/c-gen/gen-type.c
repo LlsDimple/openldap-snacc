@@ -123,18 +123,11 @@ PrintCTypeDef PARAMS ((f, r, m, td),
         case C_ANYDEFINEDBY:
         case C_LIST:	// Deepak: following three stmts writes the equivalent C code in header file.
             fprintf (f, "typedef ");
-	    if ( (GetEncRulesType() == GSER) &&
-		strcmp(ctdi->defaultFieldName, "enum")!=0 &&
-		ctri->cTypeId != C_TYPEREF ){
-		    fprintf(f,"%s",GetEncRulePrefix());
-            }
-
             PrintCType (f, r, m, td, NULL, t);	// Deepak: Prints Basic ASN Data Type like NumericString or PrintableString or ENUMERATED etc...
-            fprintf (f, " %s;", ctdi->cTypeName);	// Deepak: Prints User Defined ASN Data Type like Order-number, Item-code etc...
+            fprintf (f, " %s;", ctdi->cTypeName);// Deepak: Prints User Defined ASN Data Type like Order-number, Item-code etc...
             PrintTypeComment (f, td, t);	// Deepak: actual asn code line is written in comments here
             fprintf (f, "\n\n");
             break;
-
 
         case C_CHOICE:
             PrintCChoiceTypeDef (f, r,  m, td);
@@ -145,9 +138,15 @@ PrintCTypeDef PARAMS ((f, r, m, td),
             fprintf (f,"%s %s", "struct", t->cTypeRefInfo->cTypeName);
             PrintTypeComment (f, td, t);
             fprintf (f,"\n{\n");
-            if ( GetEncRulesType() == GSER )
-		fprintf(f, "%s","\tchar* identifier;\n");
+            if ( GetEncRulesType() == GSER ){
+		fprintf(f, "%s","\tSyntax* syntax;\n");
+		fprintf(f, "%s","\tComponentDesc* comp_desc;\n");
+		fprintf(f, "%s","\tstruct berval identifier;\n");
+            }
             PrintCStructElmts (f, r, m, td, NULL, t);
+            if ( GetEncRulesType() == GSER )
+            fprintf (f, "} Component%s;", ctdi->cTypeName);
+	    else
             fprintf (f, "} %s;", ctdi->cTypeName);
             fprintf (f, "\n\n");
             break;
@@ -162,7 +161,7 @@ PrintCTypeDef PARAMS ((f, r, m, td),
             fprintf (f, "} %s;", ctdi->cTypeName);
             fprintf (f, "\n\n");
             break;
-		case C_MACROTYPE:
+	case C_MACROTYPE:
             fprintf (f, "typedef ");
             fprintf (f,"%s %s", "struct", t->cTypeRefInfo->cTypeName);
             PrintTypeComment (f, td, t);
@@ -177,6 +176,68 @@ PrintCTypeDef PARAMS ((f, r, m, td),
     }
 
 }  /* PrintCTypeDef */
+
+/*
+ * Print C data structures to be used for storing identifiers of GSER encoded
+ * ASN.1 stream
+ * Written by Sang Seok Lim (IBM)
+ */
+void
+PrintCTypeIdDef PARAMS ((f, r, m, td),
+    FILE *f _AND_
+    CRules *r _AND_
+    Module *m _AND_
+    TypeDef *td)
+{
+    CTRI *ctri;
+    CTDI *ctdi;
+    Type *t;
+
+    ctdi = td->cTypeDefInfo;
+    if ((ctdi == NULL) || (!ctdi->genTypeDef))
+        return;
+
+    t = td->type;
+    ctri = t->cTypeRefInfo;
+
+    PrintPreTypeDefStuff (f, r, m, td, NULL, t);
+
+    switch (ctri->cTypeId)
+    {
+        case C_TYPEREF:
+        case C_LIB:
+        case C_ANY:
+        case C_ANYDEFINEDBY:
+	    /* These types don't have identifiers, just returns*/
+	    break;
+        case C_LIST:
+            PrintCType (f, r, m, td, NULL, t);
+            fprintf (f, " %sID;", ctdi->cTypeName);
+            break;
+
+        case C_CHOICE:
+            PrintCChoiceIdTypeDef (f, r,  m, td);
+            break;
+
+        case C_STRUCT:
+            fprintf (f, "typedef ");
+            fprintf (f,"%s %sID", "struct", t->cTypeRefInfo->cTypeName);
+            fprintf (f,"\n{\n");
+            fprintf(f, "%s","\tchar* identifier;\n");
+            PrintCStructIdElmts (f, r, m, td, NULL, t);
+            fprintf (f, "} %sID;", ctdi->cTypeName);
+            fprintf (f, "\n\n");
+            break;
+
+        case C_OBJECTCLASS:
+	case C_MACROTYPE:
+            printf("Not supported YET!");
+            break;
+        default:
+            break;
+    }
+
+}	/* PrintCTypeIdentDef */
 
 
 
@@ -248,8 +309,10 @@ PrintCType PARAMS ((f, r, m, td, parent, t),
 		fprintf (f, "}");
 		break;
 	    }
-
-            fprintf (f,"%s", ctri->cTypeName);
+	    if ( GetEncRulesType() == GSER ) 
+                 fprintf (f,"Component%s",ctri->cTypeName+3/*take off "Asn"*/);
+            else
+                 fprintf (f,"%s", ctri->cTypeName);
             /*
              * print enum constant defs
              */
@@ -308,11 +371,6 @@ PrintCStructElmts PARAMS ((f, r, m, td, parent, t),
 
         ctri =  et->type->cTypeRefInfo;
         fprintf (f,"\t");  /* cheap, fixed indent */
-	if ( GetEncRulesType() == GSER && ctri->cTypeId == C_LIB &&
-	    t->basicType->choiceId != BASICTYPE_ENUMERATED ){
-		fprintf(f,"%s",GetEncRulePrefix());
-	}
-
         PrintCType (f, r, m, td, t, et->type);
         fprintf (f, " %s;", ctri->cFieldName);	// Deepak: identifier of the structure
         PrintTypeComment (f, td, et->type);	// Deepak: actual asn code line is written in comments here
@@ -320,6 +378,60 @@ PrintCStructElmts PARAMS ((f, r, m, td, parent, t),
     }
     parent = parent; /*AVOIDS warning.*/
 }  /* PrintCStructElmts */
+
+static void
+PrintCStructIdElmts PARAMS ((f, r, m, td, parent, t),
+    FILE *f _AND_
+    CRules *r _AND_
+    Module *m _AND_
+    TypeDef *td _AND_
+    Type *parent _AND_
+    Type *t)
+{
+    CTRI *ctri;
+    NamedType *et;
+    NamedTypeList *elmts;
+
+    elmts = t->basicType->a.sequence;
+
+    if ((elmts == NULL) || (LIST_EMPTY (elmts)))
+    {
+        fprintf (f, "    char unused; /* empty ASN1 SET/SEQ - not used */\n");
+    }
+
+    FOR_EACH_LIST_ELMT (et, elmts)
+    {
+
+        ctri =  et->type->cTypeRefInfo;
+        fprintf (f,"\t");
+
+	if ( ctri->cTypeId == C_TYPEREF ){
+		if ((t->basicType->a.localTypeRef->link->type->cTypeRefInfo->cTypeId == C_STRUCT)||
+                 (t->basicType->a.localTypeRef->link->type->cTypeRefInfo->cTypeId == C_CHOICE))
+		{
+			fprintf (f,"struct ");
+		}
+
+		fprintf (f,"%s", ctri->cTypeName);
+		fprintf (f, "ID ");
+
+		if (ctri->isPtr)
+			fprintf (f,"*");
+	}
+	else if( ctri->cTypeId != C_STRUCT ){
+		fprintf (f, "AsnID ");
+	}
+	else{
+		printf("Type Definition Error!!!\n");
+		exit(-1);
+	}
+
+        fprintf (f, " %s;", ctri->cFieldName);
+        fprintf (f, "\n");
+    }
+    parent = parent;
+}  /* PrintCStructIdElmts */
+
 
 
 static void		// Deepak: 17/Apr/2003
@@ -525,6 +637,23 @@ PrintCChoiceUnion PARAMS ((f, r, m, td, parent, t),
     fprintf (f, "    }");
 }  /* PrintCChoiceUnion */
 
+static void
+PrintCChoiceIdUnion PARAMS ((f, r, m, td, parent, t),
+    FILE *f _AND_
+    CRules *r _AND_
+    Module *m _AND_
+    TypeDef *td _AND_
+    Type *parent _AND_
+    Type *t)
+{
+    CTRI *ctri;
+    ctri = t->cTypeRefInfo;
+
+    fprintf (f,"    union %s\n    {\n",  ctri->cTypeName);
+    PrintCStructIdElmts (f, r, m, td, parent, t);
+    fprintf (f, "    }");
+}  /* PrintCChoiceIdUnion */
+
 
 static void
 PrintCChoiceTypeDef PARAMS ((f, r, m, td),
@@ -545,14 +674,45 @@ PrintCChoiceTypeDef PARAMS ((f, r, m, td),
     fprintf (f, "struct %s", choiceName);
     PrintTypeComment (f, td, t);
     fprintf (f,"\n{\n");
-    if ( GetEncRulesType() == GSER )
-	fprintf(f, "%s","\tchar* identifier;\n");
+    if ( GetEncRulesType() == GSER ) {
+	fprintf(f, "\tSyntax* syntax;\n");
+	fprintf(f, "\tComponentDesc* comp_desc;\n");
+	fprintf(f, "\tstruct berval identifier;\n");
+    }
     PrintCChoiceIdEnum (f, r, m, td, NULL, t);
     fprintf (f,"\n");
     PrintCChoiceUnion (f, r, m, td, NULL, t);
     fprintf (f, " %s;", ctri->cFieldName);
+    if ( GetEncRulesType() == GSER )
+    fprintf (f,"\n} Component%s;\n\n", choiceName);
+    else
     fprintf (f,"\n} %s;\n\n", choiceName);
 }  /* PrintCChoiceDef */
+
+static void
+PrintCChoiceIdTypeDef PARAMS ((f, r, m, td),
+    FILE *f _AND_
+    CRules *r _AND_
+    Module *m _AND_
+    TypeDef *td)
+{
+    CTRI *ctri;
+    char *choiceName;
+    Type *t;
+
+    t = td->type;
+    ctri =  t->cTypeRefInfo;
+    choiceName = td->cTypeDefInfo->cTypeName;
+
+    fprintf (f, "typedef ");
+    fprintf (f, "struct %sID", choiceName);
+    fprintf (f,"\n{\n");
+    fprintf(f, "%s","\tchar* identifier;\n");
+    PrintCChoiceIdUnion (f, r, m, td, NULL, t);
+    fprintf (f, " %s;", ctri->cFieldName);
+    fprintf (f,"\n} %sID;\n\n", choiceName);
+}  /* PrintCChoiceIdTypeDef */
+
 
 
 

@@ -476,9 +476,9 @@ PrintCContentEncoder PARAMS ((src, hdr, r, m, td),
   */
 	  PrintCChoiceEncodeCode (src, td, td->type, FIRST_LEVEL, valueArgNameG);
 	  if ( GetEncRulesType() == GSER ){
-	  	fprintf (src,"\tif(v->identifier){\n");
+	  	fprintf (src,"\tif(v_id->identifier){\n");
 		fprintf (src,"\tBufPutByteRvs(b,\' \');\n");
-		fprintf (src,"\tBufPutSegRvs(b, v->identifier, strlen(v->identifier));\n");
+		fprintf (src,"\tBufPutSegRvs(b, v_id->identifier, strlen(v_id->identifier));\n");
 		fprintf (src,"\t}\n");
 	  }
 	  fprintf (src,"\treturn %s;\n\n", encodedLenVarNameG);
@@ -510,8 +510,8 @@ PrintCContentEncoder PARAMS ((src, hdr, r, m, td),
 				FIRST_LEVEL, valueArgNameG);
 	if ( (GetEncRulesType() == GSER) ){
 		fprintf (src,"\tBufPutSegRvs(b,\" { \",3);\n");
-		fprintf (src,"\n\tif(v->identifier)\n");
-		fprintf (src,"\tBufPutSegRvs(b, v->identifier, strlen(v->identifier));\n");
+		fprintf (src,"\n\tif(v_id->identifier)\n");
+		fprintf (src,"\tBufPutSegRvs(b, v_id->identifier, strlen(v_id->identifier));\n");
 	}
 	fprintf (src,"\treturn %s;\n\n", encodedLenVarNameG);
 	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
@@ -586,8 +586,13 @@ PrintCEncoderPrototype PARAMS ((hdr, td),
     CTDI *ctdi;
 
     ctdi =  td->cTypeDefInfo;
-    //fprintf (hdr,"%s %s%sContent PROTO ((%s b, %s *v));", returnTypeG, GetEncRulePrefix(), ctdi->encodeRoutineName, bufTypeNameG, ctdi->cTypeName);
-	fprintf (hdr,"%s %s%sContent(%s b,%s *v);", returnTypeG, GetEncRulePrefix(), ctdi->encodeRoutineName, bufTypeNameG, ctdi->cTypeName);
+    if ( GetEncRulesType() == GSER )
+        fprintf (hdr,"%s %s%sContent(%s b,%s *v, %sID *v_id);", returnTypeG,
+		GetEncRulePrefix(), ctdi->encodeRoutineName, bufTypeNameG,
+		ctdi->cTypeName,ctdi->cTypeName);
+    else
+        fprintf (hdr,"%s %s%sContent(%s b,%s *v);", returnTypeG, GetEncRulePrefix(),
+		ctdi->encodeRoutineName, bufTypeNameG, ctdi->cTypeName);
 
 }  /*  PrintCEncoderPrototype */
 
@@ -603,9 +608,14 @@ PrintCEncoderDeclaration PARAMS ((src, td),
 {
     CTDI *ctdi;
 
-	ctdi =  td->cTypeDefInfo;
-//	fprintf (src,"%s\n%s%sContent PARAMS ((b, v),\n%s b _AND_\n%s *v)\n", returnTypeG, GetEncRulePrefix(), ctdi->encodeRoutineName, bufTypeNameG, ctdi->cTypeName);ctdi =  td->cTypeDefInfo;
-    fprintf (src,"%s %s%sContent(%s b,%s *v)\n", returnTypeG, GetEncRulePrefix(), ctdi->encodeRoutineName, bufTypeNameG, ctdi->cTypeName);
+    ctdi =  td->cTypeDefInfo;
+    if ( GetEncRulesType() == GSER )
+        fprintf (src,"%s %s%sContent(%s b,%s *v, %sID v_id)\n", returnTypeG,
+		GetEncRulePrefix(), ctdi->encodeRoutineName, bufTypeNameG,
+		ctdi->cTypeName, ctdi->cTypeName);
+    else
+        fprintf (src,"%s %s%sContent(%s b,%s *v)\n", returnTypeG,GetEncRulePrefix(),
+		ctdi->encodeRoutineName, bufTypeNameG, ctdi->cTypeName);
 
 }  /*  PrintCEncoderDeclaration */
 
@@ -762,6 +772,7 @@ PrintCElmtEncodeCode PARAMS ((src, td, parent, e, level, varName),
 {
     CTRI *ctri;
     char elmtVarRef[MAX_VAR_REF];
+    char elmtVarRef2[MAX_VAR_REF];
     char idVarRef[MAX_VAR_REF];
     enum BasicTypeChoiceId tmpTypeId;
     Type *tmpType;
@@ -866,10 +877,17 @@ PrintCElmtEncodeCode PARAMS ((src, td, parent, e, level, varName),
              /* NOTE: ANY DEFINED BY must be directly in the parent (not ref)*/
             if (tmpType->cTypeRefInfo->cTypeId != C_ANY)
             {
-				if(tmpType->basicType->choiceId == BASICTYPE_ENUMERATED) // Deepak: 19/Apr/2003 only if added,
-					fprintf (src, "\t%s = %s%sContent(b,(AsnInt *)%s);\n", itemLenNameG, GetEncRulePrefix(), ctri->encodeRoutineName, elmtVarRef);
-				else
-					fprintf (src, "\t%s = %s%sContent(b,%s);\n", itemLenNameG, GetEncRulePrefix(), ctri->encodeRoutineName, elmtVarRef);
+		if(tmpType->basicType->choiceId == BASICTYPE_ENUMERATED)
+			fprintf (src, "\t%s = %s%sContent(b,(AsnInt *)%s);\n", itemLenNameG, GetEncRulePrefix(), ctri->encodeRoutineName, elmtVarRef);
+		else {
+    			MakeVarPtrRef (genEncCRulesG, td, parent, e->type, varName,
+					elmtVarRef);
+    			MakeVarPtrRef (genEncCRulesG, td, parent, e->type, "v_id",
+					elmtVarRef2);
+			fprintf (src, "\t%s = %s%sContent(b,%s,%s);\n",
+				itemLenNameG, GetEncRulePrefix(),
+				ctri->encodeRoutineName, elmtVarRef, elmtVarRef2);
+		}
                 break;
             }
             else  /* fall through */
@@ -885,8 +903,16 @@ PrintCElmtEncodeCode PARAMS ((src, td, parent, e, level, varName),
 
 
         case C_LIB:
-			fprintf (src, "\t%s = %s%sContent(b,%s);\n", itemLenNameG, 
+	    if ( GetEncRulesType() == GSER ) { 
+    		MakeVarPtrRef (genEncCRulesG, td, parent, e->type, varName, elmtVarRef);
+    		MakeVarPtrRef (genEncCRulesG, td, parent, e->type, "v_id", elmtVarRef2);
+		fprintf (src, "\t%s = %s%sContent(b,%s,%s);\n", itemLenNameG, 
+		   GetEncRulePrefix(), ctri->encodeRoutineName, elmtVarRef,elmtVarRef2);
+	    }
+	    else {
+		fprintf (src, "\t%s = %s%sContent(b,%s);\n", itemLenNameG, 
 		   GetEncRulePrefix(), ctri->encodeRoutineName, elmtVarRef);
+	    }
 	  break;
 
         case C_CHOICE:
@@ -1014,6 +1040,7 @@ PrintCListEncoderCode PARAMS ((src, td, t, level, varName),
 {
     CTRI *ctri;
     char *elmtVarRef = "component";
+    char *elmtVarRef2 = "component2";
     Type *tmpType;
     char *itemLenName=NULL;
 
@@ -1053,7 +1080,7 @@ PrintCListEncoderCode PARAMS ((src, td, t, level, varName),
       if( GetEncRulesType() == GSER )
       	 fprintf (src,"\tBufPutSegRvs(b,\" }\",2);\n");
 
-      fprintf (src, "\tFOR_EACH_LIST_ELMT_RVS(component,%s)\n", varName);
+      fprintf (src, "\tFOR_EACH_LIST_ELMT_RVS(component,component2,%s\",\"v_id\")\n", varName);
       fprintf (src, "\t{\n");
 
       if( GetEncRulesType() == GSER )
@@ -1098,10 +1125,10 @@ PrintCListEncoderCode PARAMS ((src, td, t, level, varName),
         default:
 
       if ( GetEncRulesType() == GSER )
-            fprintf (src, "\t%s = %s%sContent(%s,(%s%s*)%s);\n", 
+            fprintf (src, "\t%s = %s%sContent(%s,(%s*)%s,(%sID*)%s);\n", 
 		     itemLenNameG, GetEncRulePrefix(), 
-		     ctri->encodeRoutineName, bufNameG, GetEncRulePrefix(),
-		     ctri->cTypeName, elmtVarRef);
+		     ctri->encodeRoutineName, bufNameG, ctri->cTypeName,
+			elmtVarRef,ctri->cTypeName,elmtVarRef2);
       else
             fprintf (src, "\t%s = %s%sContent(%s,(%s*)%s);\n", 
 		     itemLenNameG, GetEncRulePrefix(), 
@@ -1146,8 +1173,8 @@ PrintCListEncoderCode PARAMS ((src, td, t, level, varName),
 
       if ( GetEncRulesType() == GSER ){
       	fprintf (src,"\tBufPutSegRvs(b,\" { \",3);\n");
-	fprintf (src,"\tif( v->identifier != NULL )\n");
-      	fprintf (src,"\tBufPutSegRvs(b,v->identifier,strlen(v->identifier));\n");
+	fprintf (src,"\tif( v_id->identifier != NULL )\n");
+      	fprintf (src,"\tBufPutSegRvs(b,v_id->identifier,strlen(v_id->identifier));\n");
       }	
     level = level;  /* AVOIDS warning. */
 }  /*  PrintCListEncoderCode */
@@ -1189,26 +1216,26 @@ PrintCChoiceEncodeCode PARAMS ((src, td, t, level, varName),
 
     	if ( GetEncRulesType() == GSER ) {
 		if ( ctri->isPtr ) {
-			fprintf (src,"\tid = %s->%s.%s->identifier;\n",
-				varName,genEncCRulesG->choiceUnionFieldName,
+			fprintf (src,"\t\tid = %s->%s.%s->identifier;\n",
+				"v_id",genEncCRulesG->choiceUnionFieldName,
 				ctri->cFieldName);
-			fprintf (src,"\t%s->%s.%s->identifier = NULL;\n",
-				varName,genEncCRulesG->choiceUnionFieldName,
+			fprintf (src,"\t\t%s->%s.%s->identifier = NULL;\n",
+				"v_id",genEncCRulesG->choiceUnionFieldName,
 				ctri->cFieldName);
 		}
 		else{
-			fprintf (src,"\tid = %s->%s.%s.identifier;\n",
-				varName,genEncCRulesG->choiceUnionFieldName,
+			fprintf (src,"\t\tid = %s->%s.%s.identifier;\n",
+				"v_id",genEncCRulesG->choiceUnionFieldName,
 				ctri->cFieldName);
-			fprintf (src,"\t%s->%s.%s.identifier = NULL;\n",
-				varName,genEncCRulesG->choiceUnionFieldName,
+			fprintf (src,"\t\t%s->%s.%s.identifier = NULL;\n",
+				"v_id",genEncCRulesG->choiceUnionFieldName,
 				ctri->cFieldName);
 		}
     	}
         PrintCElmtEncodeCode (src, td, t, e, level+1, varName);
 	if ( GetEncRulesType() == GSER ){
-		fprintf (src, "\tBufPutByteRvs(b,\':\');\n");
-		fprintf (src, "\tBufPutSegRvs(b,id,strlen(id));\n");
+		fprintf (src, "\t\tBufPutByteRvs(b,\':\');\n");
+		fprintf (src, "\t\tBufPutSegRvs(b,id,strlen(id));\n");
 	}
         fprintf (src,"\tbreak;\n\n");
 

@@ -42,6 +42,7 @@ typedef struct CRules
     char *encodeRoutineBaseName;
     char *decodeRoutineBaseName;
     char *matchingRuleBaseName;
+    char *compExtractorBaseName;
     char *freeRoutineBaseName;
     CTDI typeConvTbl[BASICTYPE_OBJECTCLASSFIELDTYPE + 1];
 }  CRules;
