@@ -75,7 +75,8 @@ GEncAsnBitsContent PARAMS ((b, bits),
  */
 #ifdef LDAP_COMPONENT
 int
-GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnBitsContent PARAMS ((mem_op, b, result, bytesDecoded ),
+    void *mem_op _AND_
     GenBuf *b _AND_
     GAsnBits *result _AND_
     AsnLen *bytesDecoded )
@@ -85,7 +86,7 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
 	unsigned char set;
                                                                           
         *bytesDecoded = 0;
-        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+        if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		return -1;
         }
@@ -95,7 +96,7 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 
-        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+        if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		return -1;
         }
@@ -103,7 +104,7 @@ GDecAsnBitsContent PARAMS ((b, result, bytesDecoded ),
 	result->value.bits = data = peek_head;
 	result->value.bitLen = data_len = strLen;
 
-        if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
+        if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		return -1;
         }

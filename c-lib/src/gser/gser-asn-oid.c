@@ -43,6 +43,50 @@ LocateNextCompOid ( char* oid ) {
 	else return NULL ;
 }
 
+#ifdef LDAP_COMPONENT
+char*
+EncodeComponentOid( void* mem_op, char* gser_oid, int* len ) {
+	OID *tmpOid ,*listOid, *currOid;
+	char* pos;
+	AsnOid result;
+
+	result.octetLen = 0;
+	result.octs = NULL;
+
+	tmpOid = NULL;
+	listOid = NULL;
+	currOid = NULL;
+	for ( pos = gser_oid ; pos ; ) {
+		if( !tmpOid ) {
+			listOid = tmpOid = (OID*)malloc(sizeof(OID));
+		}
+		else {
+			tmpOid->next = (OID*)malloc(sizeof(OID));
+			tmpOid = tmpOid->next;
+		}
+		tmpOid->arcNum = atoi( pos );
+		if ( tmpOid->arcNum < 0 ) goto oid_free;
+		tmpOid->next = NULL;
+		pos = LocateNextCompOid(pos);
+	}
+
+	result.octetLen = EncodedOidLen ( listOid );
+	if ( result.octetLen <= 0 ) goto oid_free;
+	result.octs = (char*)CompAlloc( mem_op, result.octetLen );
+
+	BuildEncodedOid( listOid, &result );
+
+oid_free :
+	for ( currOid = listOid ; currOid ; ) {
+		tmpOid = currOid;
+		currOid = currOid->next;
+		free ( tmpOid );
+	}
+
+	*len = result.octetLen;
+	return result.octs;
+}
+#else
 char*
 EncodeComponentOid( char* gser_oid, int* len ) {
 	OID *tmpOid ,*listOid, *currOid;
@@ -85,10 +129,12 @@ oid_free :
 	*len = result.octetLen;
 	return result.octs;
 }
+#endif
 
 #ifdef LDAP_COMPONENT
 int
-GDecAsnOidContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnOidContent PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnOid *result _AND_
     AsnLen *bytesDecoded )
@@ -96,15 +142,14 @@ GDecAsnOidContent PARAMS ((b, result, bytesDecoded ),
 	char* peek_head;
 	int strLen = INDEFINITE_LEN;
 
-
-	strLen = LocateNextGSERToken(b,&peek_head, GSER_NO_COPY);
+	strLen = LocateNextGSERToken(mem_op,b,&peek_head, GSER_NO_COPY);
 
 	if ( strLen == INDEFINITE_LEN ){
 		Asn1Error("Not in the format of GSER encoded Relative OID\"\n");
 		return -1;
 	}
 
-	result->value.octs = EncodeComponentOid( peek_head, &strLen );
+	result->value.octs = EncodeComponentOid( mem_op, peek_head, &strLen );
 	result->value.octetLen = strLen;
 
 	if ( !result->value.octs ) return (-1);

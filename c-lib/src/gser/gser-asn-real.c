@@ -43,7 +43,8 @@ GEncAsnRealContent PARAMS ((b, real),
 
 #ifdef LDAP_COMPONENT
 int
-GDecAsnRealContent PARAMS ((b, result, bytesDecoded),
+GDecAsnRealContent PARAMS (( mem_op, b, result, bytesDecoded),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnReal  *result _AND_
     AsnLen *bytesDecoded )
@@ -55,7 +56,7 @@ GDecAsnRealContent PARAMS ((b, result, bytesDecoded),
 	char data[256];
 
 	*bytesDecoded = 0;
-	if( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
+	if( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		return -1;
 	}
@@ -75,7 +76,7 @@ GDecAsnRealContent PARAMS ((b, result, bytesDecoded),
 		mantissa = atof ( &peek_head[minus+1] );
 
 		/* parsing exponent */
-		if( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY )) ){
+		if( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("INTEGER : Token Reading ERROR\n");
 			return -1;
 		}

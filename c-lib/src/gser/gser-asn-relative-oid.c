@@ -23,7 +23,8 @@
 
 #ifdef LDAP_COMPONENT
 int
-GDecAsnRelativeOidContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnRelativeOidContent PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnRelativeOid *result _AND_
     AsnLen *bytesDecoded )
@@ -38,7 +39,7 @@ GDecAsnRelativeOidContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 	result->value.octetLen = strLen;
-	result->value.octs = Asn1Alloc(strLen+1);
+	result->value.octs = CompAlloc( mem_op, strLen+1 );
 	if ( !result->value.octs ) return -1;
 	BufCopy( result->value.octs, b, strLen );
 

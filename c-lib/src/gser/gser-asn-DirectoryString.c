@@ -27,11 +27,12 @@ GEncDirectoryStringContent PARAMS ((b, o),
 }
 
 /*
- * GSER Decodes the content of UTF8String
+ * GSER Decodes the content of DirectoryString
  */
 #ifdef LDAP_COMPONENT
 int
-GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
+GDecDirectoryStringContent PARAMS ((mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnOcts *result _AND_
     AsnLen *bytesDecoded )
@@ -40,7 +41,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
 	char* peek_head;
 	
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		return -1;
 	}
@@ -48,39 +49,39 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
 	*bytesDecoded += strLen;
 
 	if ( strncmp ( peek_head, "teletexString", sizeof ("teletexString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("DirectoryString : Token Reading ERROR\n");
 			return -1;
 		}
-		GDecTeletexStringContent( b, (GTeletexString*)result, bytesDecoded );
+		GDecTeletexStringContent( mem_op, b, (GTeletexString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "printableString", sizeof ("printableString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("DirectoryString : Token Reading ERROR\n");
 			return -1;
 		}
-		GDecPrintableStringContent( b, (GPrintableString*)result, bytesDecoded );
+		GDecPrintableStringContent( mem_op,  b, (GPrintableString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "bmpString", sizeof ("bmpString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("DirectoryString : Token Reading ERROR\n");
 			return -1;
 		}
-		GDecBMPStringContent( b, (GBMPString*)result, bytesDecoded);
+		GDecBMPStringContent( mem_op, b, (GBMPString*)result, bytesDecoded);
 	} 
 	else if ( strncmp ( peek_head, "universalString", sizeof ("universalString") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("DirectoryString : Token Reading ERROR\n");
 			return -1;
 		}
-		GDecUniversalStringContent( b, (GUniversalString*)result, bytesDecoded );
+		GDecUniversalStringContent( mem_op, b, (GUniversalString*)result, bytesDecoded );
 	} 
 	else if ( strncmp ( peek_head, "uTF8String", sizeof ("uTF8String") ) == 0 ){
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("DirectoryString : Token Reading ERROR\n");
 			return -1;
 		}
-		GDecUTF8StringContent( b, (GUTF8String*)result, bytesDecoded );
+		GDecUTF8StringContent( mem_op, b, (GUTF8String*)result, bytesDecoded );
 	}
 	else {
 		if ( *peek_head != '\"'){
@@ -88,7 +89,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
 			return -1;
 		}
 		/* Read StringValue */
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("StringValue : Token Reading ERROR\n");
 			return -1;
 		}
@@ -102,7 +103,7 @@ GDecDirectoryStringContent PARAMS ((b, result, bytesDecoded ),
 			return -1;
 		}
 
-		if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+		if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 			Asn1Error("StringValue : Token Reading ERROR\n");
 			return -1;
 		}

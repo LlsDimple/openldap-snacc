@@ -31,11 +31,11 @@ AsnLen BEncNumericString(GenBuf *b, NumericString *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecNumericStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+BDecNumericStringContent( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 			  NumericString *result, AsnLen *bytesDecoded )
 {
 	int rc;
-	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded  );
+	rc = BDecAsnOctsContent ( mem_op, b, tagId, len, result, bytesDecoded  );
 	if (chkNumericString (result) < 0)
 	{
 		Asn1Error ("BDecNumericStringContent: ERROR - Format Error");
@@ -59,7 +59,7 @@ void BDecNumericStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 
 #ifdef LDAP_COMPONENT
 int
-BDecNumericString(GenBuf *b, NumericString *result, AsnLen *bytesDecoded)
+BDecNumericString( void* mem_op, GenBuf *b, NumericString *result, AsnLen *bytesDecoded)
 {
     AsnTag tag;
     AsnLen elmtLen1;
@@ -73,7 +73,7 @@ BDecNumericString(GenBuf *b, NumericString *result, AsnLen *bytesDecoded)
     }
 
     elmtLen1 = BDecLen (b, bytesDecoded);
-    return BDecNumericStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecNumericStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 
 } /* end of BDecNumericString() */
 #else

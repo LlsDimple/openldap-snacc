@@ -51,8 +51,8 @@ AsnLen BEncAsnInt PROTO ((GenBuf *b, AsnInt *data));
 AsnLen BEncAsnIntContent PROTO ((GenBuf *b, AsnInt *data));
 
 #ifdef LDAP_COMPONENT
-int BDecAsnInt PROTO ((GenBuf *b, AsnInt *result, AsnLen *bytesDecoded ));
-int BDecAsnIntContent PROTO ((GenBuf *b, AsnTag tag, AsnLen elmtLen, AsnInt  *result, AsnLen *bytesDecoded ));
+int BDecAsnInt PROTO (( void* mem_op, GenBuf *b, AsnInt *result, AsnLen *bytesDecoded ));
+int BDecAsnIntContent PROTO (( void* mem_op, GenBuf *b, AsnTag tag, AsnLen elmtLen, AsnInt  *result, AsnLen *bytesDecoded ));
 #else
 void BDecAsnInt PROTO ((GenBuf *b, AsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecAsnIntContent PROTO ((GenBuf *b, AsnTag tag, AsnLen elmtLen, AsnInt  *result, AsnLen *bytesDecoded, ENV_TYPE env));
@@ -68,8 +68,8 @@ AsnLen BEncUAsnInt PROTO ((GenBuf *b, UAsnInt *data));
 AsnLen BEncUAsnIntContent PROTO ((GenBuf *b, UAsnInt *data));
 
 #ifdef LDAP_COMPONENT
-int BDecUAsnInt PROTO ((GenBuf *b, UAsnInt *result, AsnLen *bytesDecoded ));
-int BDecUAsnIntContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UAsnInt *result, AsnLen *bytesDecoded ));
+int BDecUAsnInt PROTO (( void* mem_op, GenBuf *b, UAsnInt *result, AsnLen *bytesDecoded ));
+int BDecUAsnIntContent PROTO (( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, UAsnInt *result, AsnLen *bytesDecoded ));
 #else
 void BDecUAsnInt PROTO ((GenBuf *b, UAsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecUAsnIntContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UAsnInt *result, AsnLen *bytesDecoded, ENV_TYPE env));

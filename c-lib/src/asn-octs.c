@@ -101,7 +101,8 @@ BEncAsnOcts PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnOcts PARAMS ((b, result, bytesDecoded ),
+BDecAsnOcts PARAMS ((mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnOcts    *result _AND_
     AsnLen *bytesDecoded )
@@ -116,7 +117,7 @@ BDecAsnOcts PARAMS ((b, result, bytesDecoded ),
     }
 
     elmtLen = BDecLen (b, bytesDecoded );
-    return BDecAsnOctsContent (b, tag, elmtLen, result, bytesDecoded );
+    return BDecAsnOctsContent ( mem_op, b, tag, elmtLen, result, bytesDecoded );
 
 }  /* BDecAsnOcts */
 #else
@@ -280,7 +281,8 @@ FillOctetStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
  */
 #ifdef LDAP_COMPONENT
 static int
-BDecConsAsnOcts PARAMS ((b, len, result, bytesDecoded ),
+BDecConsAsnOcts PARAMS (( mem_op, b, len, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnLen len _AND_
     AsnOcts *result _AND_
@@ -300,7 +302,7 @@ BDecConsAsnOcts PARAMS ((b, len, result, bytesDecoded ),
     result->octetLen = strStkG.totalByteLen;
 
     /* alloc str for all octs pieces with extra byte for null terminator */
-    bufCurr = result->octs = Asn1Alloc (strStkG.totalByteLen +1);
+    bufCurr = result->octs = CompAlloc (mem_op, strStkG.totalByteLen +1);
     CheckAsn1Alloc (result->octs);
 
     /* copy octet str pieces into single blk */
@@ -359,7 +361,8 @@ BDecConsAsnOcts PARAMS ((b, len, result, bytesDecoded, env),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+BDecAsnOctsContent PARAMS (( mem_op, b, tagId, len, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnTag tagId _AND_
     AsnLen len _AND_
@@ -382,7 +385,7 @@ BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
      */
     if (TAG_IS_CONS (tagId))
 #ifdef LDAP_COMPONENT
-        BDecConsAsnOcts (b, len, result, bytesDecoded );
+        BDecConsAsnOcts ( mem_op, b, len, result, bytesDecoded );
 #else
         BDecConsAsnOcts (b, len, result, bytesDecoded, env);
 #endif
@@ -399,10 +402,11 @@ BDecAsnOctsContent PARAMS ((b, tagId, len, result, bytesDecoded, env),
 #endif
         }
         result->octetLen = len;
-        result->octs =  Asn1Alloc (len+1);
 #ifdef LDAP_COMPONENT
+        result->octs =  CompAlloc (mem_op,len+1);
         CheckAsn1Alloc (result->octs );
 #else
+        result->octs =  Asn1Alloc (len+1);
         CheckAsn1Alloc (result->octs, env);
 #endif
         BufCopy (result->octs, b, len);

@@ -83,7 +83,8 @@ BEncAsnBool PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnBool PARAMS ((b, result, bytesDecoded ),
+BDecAsnBool PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnBool    *result _AND_
     AsnLen *bytesDecoded )
@@ -97,7 +98,7 @@ BDecAsnBool PARAMS ((b, result, bytesDecoded ),
 	 return -1;
     }
     elmtLen = BDecLen (b, bytesDecoded );
-    return BDecAsnBoolContent (b, tag, elmtLen, result, bytesDecoded );
+    return BDecAsnBoolContent ( mem_op, b, tag, elmtLen, result, bytesDecoded );
 
 }  /* BDecAsnBool */
 #else
@@ -140,7 +141,8 @@ BEncAsnBoolContent PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnBoolContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+BDecAsnBoolContent PARAMS (( mem_op, b, tagId, len, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnTag tagId _AND_
     AsnLen len _AND_

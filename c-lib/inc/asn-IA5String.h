@@ -12,8 +12,8 @@ AsnLen BEncIA5String PROTO ((GenBuf *b, IA5String *v));
 AsnLen BEncIA5StringContent PROTO ((GenBuf *b, IA5String *octs));
 
 #ifdef LDAP_COMPONENT
-int BDecIA5String PROTO ((GenBuf *b, IA5String *result, AsnLen *bytesDecoded ));
-int BDecIA5StringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, IA5String *result, AsnLen *bytesDecoded ));
+int BDecIA5String PROTO (( void* mem_op, GenBuf *b, IA5String *result, AsnLen *bytesDecoded ));
+int BDecIA5StringContent PROTO (( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, IA5String *result, AsnLen *bytesDecoded ));
 #else
 void BDecIA5String PROTO ((GenBuf *b, IA5String *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecIA5StringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, IA5String *result, AsnLen *bytesDecoded, ENV_TYPE env));

@@ -27,11 +27,11 @@ AsnLen BEncUniversalString(GenBuf *b, UniversalString *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecUniversalStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+BDecUniversalStringContent(void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 				UniversalString *result, AsnLen *bytesDecoded )
 {
 	int rc;
-	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	rc = BDecAsnOctsContent ( mem_op, b, tagId, len, result, bytesDecoded );
 	if ((result->octetLen % 4) != 0)
 	{
         Asn1Error ("BDecUniversalStringContent: ERROR - Invalid UniversalString Format");
@@ -40,7 +40,7 @@ BDecUniversalStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 	return rc;
 } /* end of BDecUniversalStringContent() */
 
-int BDecUniversalString(GenBuf *b, UniversalString *result,
+int BDecUniversalString( void* mem_op, GenBuf *b, UniversalString *result,
 					 AsnLen *bytesDecoded )
 {
 	AsnTag tag;
@@ -55,7 +55,7 @@ int BDecUniversalString(GenBuf *b, UniversalString *result,
 	}
 
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecUniversalStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecUniversalStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 
 }  /* BDecUniversalString */
 #else

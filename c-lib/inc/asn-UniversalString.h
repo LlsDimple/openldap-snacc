@@ -12,8 +12,8 @@ AsnLen BEncUniversalString PROTO ((GenBuf *b, UniversalString *v));
 AsnLen BEncUniversalStringContent PROTO ((GenBuf *b, UniversalString *octs));
 
 #ifdef LDAP_COMPONENT
-int BDecUniversalString PROTO ((GenBuf *b, UniversalString *result, AsnLen *bytesDecoded ));
-int BDecUniversalStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UniversalString *result, AsnLen *bytesDecoded ));
+int BDecUniversalString PROTO ((void* mem_op, GenBuf *b, UniversalString *result, AsnLen *bytesDecoded ));
+int BDecUniversalStringContent PROTO ((void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, UniversalString *result, AsnLen *bytesDecoded ));
 #else
 void BDecUniversalString PROTO ((GenBuf *b, UniversalString *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecUniversalStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UniversalString *result, AsnLen *bytesDecoded, ENV_TYPE env));

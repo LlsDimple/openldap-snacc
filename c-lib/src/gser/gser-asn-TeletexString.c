@@ -24,7 +24,8 @@ GEncTeletexStringContent PARAMS ((b, o),
  */
 #ifdef LDAP_COMPONENT
 int
-GDecTeletexStringContent PARAMS ((b, result, bytesDecoded ),
+GDecTeletexStringContent PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GTeletexString *result _AND_
     AsnLen *bytesDecoded )
@@ -33,7 +34,7 @@ GDecTeletexStringContent PARAMS ((b, result, bytesDecoded ),
 	char* peek_head;
 	
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("TeletexString : Token Reading ERROR\n");
 		return -1;
 	}
@@ -45,7 +46,7 @@ GDecTeletexStringContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 	/* Read StringValue */
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_COPY )) ){
 		Asn1Error("TeletexString : Token Reading ERROR\n");
 		return -1;
 	}
@@ -55,7 +56,7 @@ GDecTeletexStringContent PARAMS ((b, result, bytesDecoded ),
 	result->value.octs = peek_head;
 	result->value.octetLen = strLen;
 
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("TeletexString : Token Reading ERROR\n");
 		return -1;
 	}

@@ -30,7 +30,8 @@ GEncAsnNullContent PARAMS ((b, data),
 
 #ifdef LDAP_COMPONENT
 int
-GDecAsnNullContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnNullContent PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnNull *result _AND_
     AsnLen *bytesDecoded )
@@ -40,13 +41,12 @@ GDecAsnNullContent PARAMS ((b, result, bytesDecoded ),
 
 	*bytesDecoded = 0;
 	data = BufGetSeg(b,&len);
-	if ( BufReadError(b) )
-	{
+	if ( BufReadError(b) ) {
 		Asn1Error("NULL Read Error\n");
 		return -1;
 	}
 
-	if ( strncmp(data,"NULL", 4) != 0 ){
+	if ( strncmp(data,"NULL", 4) != 0 ) {
 		Asn1Error("Not in the format of NULL\n");
 		return -1;
 	}

@@ -26,7 +26,11 @@ void ASN1Terminate()
 	anyIntHashTblG = NULL;
 
 	/* Releases the nibble memory completely */
+#ifdef LDAP_COMPONENT
+	ShutdownNibbleMem(NULL);
+#else
 	ShutdownNibbleMem();
+#endif
 }
 
 void FreeHashTable(Table* pTable)

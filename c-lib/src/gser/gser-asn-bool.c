@@ -45,7 +45,8 @@ GEncAsnBoolContent PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-GDecAsnBoolContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnBoolContent PARAMS ((mem_op, b, result, bytesDecoded ),
+    void *mem_op _AND_
     GenBuf *b _AND_
     GAsnBool  *result _AND_
     AsnLen  *bytesDecoded )

@@ -11,8 +11,8 @@ AsnLen BEncTeletexString PROTO ((GenBuf *b, TeletexString *v));
 AsnLen BEncTeletexStringContent PROTO ((GenBuf *b, AsnOcts *octs));
 
 #ifdef LDAP_COMPONENT
-int BDecTeletexString PROTO ((GenBuf *b, TeletexString *result, AsnLen *bytesDecoded));
-int BDecTeletexStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded ));
+int BDecTeletexString PROTO ((void* mem_op, GenBuf *b, TeletexString *result, AsnLen *bytesDecoded));
+int BDecTeletexStringContent PROTO ((void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded ));
 #else
 void BDecTeletexString PROTO ((GenBuf *b, TeletexString *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecTeletexStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, AsnOcts *result, AsnLen *bytesDecoded, ENV_TYPE env));

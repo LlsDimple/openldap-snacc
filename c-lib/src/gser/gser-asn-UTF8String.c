@@ -60,7 +60,8 @@ UnEscapeDquote PARAMS (( str , strLen ),
  */
 #ifdef LDAP_COMPONENT
 int
-GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
+GDecUTF8StringContent PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GUTF8String *result _AND_
     AsnLen *bytesDecoded )
@@ -69,7 +70,7 @@ GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
 	char* peek_head;
 	
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		return -1;
 	}
@@ -81,7 +82,7 @@ GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 	/* Read StringValue */
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		return -1;
 	}
@@ -100,7 +101,7 @@ GDecUTF8StringContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("UTF8String : Token Reading ERROR\n");
 		return -1;
 	}

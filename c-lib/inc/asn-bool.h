@@ -33,8 +33,8 @@ AsnLen BEncAsnBoolContent PROTO ((GenBuf *b, AsnBool *data));
 
 
 #ifdef LDAP_COMPONENT
-int BDecAsnBoolContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnBool *result, AsnLen *bytesDecoded ));
-int BDecAsnBool PROTO ((GenBuf *b, AsnBool *result, AsnLen *bytesDecoded ));
+int BDecAsnBoolContent PROTO (( void* mem_op, GenBuf *b, AsnTag tag, AsnLen len, AsnBool *result, AsnLen *bytesDecoded ));
+int BDecAsnBool PROTO (( void* mem_op, GenBuf *b, AsnBool *result, AsnLen *bytesDecoded ));
 #else
 void BDecAsnBoolContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnBool *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecAsnBool PROTO ((GenBuf *b, AsnBool *result, AsnLen *bytesDecoded, ENV_TYPE env));

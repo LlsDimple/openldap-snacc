@@ -25,11 +25,11 @@ AsnLen BEncBMPString(GenBuf *b, BMPString *v)
 
 
 #ifdef LDAP_COMPONENT
-int BDecBMPStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+int BDecBMPStringContent( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 				 BMPString *result, AsnLen *bytesDecoded )
 {
 	int rc;
-	rc = BDecAsnOctsContent(b, tagId, len, result, bytesDecoded );
+	rc = BDecAsnOctsContent( mem_op, b, tagId, len, result, bytesDecoded );
 	if ((result->octetLen % 2) != 0)
 	{
 		Asn1Error ("BDecBMPStringContent: ERROR - Invalid BMPString Format");
@@ -52,7 +52,7 @@ void BDecBMPStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 #endif
 
 #ifdef LDAP_COMPONENT
-int BDecBMPString(GenBuf *b, BMPString *result, AsnLen *bytesDecoded)
+int BDecBMPString( void* mem_op, GenBuf *b, BMPString *result, AsnLen *bytesDecoded)
 {
 	AsnTag tag;
 	AsnLen elmtLen1;
@@ -64,7 +64,7 @@ int BDecBMPString(GenBuf *b, BMPString *result, AsnLen *bytesDecoded)
 		return -1;
 	}
 	elmtLen1 = BDecLen (b, bytesDecoded );
-	BDecBMPStringContent (b, tag, elmtLen1, result, bytesDecoded );
+	BDecBMPStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 	return 1;
 
 }  /* BDecBMPString */

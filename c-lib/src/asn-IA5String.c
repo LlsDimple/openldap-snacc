@@ -31,11 +31,11 @@ AsnLen BEncIA5String(GenBuf *b, IA5String *v)
 } /* end of BEncBMPString() */
 
 #ifdef LDAP_COMPONENT
-int BDecIA5StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+int BDecIA5StringContent( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 				  IA5String *result, AsnLen *bytesDecoded )
 {
     int rc;
-    rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded);
+    rc = BDecAsnOctsContent ( mem_op, b, tagId, len, result, bytesDecoded);
 	if (checkIA5String(result) != 0)
     {
         Asn1Error ("BDecIA5StringContent: ERROR - Invalid IA5String");
@@ -58,7 +58,7 @@ void BDecIA5StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 #endif
 
 #ifdef LDAP_COMPONENT
-int BDecIA5String(GenBuf *b, IA5String *result, AsnLen *bytesDecoded)
+int BDecIA5String( void* mem_op, GenBuf *b, IA5String *result, AsnLen *bytesDecoded)
 {
     AsnTag tag;
     AsnLen elmtLen1;
@@ -71,7 +71,7 @@ int BDecIA5String(GenBuf *b, IA5String *result, AsnLen *bytesDecoded)
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecIA5StringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecIA5StringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
  
 } /* end of BDecIA5String() */
 #else

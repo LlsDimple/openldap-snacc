@@ -66,7 +66,8 @@ BEncAsnEnum PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnEnum PARAMS ((b, result, bytesDecoded),
+BDecAsnEnum PARAMS (( mem_op, b, result, bytesDecoded),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnEnum    *result _AND_
     AsnLen *bytesDecoded )
@@ -81,7 +82,7 @@ BDecAsnEnum PARAMS ((b, result, bytesDecoded),
     }
 
     elmtLen = BDecLen (b, bytesDecoded );
-    return BDecAsnEnumContent (b, tag, elmtLen, result, bytesDecoded );
+    return BDecAsnEnumContent ( mem_op, b, tag, elmtLen, result, bytesDecoded );
 
 }  /* BDecAsnEnum */
 #else

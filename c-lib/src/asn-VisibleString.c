@@ -29,11 +29,11 @@ AsnLen BEncVisibleString(GenBuf *b, VisibleString *v)
 } /* end of BEncVisibleString() */
 
 #ifdef LDAP_COMPONENT
-int BDecVisibleStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+int BDecVisibleStringContent( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 				VisibleString *result, AsnLen *bytesDecoded )
 {
 	int rc;
-	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	rc = BDecAsnOctsContent ( mem_op, b, tagId, len, result, bytesDecoded );
 	if (chkVisibleString (result) < 0)
 	{
         	Asn1Error ("BDecVisibleStringContent: ERROR - Format Error");
@@ -56,7 +56,7 @@ void BDecVisibleStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 #endif
 
 #ifdef LDAP_COMPONENT
-int BDecVisibleString(GenBuf *b, VisibleString *result,
+int BDecVisibleString( void* mem_op, GenBuf *b, VisibleString *result,
 					 AsnLen *bytesDecoded )
 {
     AsnTag tag;
@@ -69,7 +69,7 @@ int BDecVisibleString(GenBuf *b, VisibleString *result,
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecVisibleStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecVisibleStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* end of BDecVisibleString() */
 #else
 void BDecVisibleString(GenBuf *b, VisibleString *result,

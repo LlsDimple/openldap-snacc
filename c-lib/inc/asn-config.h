@@ -145,6 +145,11 @@ Asn1ErrorHandler Asn1InstallErrorHandler PROTO ((Asn1ErrorHandler handler));
 } 
 #endif /* __cplusplus */
 
+#ifdef LDAP_COMPONENT
+#define CompAlloc( nm, size )		NibbleAllocLocal ( nm, size )
+#define CompFree( nm, ptr )
+#endif
+
 #ifdef USE_NIBBLE_MEMORY
 
 #include "nibble-alloc.h"

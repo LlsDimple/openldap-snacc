@@ -38,8 +38,8 @@ AsnLen BEncAsnOid PROTO ((GenBuf *b, AsnOid *data));
 #define BEncAsnOidContent( b, oid)   BEncAsnOctsContent (b, oid)
 
 #ifdef LDAP_COMPONENT
-int BDecAsnOid PROTO ((GenBuf *b, AsnOid *result, AsnLen *bytesDecoded ));
-int BDecAsnOidContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnOid  *result, AsnLen *bytesDecoded ));
+int BDecAsnOid PROTO (( void* mem_op, GenBuf *b, AsnOid *result, AsnLen *bytesDecoded ));
+int BDecAsnOidContent PROTO (( void* mem_op, GenBuf *b, AsnTag tag, AsnLen len, AsnOid  *result, AsnLen *bytesDecoded ));
 #else
 void BDecAsnOid PROTO ((GenBuf *b, AsnOid *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecAsnOidContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnOid  *result, AsnLen *bytesDecoded, ENV_TYPE env));

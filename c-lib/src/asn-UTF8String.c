@@ -70,11 +70,11 @@ AsnLen BEncUTF8String(GenBuf *b, UTF8String *v)
 } /* end of BEncUTF8String() */
 
 #ifdef LDAP_COMPONENT
-int BDecUTF8StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+int BDecUTF8StringContent( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 				   UTF8String *result, AsnLen *bytesDecoded )
 {
 	int rc;
-	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	rc = BDecAsnOctsContent ( mem_op, b, tagId, len, result, bytesDecoded );
 	if (IsValidUTF8String(result) == false)
 	{
 		Asn1Error ("BDecUTF8StringContent: ERROR - Invalid UTF-8 Encoding");
@@ -97,7 +97,7 @@ void BDecUTF8StringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 #endif
 
 #ifdef LDAP_COMPONENT
-int BDecUTF8String(GenBuf *b, UTF8String *result, AsnLen *bytesDecoded )
+int BDecUTF8String( void* mem_op, GenBuf *b, UTF8String *result, AsnLen *bytesDecoded )
 {
 	AsnTag tag;
 	AsnLen elmtLen1;
@@ -110,7 +110,7 @@ int BDecUTF8String(GenBuf *b, UTF8String *result, AsnLen *bytesDecoded )
 	}
 
 	elmtLen1 = BDecLen (b, bytesDecoded );
-	return BDecUTF8StringContent (b, tag, elmtLen1, result, bytesDecoded );
+	return BDecUTF8StringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }
 #else
 void BDecUTF8String(GenBuf *b, UTF8String *result, AsnLen *bytesDecoded,

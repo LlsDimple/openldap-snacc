@@ -58,7 +58,8 @@ BEncAsnBits PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnBits PARAMS ((b, result, bytesDecoded ),
+BDecAsnBits PARAMS ((mem_op,b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnBits    *result _AND_
     AsnLen *bytesDecoded )
@@ -73,7 +74,7 @@ BDecAsnBits PARAMS ((b, result, bytesDecoded ),
 	return -1;
     }
     elmtLen = BDecLen (b, bytesDecoded );
-    BDecAsnBitsContent (b, tag, elmtLen, result, bytesDecoded );
+    BDecAsnBitsContent ( mem_op, b, tag, elmtLen, result, bytesDecoded );
     return 1;
 
 }  /* BDecAsnBits */
@@ -311,7 +312,8 @@ FillBitStringStk PARAMS ((b, elmtLen0, bytesDecoded, env),
  */
 #ifdef LDAP_COMPONENT
 static int
-BDecConsAsnBits PARAMS ((b, len, result, bytesDecoded ),
+BDecConsAsnBits PARAMS (( mem_op, b, len, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnLen len _AND_
     AsnBits *result _AND_
@@ -331,7 +333,7 @@ BDecConsAsnBits PARAMS ((b, len, result, bytesDecoded ),
     /* alloc single str long enough for combined bitstring */
     result->bitLen = strStkG.totalByteLen*8 - unusedBitsG;
 
-    bufCurr = result->bits = Asn1Alloc (strStkG.totalByteLen);
+    bufCurr = result->bits = CompAlloc (mem_op, strStkG.totalByteLen);
     if ( !result->bits ) return -1;
 
     /* copy bit string pieces (buffer refs) into single block */
@@ -384,7 +386,8 @@ BDecConsAsnBits PARAMS ((b, len, result, bytesDecoded, env),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+BDecAsnBitsContent PARAMS (( mem_op, b, tagId, len, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnTag tagId _AND_
     AsnLen len _AND_
@@ -396,7 +399,7 @@ BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
      * if CONS bit is set then constructed bit string
      */
     if (TAG_IS_CONS (tagId))
-        BDecConsAsnBits (b, len, result, bytesDecoded );
+        BDecConsAsnBits ( mem_op, b, len, result, bytesDecoded );
     else /* primitive octet string */
     {
         if (len == INDEFINITE_LEN)
@@ -407,7 +410,7 @@ BDecAsnBitsContent PARAMS ((b, tagId, len, result, bytesDecoded ),
         (*bytesDecoded) += len;
         len--;
         result->bitLen = (len * 8) - (unsigned int)BufGetByte (b);
-        result->bits =  Asn1Alloc (len);
+        result->bits =  CompAlloc (mem_op,len);
         if ( !result->bits ) return -1;
         BufCopy (result->bits, b, len);
         if (BufReadError (b))

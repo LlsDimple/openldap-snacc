@@ -30,11 +30,11 @@ AsnLen BEncPrintableString(GenBuf *b, PrintableString *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecPrintableStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
+BDecPrintableStringContent( void *mem_op, GenBuf *b, AsnTag tagId, AsnLen len,
 				PrintableString *result, AsnLen *bytesDecoded )
 {
 	int rc;
-	rc = BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	rc = BDecAsnOctsContent (mem_op, b, tagId, len, result, bytesDecoded );
 	if (chkPrintableString (result) < 0)
 	{
         	Asn1Error ("BDecPrintableStringContent: ERROR - Format Error");
@@ -58,7 +58,7 @@ void BDecPrintableStringContent(GenBuf *b, AsnTag tagId, AsnLen len,
 
 
 #ifdef LDAP_COMPONENT
-int BDecPrintableString(GenBuf *b, PrintableString *result,
+int BDecPrintableString( void* mem_op, GenBuf *b, PrintableString *result,
 				 AsnLen *bytesDecoded )
 {
     AsnTag tag;
@@ -72,7 +72,7 @@ int BDecPrintableString(GenBuf *b, PrintableString *result,
     }
 
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecPrintableStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecPrintableStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* end of BDecPrintableString() */
 #else
 void BDecPrintableString(GenBuf *b, PrintableString *result,

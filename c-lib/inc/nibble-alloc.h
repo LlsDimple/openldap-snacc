@@ -70,6 +70,15 @@ typedef struct NibbleMem
 } NibbleMem;
 
 
+NibbleMem* InitNibbleMemComp PROTO ((unsigned long initialSize, unsigned long incrementSize));
+
+void ShutdownNibbleMemLocal(NibbleMem* nm);
+
+void ServiceNibbleFaultLocal PROTO ((NibbleMem* nm, unsigned long size));
+
+void* NibbleAllocLocal PROTO ((NibbleMem *nm, unsigned long size));
+
+void ResetNibbleMemLocal (NibbleMem *nm);
 
 void InitNibbleMem PROTO ((unsigned long initialSize, unsigned long incrementSize));
 
@@ -80,7 +89,6 @@ void ServiceNibbleFault PROTO ((unsigned long size));
 void *NibbleAlloc PROTO ((unsigned long size));
 
 void ResetNibbleMem();
-
 
 #ifdef __cplusplus
 }

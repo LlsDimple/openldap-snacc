@@ -12,8 +12,8 @@ AsnLen BEncBMPString PROTO ((GenBuf *b, BMPString *v));
 AsnLen BEncBMPStringContent PROTO ((GenBuf *b, BMPString *octs));
 
 #ifdef LDAP_COMPONENT
-int BDecBMPString PROTO ((GenBuf *b, BMPString *result, AsnLen *bytesDecoded ));
-int BDecBMPStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, BMPString *result, AsnLen *bytesDecoded ));
+int BDecBMPString PROTO (( void* mem_op, GenBuf *b, BMPString *result, AsnLen *bytesDecoded ));
+int BDecBMPStringContent PROTO (( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, BMPString *result, AsnLen *bytesDecoded ));
 #else
 void BDecBMPString PROTO ((GenBuf *b, BMPString *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecBMPStringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, BMPString *result, AsnLen *bytesDecoded, ENV_TYPE env));

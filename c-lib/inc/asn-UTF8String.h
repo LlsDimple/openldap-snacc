@@ -12,8 +12,8 @@ AsnLen BEncUTF8String PROTO ((GenBuf *b, UTF8String *v));
 AsnLen BEncUTF8StringContent PROTO ((GenBuf *b, UTF8String *octs));
 
 #ifdef LDAP_COMPONENT
-int BDecUTF8String PROTO ((GenBuf *b, UTF8String *result, AsnLen *bytesDecoded ));
-int BDecUTF8StringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UTF8String *result, AsnLen *bytesDecoded));
+int BDecUTF8String PROTO (( void* mem_op, GenBuf *b, UTF8String *result, AsnLen *bytesDecoded ));
+int BDecUTF8StringContent PROTO (( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, UTF8String *result, AsnLen *bytesDecoded));
 #else
 void BDecUTF8String PROTO ((GenBuf *b, UTF8String *result, AsnLen *bytesDecoded, ENV_TYPE env));
 void BDecUTF8StringContent PROTO ((GenBuf *b, AsnTag tagId, AsnLen len, UTF8String *result, AsnLen *bytesDecoded, ENV_TYPE env));

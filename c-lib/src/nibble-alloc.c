@@ -90,6 +90,26 @@ InitNibbleMem PARAMS ((initialSize, incrementSize),
 
 }  /* InitNibbleAlloc */
 
+NibbleMem*
+InitNibbleMemLocal PARAMS ((initialSize, incrementSize),
+    unsigned long initialSize _AND_
+    unsigned long incrementSize)
+{
+    NibbleMem *nm;
+
+    nm = (NibbleMem*) malloc (sizeof (NibbleMem));
+    nm->incrementSize = incrementSize;
+
+    nm->currNibbleBuf = nm->firstNibbleBuf = (NibbleBuf*)malloc (sizeof (NibbleBuf));
+    nm->firstNibbleBuf->curr = nm->firstNibbleBuf->start = (char*) malloc (initialSize);
+    nm->firstNibbleBuf->end = nm->firstNibbleBuf->start + initialSize;
+    nm->firstNibbleBuf->next = NULL;
+    memzero (nm->currNibbleBuf->start, initialSize);
+
+    return nm;
+
+}  /* InitNibbleAllocLocal */
+
 
 /*
  * alloc new nibble buf, link in, reset to curr nibble buf
@@ -116,6 +136,25 @@ ServiceNibbleFault PARAMS ((size),
     memzero (nm->currNibbleBuf->start, newBufSize);
 } /* serviceNibbleFault */
 
+void
+ServiceNibbleFaultLocal PARAMS ((nm , size),
+    NibbleMem *nm _AND_
+    unsigned long size)
+{
+    unsigned long newBufSize;
+
+    if (size > nm->incrementSize)
+        newBufSize = size;
+    else
+        newBufSize = nm->incrementSize;
+
+    nm->currNibbleBuf->next = (NibbleBuf*) malloc (sizeof (NibbleBuf));
+    nm->currNibbleBuf = nm->currNibbleBuf->next;
+    nm->currNibbleBuf->curr = nm->currNibbleBuf->start = (char*) malloc (newBufSize);
+    nm->currNibbleBuf->end = nm->currNibbleBuf->start + newBufSize;
+    nm->currNibbleBuf->next = NULL;
+    memzero (nm->currNibbleBuf->start, newBufSize);
+} /* serviceNibbleFaultLocal */
 
 
 /*
@@ -167,7 +206,52 @@ NibbleAlloc PARAMS ((size),
     return retVal;
 }  /* NibbleAlloc */
 
+/*
+ * returns requested space filled with zeros
+ */
+void*
+NibbleAllocLocal PARAMS ((nm , size),
+    NibbleMem *nm _AND_
+    unsigned long size)
+{
+    char *retVal;
+    unsigned long ndiff;
 
+    /* DAD - although error checking on the mallocs during
+     * ServiceNibbleFault could be more robust, for now i'm
+     * just going to avoid allocating really huge amounts
+     * of memory (which can occur if the ASN.1 data has
+     * become corrupted, and you were trying to decode).
+     */
+    if(size > 1024*1024)	/* say roughly a meg for now */
+    	return(0);
+
+    if ((nm->currNibbleBuf->end - nm->currNibbleBuf->curr) < (int)size)
+         ServiceNibbleFaultLocal ( nm, size);
+
+    retVal = nm->currNibbleBuf->curr;
+
+    /*
+     * maintain word alignment
+     */
+    ndiff = size % sizeof (long);
+    if (ndiff != 0)
+    {
+        nm->currNibbleBuf->curr += size + sizeof (long) - ndiff;
+
+        /*
+         * this is a fix from Terry Sullivan <FCLTPS@nervm.nerdc.ufl.edu>
+         *
+         * makes sure curr does not go past the end ptr
+         */
+        if (nm->currNibbleBuf->curr > nm->currNibbleBuf->end)
+            nm->currNibbleBuf->curr = nm->currNibbleBuf->end;
+    }
+    else
+        nm->currNibbleBuf->curr += size;
+
+    return retVal;
+}  /* NibbleAllocLocal */
 
 /*
  * frees all nibble buffers except the first,
@@ -206,6 +290,39 @@ ResetNibbleMem()
 
 } /* ResetNibbleMem */
 
+void
+ResetNibbleMemLocal PARAMS((nm),
+   NibbleMem *nm
+)
+{
+    NibbleBuf *tmp;
+    NibbleBuf *nextTmp;
+
+    /*
+     * reset first nibble buf
+     */
+    memzero (nm->firstNibbleBuf->start, nm->firstNibbleBuf->curr - nm->firstNibbleBuf->start);
+
+    nm->firstNibbleBuf->curr = nm->firstNibbleBuf->start;
+
+    /*
+     * free incrementally added nibble bufs
+     */
+    for (tmp = nm->firstNibbleBuf->next; tmp != NULL; )
+    {
+        free (tmp->start);
+        nextTmp = tmp->next;
+        free (tmp);
+        tmp = nextTmp;
+    }
+
+    /* From ftp://ftp.cs.ubc.ca/pub/local/src/snacc/bugs-in-1.1 */
+    nm->firstNibbleBuf->next = NULL;
+    nm->currNibbleBuf = nm->firstNibbleBuf;
+
+} /* ResetNibbleMem */
+
+
 
 /*
  * frees all nibble buffers, closing this
@@ -220,6 +337,30 @@ ShutdownNibbleMem()
 
     nm = nmG;
     nmG = NULL;
+    /*
+     * free nibble bufs
+     */
+	if (nm == NULL)
+		return;
+    for (tmp = nm->firstNibbleBuf; tmp != NULL; )
+    {
+        free (tmp->start);
+        nextTmp = tmp->next;
+        free (tmp);
+        tmp = nextTmp;
+    }
+
+    free (nm);
+} /* ShutdownNibbleMem */
+
+void
+ShutdownNibbleMemLocal PARAMS ((nm),
+    NibbleMem *nm
+)
+{
+    NibbleBuf *tmp;
+    NibbleBuf *nextTmp;
+
     /*
      * free nibble bufs
      */

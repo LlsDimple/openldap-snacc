@@ -46,7 +46,8 @@ BEncAsnRelativeOid PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded ),
+BDecAsnRelativeOid PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnRelativeOid    *result _AND_
     AsnLen *bytesDecoded )
@@ -61,7 +62,7 @@ BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded ),
     }
 
     elmtLen = BDecLen (b, bytesDecoded );
-    return BDecAsnRelativeOidContent (b, tag, elmtLen, result, bytesDecoded );
+    return BDecAsnRelativeOidContent ( mem_op, b, tag, elmtLen, result, bytesDecoded );
 
 }  /* BDecAsnRelativeOid */
 #else
@@ -95,7 +96,8 @@ BDecAsnRelativeOid PARAMS ((b, result, bytesDecoded, env),
  */
 #ifdef LDAP_COMPONENT
 int
-BDecAsnRelativeOidContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+BDecAsnRelativeOidContent PARAMS (( mem_op, b, tagId, len, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnTag tagId _AND_
     AsnLen len _AND_
@@ -108,7 +110,7 @@ BDecAsnRelativeOidContent PARAMS ((b, tagId, len, result, bytesDecoded ),
 	return -1;
     }
     result->octetLen = len;
-    result->octs =  Asn1Alloc (len);
+    result->octs =  CompAlloc (mem_op, len);
     CheckAsn1Alloc (result->octs);
     BufCopy (result->octs, b, len);
     if (BufReadError (b))

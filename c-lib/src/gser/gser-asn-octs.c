@@ -26,25 +26,27 @@ GEncAsnOctsContent PARAMS ((b, o),
     GenBuf *b _AND_
     GAsnOcts *o)
 {
-    char data[2];
-    int i,len;
+    char *buf;
+    int i,k,len;
 
+    buf = malloc(o->value.octetLen*2);
+ 
     BufPutSegRvs (b, "'H", 2 );
-    for ( i = 0 ; i < o->value.octetLen ; i++ ){
-	data[0] = o->value.octs[i] & 0x0F;
-	data[1] = (o->value.octs[i] & 0xF0)>>4;
+    for ( i = 0, k = 0 ; i < o->value.octetLen ; i++, k += 2 ){
+	buf[k] = o->value.octs[i] & 0x0F;
+	buf[k+1] = (o->value.octs[i] & 0xF0)>>4;
 
-	if ( data[1] >= 10 )
-		data[1] = data[1] - 10 + 'A';
+	if ( buf[k] >= 10 )
+		buf[k] = buf[k] - 10 + 'A';
 	else
-		data[1] += '0';
+		buf[k] += '0';
 
-	if( data[0] >= 10 )
-		data[0] = data[0] - 10 + 'A';
+	if( buf[k+1] >= 10 )
+		buf[k+1] = buf[k+1] - 10 + 'A';
 	else
-		data[0] += '0';
-	BufPutSegRvs (b, data, 2 );
+		buf[k+1] += '0';
     }
+    BufPutSegRvs (b, k, o->value.octetLen*2 );
     BufPutByteRvs (b, '\'' );
 
    if ( o->identifier != NULL ){
@@ -52,6 +54,8 @@ GEncAsnOctsContent PARAMS ((b, o),
        len = strlen(o->identifier);
        BufPutSegRvs(b, o->identifier, len);
     }
+
+    free ( buf );
 
     return o->value.octetLen + 3;
 }
@@ -61,7 +65,8 @@ GEncAsnOctsContent PARAMS ((b, o),
  */
 #ifdef LDAP_COMPONENT
 int
-GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnOctsContent PARAMS ((mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnOcts *result _AND_
     AsnLen *bytesDecoded )
@@ -71,11 +76,10 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
 	unsigned char* data;
 	
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("OCTET String : Token Reading ERROR\n");
 		return -1;
 	}
-
 
 	*bytesDecoded += strLen;
 
@@ -84,15 +88,14 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
 		return -1;
 	}
 
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("OCTET String :  String read ERROR\n");
 		return -1;
 	}
 
-	result->value.octetLen = strLen;
-	data = Asn1Alloc(sizeof(char)*(strLen>>2)+1);
-	k = strLen/2-1;
-	for ( i = 0 ; i < strLen ; i += 2, k-- ){
+	result->value.octetLen = strLen/2;
+	data = CompAlloc( mem_op, sizeof(char)*(strLen>>2)+1 );
+	for ( i = 0, k = 0 ; i < strLen ; i += 2, k++ ){
 	   if( peek_head[i] >= 'A' )
 		peek_head[i] = peek_head[i]-'A'+10;
 	   else
@@ -103,17 +106,17 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
 	   else
 		peek_head[i+1] = peek_head[i+1]-'0';
 
-	   data[k] = (char)( (peek_head[i+1]<<4)&0xF0)|(peek_head[i]&0x0F );
+	   data[k] = (char)( (peek_head[i]<<4)&0xF0)|(peek_head[i+1]&0x0F );
 	}
 
-	data[strLen] = '\0';
+	data[strLen/2] = '\0';
 
 	result->value.octs = data;
 	*bytesDecoded += strLen;
 
-	if ( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_NO_COPY )) ){
 		Asn1Error("OCTET String :  Token(\"H) read ERROR\n");
-		Asn1Free(data);
+		CompFree( mem_op, data );
 		return -1;
 	}
 
@@ -121,7 +124,7 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded ),
 
 	if ( peek_head[0] != '\'' || peek_head[1] != 'H' ){
 		Asn1Error("OCTET String :  Should End with \"H\n");
-		Asn1Free(data);
+		CompFree( mem_op, data );
 		return -1;
 	}
 	return 1;
@@ -157,10 +160,9 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
 		longjmp( env, -20);
 	}
 
-	result->value.octetLen = strLen;
+	result->value.octetLen = strLen/2;
 	data = Asn1Alloc(sizeof(char)*(strLen>>2)+1);
-	k = strLen/2-1;
-	for ( i = 0 ; i < strLen ; i += 2, k-- ){
+	for ( i = 0, k = 0 ; i < strLen ; i += 2, k++ ){
 	   if( peek_head[i] >= 'A' )
 		peek_head[i] = peek_head[i]-'A'+10;
 	   else
@@ -171,10 +173,10 @@ GDecAsnOctsContent PARAMS ((b, result, bytesDecoded, env),
 	   else
 		peek_head[i+1] = peek_head[i+1]-'0';
 
-	   data[k] = (char)( (peek_head[i+1]<<4)&0xF0)|(peek_head[i]&0x0F );
+	   data[k] = (char)( (peek_head[i]<<4)&0xF0)|(peek_head[i+1]&0x0F );
 	}
 
-	data[strLen] = '\0';
+	data[strLen/2] = '\0';
 
 	result->value.octs = data;
 	*bytesDecoded += strLen;

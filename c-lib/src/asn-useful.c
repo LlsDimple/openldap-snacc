@@ -29,7 +29,8 @@ VideotexString *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecVideotexString PARAMS ((b, result, bytesDecoded ),
+BDecVideotexString PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 VideotexString *result _AND_
 AsnLen *bytesDecoded )
@@ -45,7 +46,7 @@ MAKE_TAG_ID (UNIV, PRIM, VIDEOTEXSTRING_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecVideotexStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecVideotexStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecVideotexString */
 #else
 void BDecVideotexString PARAMS ((b, result, bytesDecoded, env),
@@ -81,7 +82,8 @@ GraphicString *v)
 } /* BEncGraphicString */
 
 #ifdef LDAP_COMPONENT
-int BDecGraphicString PARAMS ((b, result, bytesDecoded ),
+int BDecGraphicString PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 GraphicString *result _AND_
 AsnLen *bytesDecoded )
@@ -97,7 +99,7 @@ MAKE_TAG_ID (UNIV, PRIM, GRAPHICSTRING_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecGraphicStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecGraphicStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecGraphicString */
 #else
 void BDecGraphicString PARAMS ((b, result, bytesDecoded, env),
@@ -166,7 +168,8 @@ ISO646String *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecISO646String PARAMS ((b, result, bytesDecoded ),
+BDecISO646String PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 ISO646String *result _AND_
 AsnLen *bytesDecoded )
@@ -182,7 +185,7 @@ MAKE_TAG_ID (UNIV, PRIM, VISIBLESTRING_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecISO646StringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecISO646StringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecISO646String */
 #else
 void BDecISO646String PARAMS ((b, result, bytesDecoded, env),
@@ -218,7 +221,8 @@ GeneralString *v)
 } /* BEncGeneralString */
 
 #ifdef LDAP_COMPONENT
-int BDecGeneralString PARAMS ((b, result, bytesDecoded ),
+int BDecGeneralString PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 GeneralString *result _AND_
 AsnLen *bytesDecoded )
@@ -234,7 +238,7 @@ MAKE_TAG_ID (UNIV, PRIM, GENERALSTRING_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecGeneralStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecGeneralStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecGeneralString */
 #else
 void BDecGeneralString PARAMS ((b, result, bytesDecoded, env),
@@ -269,7 +273,8 @@ UTCTime *v)
     return l;
 } /* BEncUTCTime */
 #ifdef LDAP_COMPONENT
-int BDecUTCTime PARAMS ((b, result, bytesDecoded ),
+int BDecUTCTime PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 UTCTime *result _AND_
 AsnLen *bytesDecoded )
@@ -285,7 +290,7 @@ MAKE_TAG_ID (UNIV, PRIM, UTCTIME_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecUTCTimeContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecUTCTimeContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecUTCTime */
 #else
 void BDecUTCTime PARAMS ((b, result, bytesDecoded, env),
@@ -321,7 +326,8 @@ GeneralizedTime *v)
 } /* BEncGeneralizedTime */
 
 #ifdef LDAP_COMPONENT
-int BDecGeneralizedTime PARAMS ((b, result, bytesDecoded ),
+int BDecGeneralizedTime PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 GeneralizedTime *result _AND_
 AsnLen *bytesDecoded )
@@ -337,7 +343,7 @@ MAKE_TAG_ID (UNIV, PRIM, GENERALIZEDTIME_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecGeneralizedTimeContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecGeneralizedTimeContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecGeneralizedTime */
 #else
 void BDecGeneralizedTime PARAMS ((b, result, bytesDecoded, env),
@@ -410,7 +416,8 @@ EXTERNALChoice *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecEXTERNALChoiceContent PARAMS ((b, tagId0, elmtLen0, v, bytesDecoded),
+BDecEXTERNALChoiceContent PARAMS (( mem_op, b, tagId0, elmtLen0, v, bytesDecoded),
+void* mem_op _AND_
 GenBuf *b _AND_
 AsnTag tagId0 _AND_
 AsnLen elmtLen0 _AND_
@@ -464,13 +471,14 @@ if ((tagId1 != MAKE_TAG_ID (UNIV, PRIM, OCTETSTRING_TAG_CODE)) &&
     elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
 #endif
         (v->choiceId) = EXTERNALCHOICE_SINGLE_ASN1_TYPE;
-    (v->a.single_ASN1_type) = (AsnOcts*) Asn1Alloc (sizeof (AsnOcts));
 #ifdef LDAP_COMPONENT
+    (v->a.single_ASN1_type) = (AsnOcts*) CompAlloc ( mem_op, sizeof (AsnOcts));
     CheckAsn1Alloc ((v->a.single_ASN1_type) );
-    BDecAsnOctsContent (b, tagId1, elmtLen1, (v->a.single_ASN1_type), &totalElmtsLen1 );
+    BDecAsnOctsContent ( mem_op, b, tagId1, elmtLen1, (v->a.single_ASN1_type), &totalElmtsLen1 );
     if (elmtLen0 == INDEFINITE_LEN)
         BDecEoc (b, &totalElmtsLen1 );
 #else
+    (v->a.single_ASN1_type) = (AsnOcts*) Asn1Alloc (sizeof (AsnOcts));
     CheckAsn1Alloc ((v->a.single_ASN1_type), env);
     BDecAsnOctsContent (b, tagId1, elmtLen1, (v->a.single_ASN1_type), &totalElmtsLen1, env);
     if (elmtLen0 == INDEFINITE_LEN)
@@ -481,11 +489,12 @@ if ((tagId1 != MAKE_TAG_ID (UNIV, PRIM, OCTETSTRING_TAG_CODE)) &&
        case MAKE_TAG_ID (CNTX, PRIM, 1):
        case MAKE_TAG_ID (CNTX, CONS, 1):
         (v->choiceId) = EXTERNALCHOICE_OCTET_ALIGNED;
-    (v->a.octet_aligned) = (AsnOcts*) Asn1Alloc (sizeof (AsnOcts));
 #ifdef LDAP_COMPONENT
+    (v->a.octet_aligned) = (AsnOcts*) CompAlloc (mem_op, sizeof (AsnOcts));
     CheckAsn1Alloc ((v->a.octet_aligned) );
-    BDecAsnOctsContent (b, tagId0, elmtLen0, (v->a.octet_aligned), &totalElmtsLen1);
+    BDecAsnOctsContent ( mem_op, b, tagId0, elmtLen0, (v->a.octet_aligned), &totalElmtsLen1);
 #else
+    (v->a.octet_aligned) = (AsnOcts*) Asn1Alloc (sizeof (AsnOcts));
     CheckAsn1Alloc ((v->a.octet_aligned), env);
     BDecAsnOctsContent (b, tagId0, elmtLen0, (v->a.octet_aligned), &totalElmtsLen1, env);
 #endif
@@ -494,11 +503,12 @@ if ((tagId1 != MAKE_TAG_ID (UNIV, PRIM, OCTETSTRING_TAG_CODE)) &&
        case MAKE_TAG_ID (CNTX, PRIM, 2):
        case MAKE_TAG_ID (CNTX, CONS, 2):
         (v->choiceId) = EXTERNALCHOICE_ARBITRARY;
-    (v->a.arbitrary) = (AsnBits*) Asn1Alloc (sizeof (AsnBits));
 #ifdef LDAP_COMPONENT
+    (v->a.arbitrary) = (AsnBits*) CompAlloc (mem_op, sizeof (AsnBits));
     CheckAsn1Alloc ((v->a.arbitrary) );
-    BDecAsnBitsContent (b, tagId0, elmtLen0, (v->a.arbitrary), &totalElmtsLen1 );
+    BDecAsnBitsContent (mem_op,b, tagId0, elmtLen0, (v->a.arbitrary), &totalElmtsLen1 );
 #else
+    (v->a.arbitrary) = (AsnBits*) Asn1Alloc (sizeof (AsnBits));
     CheckAsn1Alloc ((v->a.arbitrary), env);
     BDecAsnBitsContent (b, tagId0, elmtLen0, (v->a.arbitrary), &totalElmtsLen1, env);
 #endif
@@ -591,7 +601,8 @@ EXTERNAL *v)
 } /* BEncEXTERNAL */
 
 #ifdef LDAP_COMPONENT
-int BDecEXTERNAL PARAMS ((b, result, bytesDecoded ),
+int BDecEXTERNAL PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 EXTERNAL *result _AND_
 AsnLen *bytesDecoded )
@@ -606,7 +617,7 @@ MAKE_TAG_ID (UNIV, CONS, EXTERNAL_TAG_CODE)))
         return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    BDecEXTERNALContent (b, tag, elmtLen1, result, bytesDecoded );
+    BDecEXTERNALContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
     return 1;
 }  /* BDecEXTERNAL */
 #else
@@ -678,7 +689,8 @@ EXTERNAL *v)
 
 #ifdef LDAP_COMPONENT
 int
-BDecEXTERNALContent PARAMS ((b, tagId0, elmtLen0, v, bytesDecoded ),
+BDecEXTERNALContent PARAMS (( mem_op, b, tagId0, elmtLen0, v, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 AsnTag tagId0 _AND_
 AsnLen elmtLen0 _AND_
@@ -714,7 +726,7 @@ ENV_TYPE env)
     {
 #ifdef LDAP_COMPONENT
     elmtLen1 = BDecLen (b, &totalElmtsLen1 );
-    BDecAsnOidContent (b, tagId1, elmtLen1, (&v->direct_reference), &totalElmtsLen1);
+    BDecAsnOidContent ( mem_op, b, tagId1, elmtLen1, (&v->direct_reference), &totalElmtsLen1);
     tagId1 = BDecTag (b, &totalElmtsLen1 );
 #else
     elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
@@ -728,9 +740,9 @@ ENV_TYPE env)
     {
 #ifdef LDAP_COMPONENT
     elmtLen1 = BDecLen (b, &totalElmtsLen1 );
-    (v->indirect_reference) = (AsnInt*) Asn1Alloc (sizeof (AsnInt));
+    (v->indirect_reference) = (AsnInt*) CompAlloc (mem_op,sizeof (AsnInt));
     CheckAsn1Alloc ((v->indirect_reference));
-    BDecAsnIntContent (b, tagId1, elmtLen1, (v->indirect_reference), &totalElmtsLen1);
+    BDecAsnIntContent ( mem_op, b, tagId1, elmtLen1, (v->indirect_reference), &totalElmtsLen1);
     tagId1 = BDecTag (b, &totalElmtsLen1 );
 #else
     elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
@@ -747,7 +759,7 @@ ENV_TYPE env)
     {
 #ifdef LDAP_COMPONENT
     elmtLen1 = BDecLen (b, &totalElmtsLen1 );
-    BDecObjectDescriptorContent (b, tagId1, elmtLen1, (&v->data_value_descriptor), &totalElmtsLen1 );
+    BDecObjectDescriptorContent ( mem_op, b, tagId1, elmtLen1, (&v->data_value_descriptor), &totalElmtsLen1 );
     tagId1 = BDecTag (b, &totalElmtsLen1 );
 #else
     elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
@@ -765,9 +777,9 @@ ENV_TYPE env)
     {
 #ifdef LDAP_COMPONENT
         elmtLen1 = BDecLen (b, &totalElmtsLen1 );
-    (v->encoding) = (EXTERNALChoice*) Asn1Alloc (sizeof (EXTERNALChoice));
+    (v->encoding) = (EXTERNALChoice*) CompAlloc (mem_op, sizeof (EXTERNALChoice));
     CheckAsn1Alloc ((v->encoding) );
-    BDecEXTERNALChoiceContent (b, tagId1, elmtLen1, (v->encoding), &totalElmtsLen1);
+    BDecEXTERNALChoiceContent ( mem_op, b, tagId1, elmtLen1, (v->encoding), &totalElmtsLen1);
 #else
         elmtLen1 = BDecLen (b, &totalElmtsLen1, env);
     (v->encoding) = (EXTERNALChoice*) Asn1Alloc (sizeof (EXTERNALChoice));

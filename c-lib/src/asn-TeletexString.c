@@ -17,16 +17,18 @@ TeletexString *v)
     return l;
 } /* BEncTeletexString */
 #ifdef LDAP_COMPONENT
-int BDecTeletexStringContent PARAMS ((b, tagId, len, result, bytesDecoded ),
+int BDecTeletexStringContent PARAMS (( mem_op, b, tagId, len, result, bytesDecoded ),
+ void* mem_op _AND_
  GenBuf *b _AND_
  AsnTag tagId _AND_
  AsnLen len _AND_
  AsnOcts *result _AND_
  AsnLen *bytesDecoded )
 {
-	return BDecAsnOctsContent (b, tagId, len, result, bytesDecoded );
+	return BDecAsnOctsContent ( mem_op, b, tagId, len, result, bytesDecoded );
 }
-int BDecTeletexString PARAMS ((b, result, bytesDecoded ),
+int BDecTeletexString PARAMS (( mem_op, b, result, bytesDecoded ),
+void* mem_op _AND_
 GenBuf *b _AND_
 TeletexString *result _AND_
 AsnLen *bytesDecoded )
@@ -42,7 +44,7 @@ MAKE_TAG_ID (UNIV, PRIM, TELETEXSTRING_TAG_CODE))&&
 	return -1;
     }
     elmtLen1 = BDecLen (b, bytesDecoded );
-    return BDecTeletexStringContent (b, tag, elmtLen1, result, bytesDecoded );
+    return BDecTeletexStringContent ( mem_op, b, tag, elmtLen1, result, bytesDecoded );
 }  /* BDecTeletexString */
 #else
 void BDecTeletexStringContent PARAMS ((b, tagId, len, result, bytesDecoded, env),

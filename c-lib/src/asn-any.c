@@ -367,7 +367,8 @@ BEncAsnAny PARAMS ((b, v),
  * since the tags are needed too.
  */
 #ifndef LDAP_COMPONENT
-void BDecAsnAny PARAMS ((b, result, bytesDecoded, env),
+void BDecAsnAny PARAMS ((mem_op, b, result, bytesDecoded, env),
+    void* mem_op _AND_
     GenBuf *b _AND_
     AsnAny  *result _AND_
     AsnLen *bytesDecoded _AND_

@@ -30,7 +30,7 @@ typedef char AsnNull;
 
 AsnLen BEncAsnNull PROTO ((GenBuf *b, AsnNull *data));
 #ifdef LDAP_COMPONENT
-int BDecAsnNull PROTO ((GenBuf *b, AsnNull *result, AsnLen *bytesDecoded ));
+int BDecAsnNull PROTO ((void* mem_op, GenBuf *b, AsnNull *result, AsnLen *bytesDecoded ));
 #else
 void BDecAsnNull PROTO ((GenBuf *b, AsnNull *result, AsnLen *bytesDecoded, ENV_TYPE env));
 #endif
@@ -40,7 +40,7 @@ void BDecAsnNull PROTO ((GenBuf *b, AsnNull *result, AsnLen *bytesDecoded, ENV_T
 #define BEncAsnNullContent(b, data) 0
 
 #ifdef LDAP_COMPONENT
-int BDecAsnNullContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnNull *result, AsnLen *bytesDecoded ));
+int BDecAsnNullContent PROTO (( void* mem_op, GenBuf *b, AsnTag tag, AsnLen len, AsnNull *result, AsnLen *bytesDecoded ));
 #else
 void BDecAsnNullContent PROTO ((GenBuf *b, AsnTag tag, AsnLen len, AsnNull *result, AsnLen *bytesDecoded, ENV_TYPE env));
 #endif

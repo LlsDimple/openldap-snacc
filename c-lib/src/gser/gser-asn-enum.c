@@ -38,7 +38,8 @@ GEncAsnEnumContent PARAMS ((b, data),
  */
 #ifdef LDAP_COMPONENT
 int
-GDecAsnEnumContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnEnumContent PARAMS ((mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnEnum    *result _AND_
     AsnLen *bytesDecoded )
@@ -47,7 +48,7 @@ GDecAsnEnumContent PARAMS ((b, result, bytesDecoded ),
 	long strLen;
 
 	*bytesDecoded = 0;
-	if ( !(strLen = LocateNextGSERToken( b,&peek_head, GSER_NO_COPY )) ){
+	if ( !(strLen = LocateNextGSERToken( mem_op, b,&peek_head, GSER_NO_COPY )) ){
 		Asn1Error("ENUMERATED : Token Reading ERROR\n");
 		return -1;
 	}

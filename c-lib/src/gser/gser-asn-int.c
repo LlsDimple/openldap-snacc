@@ -66,7 +66,8 @@ GEncAsnIntContent PARAMS ((b, data),
 #include <stdlib.h>
 #ifdef LDAP_COMPONENT
 int
-GDecAsnIntContent PARAMS ((b, result, bytesDecoded ),
+GDecAsnIntContent PARAMS (( mem_op, b, result, bytesDecoded ),
+    void* mem_op _AND_
     GenBuf *b _AND_
     GAsnInt    *result _AND_
     AsnLen *bytesDecoded )
@@ -75,12 +76,12 @@ GDecAsnIntContent PARAMS ((b, result, bytesDecoded ),
 	char* peek_head;
 
 	*bytesDecoded = 0;
-	if( !(strLen = LocateNextGSERToken( b, &peek_head, GSER_COPY )) ){
+	if( !(strLen = LocateNextGSERToken( mem_op, b, &peek_head, GSER_COPY )) ){
 		Asn1Error("INTEGER : Token Reading ERROR\n");
 		return -1;
 	}
 	result->value = atoi(peek_head);
-	Asn1Free(peek_head);
+	CompFree( mem_op, peek_head );
 	*bytesDecoded += strLen;
 	return 1;
 }

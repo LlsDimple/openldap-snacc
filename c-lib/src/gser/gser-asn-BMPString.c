@@ -35,12 +35,12 @@ AsnLen GEncBMPStringContent(GenBuf *b, GBMPString *result )
 } 
 
 #ifdef LDAP_COMPONENT
-int GDecBMPStringContent(GenBuf *b, GBMPString *result,
+int GDecBMPStringContent(void* mem_op, GenBuf *b, GBMPString *result,
 				 AsnLen *bytesDecoded )
 {
 	int rc;
 	/* UTF-8, a Transformation format of ISO RFC 2279 */
-	rc = GDecUTF8StringContent(b,(GUTF8String*)result,bytesDecoded );
+	rc = GDecUTF8StringContent( mem_op, b,(GUTF8String*)result,bytesDecoded );
 	if ( rc < 0 ) return rc;
 	return TranslateUTF8toUCS2( result->value.octs, result->value.octetLen);
 }
