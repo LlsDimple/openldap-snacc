@@ -3258,6 +3258,9 @@ PrintCListSeqOfMatchingRuleCode PARAMS ((src, td, list, varName),
     fprintf (src, "\t\t}\n");
     fprintf (src, "\t} /* end of for */\n\n");
 
+    fprintf (src, "\tAsnListFirst( v1 );\n");
+    fprintf (src, "\tAsnListFirst( v2 );\n");
+
     fprintf (src,"\tif( (!component1 && component2) || (component1 && !component2))\n");
     fprintf (src,"\t\treturn LDAP_COMPARE_FALSE;\n");
     fprintf (src,"\telse\n\t\treturn LDAP_COMPARE_TRUE;\n");
@@ -3374,6 +3377,8 @@ PrintCListSetOfMatchingRuleCode PARAMS ((src, td, list, varName),
     fprintf (src, "\t\t rc = LDAP_COMPARE_FALSE;\n");
 
     fprintf (src, "\tAsnListMove( &t_list, v2 );\n");
+    fprintf (src, "\tAsnListFirst( v1 );\n");
+    fprintf (src, "\tAsnListFirst( v2 );\n");
     fprintf (src, "\treturn rc;\n");
 }
 
