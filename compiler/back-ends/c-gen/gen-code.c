@@ -273,7 +273,7 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
         if (printPrinters && (GetEncRulesType() != BER_COMP || GetEncRulesType() != GSER ))
             PrintCPrinter (src, hdr, r, mods, m, td);
 
-        if (printFree || (GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER))
+        if (printFree)
             PrintCFree (src, hdr, r, mods, m, td);
 
         /* only print new lines for normal types */

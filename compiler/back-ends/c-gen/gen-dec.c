@@ -138,7 +138,7 @@ extern EncRulesType GetEncRulesType();
 static
 void PrintCompDecodeHead( FILE* src ) {
     fprintf (src, "\tif ( !(mode & DEC_ALLOC_MODE_1) ) {\n");
-    fprintf (src, "\tmemset(&c_temp,0,sizeof(c_temp));\n");
+    fprintf (src, "\t\tmemset(&c_temp,0,sizeof(c_temp));\n");
     fprintf (src, "\t\t k = &c_temp;\n");
     fprintf (src, "\t} else\n");
     fprintf (src, "\t\t k = t = *v;\n");
@@ -312,19 +312,19 @@ Type *t)
     if ( strncmp ( name, "Asn" , 3 ) == 0 ) name = name+3;
 
     fprintf (src, "\tif( !(old_mode & DEC_ALLOC_MODE_1) ) {\n");
-    fprintf (src, "\t*v = t = (Component%s*) malloc( sizeof(Component%s) );\n",
+    fprintf (src, "\t*v = t = (Component%s*) CompAlloc( mem_op, sizeof(Component%s) );\n",
 		name, name);
     fprintf (src, "\tif ( !t ) return -1;\n");
     fprintf (src, "\t*t = *k;\n");
     fprintf (src, "\t}\n");
     fprintf (src, "\tt->syntax = (Syntax*)NULL;\n");
-    fprintf (src, "\tt->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
+    fprintf (src, "\tt->comp_desc = CompAlloc( mem_op, sizeof( ComponentDesc ) );\n");
     fprintf (src, "\tif ( !t->comp_desc ) {\n");
     fprintf (src, "\t\tfree ( t );\n");
     fprintf (src, "\t\treturn -1;\n\t}\n");
     fprintf (src, "\tt->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponent%s ;\n", name);
     fprintf (src, "\tt->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponent%s ;\n", name);
-    fprintf (src, "\tt->comp_desc->cd_free = (comp_free_func*)FreeComponent%s ;\n", name);
+    fprintf (src, "\tt->comp_desc->cd_free = (comp_free_func*)NULL;\n");
     fprintf (src, "\tt->comp_desc->cd_extract_i = (extract_component_from_id_func*)ExtractingComponent%s;\n", name);
     fprintf (src, "\tt->comp_desc->cd_type = ASN_COMPOSITE;\n");
     fprintf (src, "\tt->comp_desc->cd_type_id = COMPOSITE_ASN1_TYPE;\n");
@@ -354,11 +354,11 @@ PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, varName),
 
     PrintCompDecodeHead (src);
 
-    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading identifier\");\n");
     fprintf (src, "\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t}\n");
-    fprintf (src, "\tif( !(strLen2 = LocateNextGSERToken(b,&peek_head2,GSER_NO_COPY)) ){\n");
+    fprintf (src, "\tif( !(strLen2 = LocateNextGSERToken(mem_op,b,&peek_head2,GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading identifier\");\n");
     fprintf (src, "\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t}\n");
@@ -508,7 +508,7 @@ PrintCChoiceExtractorCode PARAMS ((src, td, t, varName),
 	MakeChoiceIdValueRef (genDecCRulesG,td,t,e->type, "comp",
 				choiceIdVarName);
 
-	fprintf (src, "\tif( %s ==  %s &&\n\t\t ((strncmp(comp->a.%s%sidentifier.bv_val, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0) ||\n\t\t ( strncmp(comp->a.%s%sid_buf, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0))) {\n",choiceIdVarName,ctri->choiceIdSymbol, e->type->cTypeRefInfo->cFieldName,ref_name, e->type->cTypeRefInfo->cFieldName, ref_name);
+	fprintf (src, "\tif( %s ==  %s &&\n\t\t (( comp->a.%s%sidentifier.bv_val && strncmp(comp->a.%s%sidentifier.bv_val, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0) ||\n\t\t ( strncmp(comp->a.%s%sid_buf, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0))) {\n",choiceIdVarName,ctri->choiceIdSymbol,e->type->cTypeRefInfo->cFieldName,ref_name, e->type->cTypeRefInfo->cFieldName,ref_name, e->type->cTypeRefInfo->cFieldName, ref_name);
 
 	fprintf (src, "\t\tif ( cr->cr_curr->ci_next == NULL )\n");
 	if ( ctri->isPtr ) {
@@ -731,10 +731,10 @@ PrintCDecoderPrototype PARAMS ((hdr, td),
 
     ctdi =  td->cTypeDefInfo;
     if ( GetEncRulesType() == GSER ){
-	fprintf (hdr,"int %sDecComponent%s PROTO ((%s b, Component%s **v, %s *bytesDecoded, int mode));\n", GetEncRulePrefix(), ctdi->cTypeName, bufTypeNameG, ctdi->cTypeName, lenTypeNameG );
+	fprintf (hdr,"int %sDecComponent%s PROTO (( void* mem_op, %s b, Component%s **v, %s *bytesDecoded, int mode));\n", GetEncRulePrefix(), ctdi->cTypeName, bufTypeNameG, ctdi->cTypeName, lenTypeNameG );
     }
     else if ( GetEncRulesType() == BER_COMP ) {
-	fprintf (hdr,"int %sDecComponent%s PROTO ((%s b, %s tagId%d, %s elmtLen%d, Component%s **v, %s *bytesDecoded, int mode));\n", GetEncRulePrefix(), ctdi->cTypeName, bufTypeNameG, tagTypeNameG, FIRST_LEVEL-1, lenTypeNameG, FIRST_LEVEL-1, ctdi->cTypeName, lenTypeNameG);
+	fprintf (hdr,"int %sDecComponent%s PROTO ((void* mem_op, %s b, %s tagId%d, %s elmtLen%d, Component%s **v, %s *bytesDecoded, int mode));\n", GetEncRulePrefix(), ctdi->cTypeName, bufTypeNameG, tagTypeNameG, FIRST_LEVEL-1, lenTypeNameG, FIRST_LEVEL-1, ctdi->cTypeName, lenTypeNameG);
     }
     else if ( GetEncRulesType() == BER ) {
 	fprintf (hdr,"void %s%sContent PROTO ((%s b, %s tagId%d, %s elmtLen%d, %s *v, %s *bytesDecoded, %s env));\n", GetEncRulePrefix(), ctdi->decodeRoutineName, bufTypeNameG, tagTypeNameG, FIRST_LEVEL-1, lenTypeNameG, FIRST_LEVEL-1, ctdi->cTypeName, lenTypeNameG, envTypeNameG);
@@ -762,7 +762,7 @@ PrintCExtractorPrototype PARAMS ((hdr, td),
 
     ctdi =  td->cTypeDefInfo;
 
-    fprintf (hdr,"void* %s PROTO ((ComponentReference *cr, Component%s *comp ));\n", ctdi->compExtractorName, ctdi->cTypeName );
+    fprintf (hdr,"void* %s PROTO (( void* mem_op, ComponentReference *cr, Component%s *comp ));\n", ctdi->compExtractorName, ctdi->cTypeName );
 } /* PrintCExtractorPrototype */
 
 /*
@@ -778,8 +778,9 @@ PrintCDecoderDeclaration PARAMS ((src,td),
     ctdi =  td->cTypeDefInfo;
     if ( (GetEncRulesType() == GSER) ) {
     fprintf (src,"int\n");
-    fprintf (src,"%sDecComponent%s PARAMS ((b, v, bytesDecoded, mode),\n", 
+    fprintf (src,"%sDecComponent%s PARAMS (( mem_op,b, v, bytesDecoded, mode),\n", 
 	     GetEncRulePrefix(), ctdi->cTypeName);
+    fprintf (src,"void* mem_op _AND_\n");
     fprintf (src,"%s b _AND_\n", bufTypeNameG);
     if ( strncmp( td->cTypeDefInfo->cTypeName, "Asn", 3 )  == 0 )
 	fprintf (src,"Component%s **v _AND_\n",td->cTypeDefInfo->cTypeName+3);
@@ -793,6 +794,7 @@ PrintCDecoderDeclaration PARAMS ((src,td),
     fprintf (src,"%sDecComponent%s PARAMS ((b, tagId%d, elmtLen%d, v, bytesDecoded, mode),\n", 
 	     GetEncRulePrefix(), ctdi->cTypeName, FIRST_LEVEL -1,
 	     FIRST_LEVEL -1);
+    fprintf (src,"void* mem_op _AND_\n");
     fprintf (src,"%s b _AND_\n", bufTypeNameG);
     fprintf (src,"%s tagId%d _AND_\n", tagTypeNameG, FIRST_LEVEL -1);
     fprintf (src,"%s elmtLen%d _AND_\n", lenTypeNameG, FIRST_LEVEL -1);
@@ -839,7 +841,7 @@ PrintCExtractorDeclaration PARAMS ((src,td),
 
     ctdi =  td->cTypeDefInfo;
     fprintf (src,"void*\n");
-    fprintf (src,"%s ( ComponentReference* cr, Component%s *comp )\n", ctdi->compExtractorName, ctdi->cTypeName);
+    fprintf (src,"%s ( void* mem_op, ComponentReference* cr, Component%s *comp )\n", ctdi->compExtractorName, ctdi->cTypeName);
 }  /*  PrintCExtractorDeclaration */
 
 /*
@@ -1124,7 +1126,7 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
         fprintf (src,"/* ANY - Fix Me ! */\n");
         fprintf (src,"\tSetAnyTypeUnknown(%s);\n", elmtVarName);
         //RWC;fprintf (src,"    SetAnyTypeBy\?\?\?(%s, \?\?\?);\n", elmtVarName);
-        fprintf (src,"    %s%s (b, %s, &%s%d, env);\n", 
+        fprintf (src,"    %s%s (mem_op,b, %s, &%s%d, env);\n", 
 		 GetEncRulePrefix(), "DecAsnAny"/*RWC;NOT VALID FOR C_TYPEREF;ctri->decodeRoutineName*/, 
 		 elmtVarName, decodedLenVarNameG, totalLevel);
     }
@@ -1155,11 +1157,11 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
             fprintf (src, "    SetAnyTypeByInt (%s, %s);\n", elmtVarName, idVarRef);
         }
 	if ( GetEncRulesType() == BER_COMP ) {
-        fprintf (src,"    %sDecComponentAnyDefinedBy (b, %s, &%s%d, mode );\n", 
+        fprintf (src,"    %sDecComponentAnyDefinedBy (mem_op,b, %s, &%s%d, mode );\n", 
 		 GetEncRulePrefix(),/* ctri->decodeRoutineName, */
 		 elmtVarName, decodedLenVarNameG, totalLevel);
 	} else if ( GetEncRulesType() == GSER || GetEncRulesType() == GSER_COMP ){
-        fprintf (src,"    %sDecComponentAnyDefinedBy (b, %s, bytesDecoded, mode );\n", 
+        fprintf (src,"    %sDecComponentAnyDefinedBy (mem_op, b, %s, bytesDecoded, mode );\n", 
 		 GetEncRulePrefix(), elmtVarName );
 	} else {
         fprintf (src,"    %s%s (b, %s, &%s%d, env);\n", 
@@ -1178,11 +1180,11 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
 		else
 			strcpy (tmpVarName,ctri->cTypeName );
 		if ( IsPrimitiveType( t ) && IsPtrType ( t ) ) {
-                fprintf (src,"\t%sDecComponent%s (b, %s, %s, DEC_ALLOC_MODE_0 );\n", 
+                fprintf (src,"\t%sDecComponent%s (mem_op, b, %s, %s, DEC_ALLOC_MODE_0 );\n", 
 		          GetEncRulePrefix(), tmpVarName, 
 		          elmtVarName, "bytesDecoded");
 		} else {
-                fprintf (src,"\t%sDecComponent%s (b, %s, %s, mode);\n", 
+                fprintf (src,"\t%sDecComponent%s (mem_op, b, %s, %s, mode);\n", 
 		          GetEncRulePrefix(), tmpVarName, 
 		          elmtVarName, "bytesDecoded");
 		}
@@ -1222,12 +1224,12 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
 			strcpy (tmpVarName,ctri->cTypeName );
 
 		if ( IsPrimitiveType( t ) && IsPtrType ( t ) ) {
-            fprintf (src,"\t%sDecComponent%s (b, %s%d, %s%d, %s, &%s%d, DEC_ALLOC_MODE_0 );\n", 
+            fprintf (src,"\t%sDecComponent%s (mem_op, b, %s%d, %s%d, %s, &%s%d, DEC_ALLOC_MODE_0 );\n", 
 		     GetEncRulePrefix(), tmpVarName, 
 		     tagIdVarNameG, tagLevel, itemLenVarNameG, elmtLevel, 
 		     elmtVarName, decodedLenVarNameG, totalLevel);
 		} else {
-            fprintf (src,"\t%sDecComponent%s (b, %s%d, %s%d, %s, &%s%d, mode);\n", 
+            fprintf (src,"\t%sDecComponent%s (mem_op, b, %s%d, %s%d, %s, &%s%d, mode);\n", 
 		     GetEncRulePrefix(), tmpVarName, 
 		     tagIdVarNameG, tagLevel, itemLenVarNameG, elmtLevel, 
 		     elmtVarName, decodedLenVarNameG, totalLevel);
@@ -1499,7 +1501,7 @@ PrintCElmtExtractorCode PARAMS ((src, td, parent, t, parentVarName, elmtVarName,
     {
         case C_LIB:
         case C_TYPEREF:
-            fprintf (src,"\t%s ( cr, %s );\n", ctri->compExtractorName, elmtVarName);
+            fprintf (src,"\t%s ( mem_op, cr, %s );\n", ctri->compExtractorName, elmtVarName);
         break;
 
         case C_CHOICE:
@@ -1939,7 +1941,6 @@ PrintDefaultValue PARAMS ((src, tmpVarName, defaultVal),
 	char* buf[512];
 	char* max_int="2147483648";
 	char* min_int="0";
-	int rc;
 	struct BasicValue* basicValue = defaultVal->basicValue;
 
 	switch ( basicValue->choiceId ) {
@@ -2045,7 +2046,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
  * Print codes for reading '{' in GSER encoded data stream,
  */
     fprintf (src,"\t*bytesDecoded = 0;\n");
-    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src,"\t\tAsn1Error(\"Error during Reading { in encoded data\");\n");
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n");
@@ -2054,7 +2055,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n\n");
 
-    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src,"\t\tAsn1Error(\"Error during Reading identifier\");\n");
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n");
@@ -2083,7 +2084,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 
 	if ( --count != 0 ) {
 		/* The last element so that don't parse ',' */
-		fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+		fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
 		fprintf (src,"\t\tAsn1Error(\"Error during Reading , \");\n");
 		fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 		fprintf (src,"\t}\n");
@@ -2092,7 +2093,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 		fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 		fprintf (src,"\t}\n");
 		/* The last element so that don't parse identifier*/
-		fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+		fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
 		fprintf (src,"\t  Asn1Error(\"Error during Reading identifier\");\n");
 		fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
 		fprintf (src,"\t}\n");
@@ -2111,7 +2112,7 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     /*
      * Print codes for reading '}' in GSER encoded data stream,
      */
-    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ) {\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ) {\n");
     fprintf (src,"\t\tAsn1Error(\"Error during Reading } in encoding\");\n");
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n");
@@ -2157,7 +2158,7 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
  * Print codes for reading '{' in GSER encoded data stream,
  */
     fprintf (src,"\t*bytesDecoded = 0;\n");
-    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src,"\t\tAsn1Error(\"Error during Reading { in encoded data\");\n");
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n");
@@ -2168,7 +2169,7 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
 
     fprintf (src,"   for( i = 0 ; i < %d ; i++ ) {\n", count);
 
-    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
     fprintf (src,"\t\tAsn1Error(\"Error during Reading identifier\");\n");
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n");
@@ -2211,7 +2212,7 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     } /* End of For */
 
 	fprintf (src,"\tif ( i < %d ) {\n",t_count-1);
-	fprintf (src,"\t\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ){\n");
+	fprintf (src,"\t\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ){\n");
 	fprintf (src,"\t\t\tAsn1Error(\"Error during Reading , \");\n");
 	fprintf (src,"\t\t\treturn LDAP_PROTOCOL_ERROR;\n");
 	fprintf (src,"\t\t}\n");
@@ -2248,7 +2249,7 @@ PrintCSetGSERDecodeCode PARAMS ((src, td, parent, elmts, varName),
     /*
      * Print codes for reading '}' in GSER encoded data stream,
      */
-    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(b,&peek_head,GSER_NO_COPY)) ) {\n");
+    fprintf (src,"\tif( !(strLen = LocateNextGSERToken(mem_op,b,&peek_head,GSER_NO_COPY)) ) {\n");
     fprintf (src,"\t\tAsn1Error(\"Error during Reading } in encoding\");\n");
     fprintf (src,"\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src,"\t}\n");
@@ -2357,7 +2358,7 @@ PrintCSeqExtractorCode PARAMS ((src, td, t, elmts, varName),
 		if ( ctri->isPtr ) strcpy (ref_name, "->" );
 		else strcpy (ref_name, "." );
 
-		fprintf (src, "\tif ( ( strncmp(comp->%s%sidentifier.bv_val, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0 ) || ( strncmp(comp->%s%sid_buf, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0 ) ) {\n",e->type->cTypeRefInfo->cFieldName, ref_name, e->type->cTypeRefInfo->cFieldName, ref_name);
+		fprintf (src, "\tif ( ( comp->%s%sidentifier.bv_val && strncmp(comp->%s%sidentifier.bv_val, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0 ) || ( strncmp(comp->%s%sid_buf, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0 ) ) {\n",e->type->cTypeRefInfo->cFieldName, ref_name ,e->type->cTypeRefInfo->cFieldName, ref_name, e->type->cTypeRefInfo->cFieldName, ref_name);
 		fprintf (src, "\t\tif ( cr->cr_curr->ci_next == NULL )\n");
 
 		if ( ctri->isPtr ) {
@@ -2460,7 +2461,7 @@ PrintCSetExtractorCode PARAMS ((src, td, t, elmts, varName),
 
 	if ( ctri->isPtr ) strcpy (ref_name, "->" );
 	else strcpy (ref_name, "." );
-	fprintf (src, "\tif ( (strncmp(comp->%s%sidentifier.bv_val, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0) || ( strncmp(comp->%s%sid_buf, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0) ) {",e->type->cTypeRefInfo->cFieldName, ref_name, e->type->cTypeRefInfo->cFieldName, ref_name);
+	fprintf (src, "\tif ( ( comp->%s%sidentifier.bv_val && strncmp(comp->%s%sidentifier.bv_val, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0) || ( strncmp(comp->%s%sid_buf, cr->cr_curr->ci_val.ci_identifier.bv_val,cr->cr_curr->ci_val.ci_identifier.bv_len) == 0) ) {", e->type->cTypeRefInfo->cFieldName, ref_name,e->type->cTypeRefInfo->cFieldName, ref_name, e->type->cTypeRefInfo->cFieldName, ref_name);
 
 	fprintf (src, "\tif ( cr->cr_curr->ci_next == NULL )\n");
 
@@ -3357,7 +3358,7 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
 	fprintf (src, "\tAsnListInit( &k->comp_list, sizeof( Component%s ) );\n", ctri->cTypeName );
     }
     fprintf (src, "\t*bytesDecoded = 0;\n");
-    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_PEEK)) ){\n");
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(mem_op,b, &peek_head, GSER_PEEK)) ){\n");
     fprintf (src, "\t\tAsn1Error(\"Error during Reading { in encoding\");\n");
     fprintf (src, "\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t}\n");
@@ -3374,7 +3375,7 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, varName),
     else
     	fprintf (src,"\t\tComponent%s **tmpVar;\n", ctri->cTypeName);
 
-    fprintf (src, "\t\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_NO_COPY)) ){\n");
+    fprintf (src, "\t\tif( !(strLen = LocateNextGSERToken(mem_op,b, &peek_head, GSER_NO_COPY)) ){\n");
     fprintf (src, "\t\t\tAsn1Error(\"Error during Reading{ in encoding\");\n");
     fprintf (src, "\t\t\treturn LDAP_PROTOCOL_ERROR;\n");
     fprintf (src, "\t\t}\n");
@@ -3463,7 +3464,7 @@ PrintCListSeqOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\t\t\t\t\treturn component;\n");
 	fprintf ( src, "\t\t\t\telse {\n");
 	fprintf ( src, "\t\t\t\t\tcr->cr_curr = cr->cr_curr->ci_next;\n");
-	fprintf ( src, "\t\t\t\t\treturn\n");
+	fprintf ( src, "\t\t\t\t\treturn ");
 	PrintCElmtExtractorCode (src, td, list, list->basicType->a.sequenceOf,
 					NULL, "component", NULL );
 	fprintf ( src, "\t\t\t\t}\n");
@@ -3480,7 +3481,7 @@ PrintCListSeqOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\t\t\t\t\treturn component;\n");
 	fprintf ( src, "\t\t\t\telse {\n");
 	fprintf ( src, "\t\t\t\t\tcr->cr_curr = cr->cr_curr->ci_next;\n");
-	fprintf ( src, "\t\t\t\t\treturn\n");
+	fprintf ( src, "\t\t\t\t\treturn ");
 	PrintCElmtExtractorCode (src, td, list, list->basicType->a.sequenceOf,
 					NULL, "component", NULL );
 	fprintf ( src, "\t\t\t\t}\n");
@@ -3489,8 +3490,9 @@ PrintCListSeqOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\t\tbreak;\n");
 	fprintf ( src, "\tcase LDAP_COMPREF_ALL :\n");
 	fprintf ( src, "\t\treturn comp;\n");
-	fprintf (src, "\t\tk = (ComponentInt*)malloc(sizeof(ComponentInt));\n");
-	fprintf (src, "\t\tk->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
+	fprintf ( src, "\tcase LDAP_COMPREF_COUNT :\n");
+	fprintf (src, "\t\tk = (ComponentInt*)CompAlloc( mem_op, sizeof(ComponentInt));\n");
+	fprintf (src, "\t\tk->comp_desc = CompAlloc( mem_op, sizeof( ComponentDesc ) );\n");
 	fprintf (src, "\t\tk->comp_desc->cd_tag = NULL;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponentInt;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponentInt;\n");
@@ -3579,7 +3581,7 @@ PrintCListSetOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\t\t\t\t\treturn component;\n");
 	fprintf ( src, "\t\t\t\telse {\n");
 	fprintf ( src, "\t\t\t\t\tcr->cr_curr = cr->cr_curr->ci_next;\n");
-	fprintf ( src, "\t\t\t\t\treturn\n");
+	fprintf ( src, "\t\t\t\t\treturn ");
 	PrintCElmtExtractorCode (src, td, list, list->basicType->a.setOf,
 					NULL, "component", NULL );
 	fprintf ( src, "\t\t\t\t}\n");
@@ -3596,7 +3598,7 @@ PrintCListSetOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\t\t\t\t\treturn component;\n");
 	fprintf ( src, "\t\t\t\telse {\n");
 	fprintf ( src, "\t\t\t\t\tcr->cr_curr = cr->cr_curr->ci_next;\n");
-	fprintf ( src, "\t\t\t\t\treturn\n");
+	fprintf ( src, "\t\t\t\t\treturn ");
 	PrintCElmtExtractorCode (src, td, list, list->basicType->a.setOf,
 					NULL, "component", NULL );
 	fprintf ( src, "\t\t\t\t}\n");
@@ -3605,8 +3607,9 @@ PrintCListSetOfExtractorCode PARAMS ((src, td, list,varName),
 	fprintf ( src, "\t\tbreak;\n");
 	fprintf ( src, "\tcase LDAP_COMPREF_ALL :\n");
 	fprintf ( src, "\t\treturn comp;\n");
-	fprintf (src, "\t\tk = (ComponentInt*)malloc(sizeof(ComponentInt));\n");
-	fprintf (src, "\t\tk->comp_desc = malloc( sizeof( ComponentDesc ) );\n");
+	fprintf ( src, "\tcase LDAP_COMPREF_COUNT :\n");
+	fprintf (src, "\t\tk = (ComponentInt*)CompAlloc( mem_op, sizeof(ComponentInt));\n");
+	fprintf (src, "\t\tk->comp_desc = CompAlloc( mem_op, sizeof( ComponentDesc ) );\n");
 	fprintf (src, "\t\tk->comp_desc->cd_tag = NULL;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_gser_decoder = (gser_decoder_func*)GDecComponentInt;\n");
 	fprintf (src, "\t\tk->comp_desc->cd_ber_decoder = (ber_decoder_func*)BDecComponentInt;\n");
