@@ -399,9 +399,9 @@ PrintCElmtFree PARAMS ((src, td, parent, e, varName),
     if(e->optional || (e->defaultVal != NULL)) {
 	if ( GetEncRulesType() == BER_COMP || GetEncRulesType() == GSER ) {
 		if ( strncmp ( ctri->optTestRoutineName, "ASN", 3) == 0 ) 
-			fprintf (src, "\tif(COMPONENT%s (%s))\n    {\n", ctri->optTestRoutineName+3, elmtVarRef);
+			fprintf (src, "\tif(COMPONENT%s (%s))\n\t{\n", ctri->optTestRoutineName+3, elmtVarRef);
 		else 
-			fprintf (src, "\tif(COMPONENT%s (%s))\n    {\n", ctri->optTestRoutineName, elmtVarRef);
+			fprintf (src, "\tif(COMPONENT%s (%s))\n\t{\n", ctri->optTestRoutineName, elmtVarRef);
 	} else {
         fprintf (src, "\tif(%s (%s))\n    {\n", ctri->optTestRoutineName, elmtVarRef);
 	}
