@@ -237,6 +237,13 @@ ExpBufFreeBuf PARAMS ((ptr),
 		free (ptr);
 }
 
+void
+GenBufFreeBuf PARAMS ((ptr),
+    GenBuf *ptr)
+{
+	if (ptr != NULL)
+		free (ptr);
+}
 char*
 ExpBufAllocData()
 {
