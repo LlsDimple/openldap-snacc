@@ -41,6 +41,7 @@ typedef struct CRules
     char *printRoutineBaseName;  /* eg if "Print" -> PrintFoo (..) */
     char *encodeRoutineBaseName;
     char *decodeRoutineBaseName;
+    char *matchingRuleBaseName;
     char *freeRoutineBaseName;
     CTDI typeConvTbl[BASICTYPE_OBJECTCLASSFIELDTYPE + 1];
 }  CRules;

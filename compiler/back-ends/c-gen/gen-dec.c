@@ -85,6 +85,11 @@ static void PrintCElmtDecodeCode PROTO ((FILE *src, TypeDef *td, Type *parent,
 										int tagLevel, char *parnetVarName,
 										char *elmtVarName, int stoleChoiceTags));
 
+static void PrintCElmtMatchingRuleCode PROTO ((FILE *src, TypeDef *td, Type *parent,
+										Type *t, int elmtLevel, int totalLevel,
+										int tagLevel, char *parnetVarName,
+										char *elmtVarName, char* elmtVarName2));
+
 static void PrintCListGSERDecoderCode PROTO ((FILE *src, TypeDef *td,
 											  Type *list, int elmtLevel,
 											  int totalLevel, int tagLevel,
@@ -316,7 +321,92 @@ PrintCChoiceGSERDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel,
     fprintf (src, "\tAsn1Error(\"Error - Unexpected identifier\");\n");
 }
 
+/*
+ * Matching Rule generations routine for CHOICE type
+ * Written by Sang Seok Lim
+ */
+static void
+PrintCChoiceMatchingRuleCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *t _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    NamedType *e;
+    CTRI *ctri;
+    enum BasicTypeChoiceId builtinType;
+    char  tmpVarName[MAX_VAR_REF];
+    char  tmpVarName2[MAX_VAR_REF];
+    char  choiceIdVarName[MAX_VAR_REF];
+    char  choiceIdVarName2[MAX_VAR_REF];
+    void *tmp;
+    int initialTagLevel;
+    int initialElmtLevel;
 
+    initialTagLevel = tagLevel;
+    initialElmtLevel = elmtLevel;
+    
+    fprintf (src, "\tif( (strcmp( v1->identifier, v2->identifier) !=0) &&\n");
+    fprintf (src, "\t\t(v1->%s == v2->%s ))\n",t->cTypeRefInfo->choiceIdEnumFieldName,
+			t->cTypeRefInfo->choiceIdEnumFieldName);
+    fprintf (src, "\t\t return 0;\n");
+
+    fprintf (src, "\tswitch( v1->%s )\n\t{\n",t->cTypeRefInfo->choiceIdEnumFieldName);
+
+    FOR_EACH_LIST_ELMT (e,  t->basicType->a.choice)
+    {
+        tmp = (void*)CURR_LIST_NODE (t->basicType->a.choice);
+
+        tagLevel = initialTagLevel;
+        elmtLevel = initialElmtLevel;
+
+        ctri =  e->type->cTypeRefInfo;
+
+        builtinType = GetBuiltinType (e->type);
+
+        MakeChoiceIdValueRef (genDecCRulesG, td, t, e->type, varName,
+				choiceIdVarName);
+
+	if( choiceIdVarName[ strlen(varName)+1 ] == ' ' ){
+		choiceIdVarName[strlen(varName)+1] = '1';
+		strcpy(choiceIdVarName2,choiceIdVarName);
+		choiceIdVarName2[strlen(varName)+1] = '2';
+	}
+	else{
+		choiceIdVarName[strlen(varName)+2] = '1';
+		strcpy(choiceIdVarName2,choiceIdVarName);
+		choiceIdVarName2[strlen(varName)+2] = '2';
+	}
+	fprintf (src, "\t   case %s :\n",ctri->choiceIdSymbol);
+
+        fprintf (src, "\t\t%s = %s;\n", choiceIdVarName,
+				ctri->choiceIdSymbol);
+        MakeVarPtrRef (genDecCRulesG, td, t, e->type, varName, tmpVarName);
+
+	if( tmpVarName[ strlen(varName)+1 ] == ' ' ){
+		tmpVarName[strlen(varName)+1] = '1';
+		strcpy(tmpVarName2,tmpVarName);
+		tmpVarName2[strlen(varName)+1] = '2';
+	}
+	else{
+		tmpVarName[strlen(varName)+2] = '1';
+		strcpy(tmpVarName2,tmpVarName);
+		tmpVarName2[strlen(varName)+2] = '2';
+	}
+
+	fprintf (src, "\t\trc = ");
+        PrintCElmtMatchingRuleCode (src, td, t, e->type, elmtLevel, totalLevel,
+				tagLevel, varName, tmpVarName, tmpVarName2);
+	fprintf (src, "\t\tbreak;\n");
+
+        SET_CURR_LIST_NODE (t->basicType->a.choice, tmp);
+    }
+    fprintf (src, "\t}\n");
+    fprintf (src, "\treturn rc;\n");
+}
 
 void
 PrintCContentDecoder PARAMS ((src, hdr, r, m,  td, longJmpVal),
@@ -500,6 +590,19 @@ PrintCDecoderPrototype PARAMS ((hdr, td),
 
 }  /*  PrintCDecoderPrototype */
 
+static void
+PrintCMatchingRulePrototype PARAMS ((hdr, td),
+    FILE *hdr _AND_
+    TypeDef *td)
+{
+    CTDI *ctdi;
+
+    ctdi =  td->cTypeDefInfo;
+
+    fprintf (hdr,"int %s%sContent PROTO ((%s *v1, %s *v2 ));\n",
+		GetEncRulePrefix(), ctdi->matchingRuleName,
+		ctdi->cTypeName, ctdi->cTypeName);
+} /* PrintCMatchingRulePrototype */
 
 
 /*
@@ -536,6 +639,20 @@ PrintCDecoderDeclaration PARAMS ((src,td),
 
 }  /*  PrintCDecoderDeclaration */
 
+static void
+PrintCMatchingRuleDeclaration PARAMS ((src,td),
+    FILE *src _AND_
+    TypeDef *td)
+{
+    CTDI *ctdi;
+
+    ctdi =  td->cTypeDefInfo;
+    fprintf (src,"int\n");
+    fprintf (src,"%s%sContent PARAMS (( v1, v2 ),\n", 
+	     GetEncRulePrefix(), ctdi->matchingRuleName);
+    fprintf (src,"%s *v1 _AND_\n", ctdi->cTypeName);
+    fprintf (src,"%s *v2 ) \n", ctdi->cTypeName);
+}  /*  PrintCMatchingRuleDeclaration */
 
 
 /*
@@ -559,6 +676,15 @@ PrintCDecoderDefine PARAMS ((hdr, td),
 */
 }  /*  PrintCDecoderDefine */
 
+static void
+PrintCMatchingRuleDefine PARAMS ((hdr, td),
+    FILE *hdr _AND_
+    TypeDef *td)
+{
+    fprintf(hdr, "#define %s%sContent %s%sContent", 
+	    GetEncRulePrefix(), td->cTypeDefInfo->matchingRuleName, 
+	    GetEncRulePrefix(), td->type->cTypeRefInfo->matchingRuleName);
+}
 
 
 /*
@@ -697,6 +823,23 @@ PrintCDecoderLocals PARAMS ((src,td),
 
 }  /*  PrintCDecoderLocals */
 
+static void
+PrintCMatchingRuleLocals PARAMS ((src,td),
+    FILE *src _AND_
+    TypeDef *td)
+{
+    int levels;
+
+    levels = CountVariableLevels (td->type);
+
+    fprintf (src, "\tint rc;\n");
+    if ( td->type->basicType->choiceId == BASICTYPE_SETOF ||
+	 td->type->basicType->choiceId == BASICTYPE_SEQUENCEOF )
+	fprintf (src, "\tvoid* component1, *component2;\n");
+    if ( td->type->basicType->choiceId == BASICTYPE_SETOF )
+	fprintf (src, "\tAsnList t_list;\n");
+
+} /* PrintMatchingRuleLocals */
 
 /*
  * given the Type *(t) of an elmt in a set/seq/choice/list,
@@ -882,6 +1025,114 @@ PrintCElmtDecodeCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLeve
    }
 
 } /* PrintCElmtDecodeCode */
+
+/*
+ * Print C element matching rule code
+ * Written by Sang Seok Lim
+ */
+static void
+PrintCElmtMatchingRuleCode PARAMS ((src, td, parent, t, elmtLevel, totalLevel, tagLevel, parentVarName, elmtVarName, elmtVarName2),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *parent _AND_
+    Type *t _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *parentVarName _AND_
+    char *elmtVarName _AND_
+    char *elmtVarName2)
+    
+{
+    CTRI *ctri;
+    Type *tmpType;
+    char idVarRef[MAX_VAR_REF];
+    NamedType *idNamedType;
+    enum BasicTypeChoiceId tmpTypeId;
+
+    ctri =  t->cTypeRefInfo;
+
+    tmpType = GetType (t);
+
+   if(!tmpType->extensionAddition)
+   {
+    /* Need to be considered */
+    if (tmpType->basicType->choiceId == BASICTYPE_ANY)
+    {
+        fprintf (src,"/* ANY - Fix Me ! */\n");
+        fprintf (src,"\tSetAnyTypeUnknown(%s);\n", elmtVarName);
+        fprintf (src,"    %s%s (b, %s, &%s%d, env);\n", 
+		 GetEncRulePrefix(), "DecAsnAny", 
+		 elmtVarName, decodedLenVarNameG, totalLevel);
+    }
+    /* Need to be considered */
+    else if (tmpType->basicType->choiceId == BASICTYPE_ANYDEFINEDBY)
+    {
+        idNamedType = t->basicType->a.anyDefinedBy->link;
+        tmpTypeId = GetBuiltinType (idNamedType->type);
+
+        if (tmpTypeId == BASICTYPE_OID || tmpTypeId == BASICTYPE_RELATIVE_OID)
+        {
+            MakeVarPtrRef (genDecCRulesG, td, parent, idNamedType->type, parentVarName, idVarRef);
+            fprintf (src, "    SetAnyTypeByOid (%s, %s);\n", elmtVarName, idVarRef);
+        }
+        else
+        {
+            MakeVarValueRef (genDecCRulesG, td, parent, idNamedType->type, parentVarName, idVarRef);
+            fprintf (src, "    SetAnyTypeByInt (%s, %s);\n", elmtVarName, idVarRef);
+        }
+        fprintf (src,"    %s%s (b, %s, &%s%d, env);\n", 
+		 GetEncRulePrefix(), ctri->decodeRoutineName, 
+		 elmtVarName, decodedLenVarNameG, totalLevel);
+    }
+    else switch (ctri->cTypeId)
+    {
+        case C_LIB:
+        case C_TYPEREF:
+            fprintf (src,"\t%s%sContent ( %s, %s );\n", 
+	          GetEncRulePrefix(), ctri->matchingRuleName, 
+	          elmtVarName,elmtVarName2);
+        break;
+
+        case C_CHOICE:
+            PrintCChoiceMatchingRuleCode (src, td, t, elmtLevel,
+					totalLevel+1, tagLevel, elmtVarName);
+        break;
+
+        case C_STRUCT:
+            if (t->basicType->choiceId == BASICTYPE_SET){
+                PrintCSetDecodeCode (src, td, t, t->basicType->a.set,
+				     elmtLevel, totalLevel+1, tagLevel,
+				     elmtVarName);
+	    }
+            else
+            {
+		PrintCSeqGSERDecodeCode (src, td, td->type,
+			   	            td->type->basicType->a.sequence,
+					    FIRST_LEVEL-1, FIRST_LEVEL,
+					    FIRST_LEVEL-1, valueArgNameG);
+            }
+            fprintf (src,"             %s%d += %s%d;\n",
+		decodedLenVarNameG, totalLevel, decodedLenVarNameG, totalLevel+1);
+        break;
+
+        case C_LIST:
+            PrintCListDecoderCode (src, td, t,  elmtLevel, totalLevel+1, tagLevel, elmtVarName);
+            fprintf (src,"\n\n");
+            fprintf (src,"             %s%d += %s%d;\n", decodedLenVarNameG, totalLevel, decodedLenVarNameG, totalLevel+1);
+        break;
+
+
+        case C_NO_TYPE:
+            break;
+
+        default:
+            fprintf (stderr,"PrintCElmtDecodeCode: ERROR - unknown c type id\n");
+        break;
+    }
+   }
+
+} /* PrintCElmtMatchingCode */
 
 
 /*
@@ -1181,7 +1432,7 @@ PrintCSetDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagL
 
 
 /*
- * Prints code for decoding the elmts of a SEQUENCE in GSER
+ * Prints code for decoding the elmts of a SEQUENCE SET in GSER
  * This Routine is orginally developed by sang seok lim
  */
 static void
@@ -1282,6 +1533,48 @@ PrintCSeqGSERDecodeCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, 
     fprintf (src,"\t}\n");
 }
 
+/*
+ * Prints C code for Matching Rules the elmts of a SEQUENCE and SET in GSER
+ * This Routine is orginally developed by sang seok lim
+ */
+static void
+PrintCSeqSetMatchingRuleCode PARAMS ((src, td, parent, elmts, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *parent _AND_
+    NamedTypeList *elmts _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    NamedType *e;
+    char  tmpVarName[MAX_VAR_REF];
+    char  tmpVarName2[MAX_VAR_REF];
+
+    AsnListFirst (elmts);
+    e = (NamedType*)FIRST_LIST_ELMT (elmts);
+
+    fprintf (src, "\trc = 1;\n");
+    FOR_EACH_LIST_ELMT (e, elmts)
+    {
+	MakeVarPtrRef (genDecCRulesG, td, parent, e->type, varName, tmpVarName);
+	if( tmpVarName[ strlen(varName)+1 ] == ' ' ){
+		tmpVarName[strlen(varName)+1] = '1';
+		strcpy(tmpVarName2,tmpVarName);
+		tmpVarName2[strlen(varName)+1] = '2';
+	}
+	else{
+		tmpVarName[strlen(varName)+2] = '1';
+		strcpy(tmpVarName2,tmpVarName);
+		tmpVarName2[strlen(varName)+2] = '2';
+	}
+	fprintf (src, "\t rc &=");
+        PrintCElmtMatchingRuleCode (src, td, parent, e->type, elmtLevel, totalLevel,
+				tagLevel, varName, tmpVarName, tmpVarName2);
+    }
+    fprintf (src, "\treturn rc;\n");
+}
 
 /*
  * Prints code for decoding the elmts of a SEQUENCE
@@ -1996,7 +2289,7 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLeve
     
     fprintf (src, "\tAsnLen totalElmtsLen1, elmtLen0;\n");
     fprintf (src, "\tbytesDecoded = 0;\n");
-    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_PEEK)) ){\n");
+    fprintf (src, "\tif( !(strLen = LocateNextGSERToken(b, &peek_head, GSER_NO_COPY)) ){\n");
     fprintf (src, "\tAsn1Error(\"Error during Reading{ in encoded data\");\n");
     fprintf (src, "\tlongjmp(env,-20);\n");
     fprintf (src, "\t}\n");
@@ -2021,8 +2314,97 @@ PrintCListGSERDecoderCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLeve
     fprintf (src, "\t} /* end of for */\n\n");
 }
 
+/*
+ * Matching Rule Generation Routine for SEQUENCE OF
+ * Written by Sang Seok Lim
+ */
+static void
+PrintCListSeqOfMatchingRuleCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *list _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    CTRI *ctri;
+    char tmpVarName[] = "component1";
+    char tmpVarName2[] = "component2";
 
+    ctri = list->basicType->a.sequenceOf->cTypeRefInfo;
 
+    fprintf (src, "   rc = 1;");
+    fprintf (src, "   FOR_EACH_LIST_PAIR_ELMT");
+    fprintf (src, "(component1, component2, v1, v2)");
+    fprintf (src, "\t{\n");
+
+    fprintf (src, "\trc &= %s%sContent((%s%s*)%s,(%s%s*)%s);\n", 
+	     GetEncRulePrefix(), ctri->matchingRuleName,
+	     GetEncRulePrefix(), ctri->cTypeName, tmpVarName,
+	     GetEncRulePrefix(), ctri->cTypeName, tmpVarName2);
+    fprintf (src, "   } /* end of for */\n\n");
+
+    fprintf (src,"\tif( (!component1 && component2) || (component1 && !component2))\n");
+    fprintf (src,"\t\treturn 0;\n");
+    fprintf (src,"\telse\n\t\treturn rc;\n");
+/*
+    PrintCElmtMatchingRuleCode (src, td, list, list->basicType->a.setOf, elmtLevel,
+			totalLevel, tagLevel, varName, tmpVarName, tmpVarName);*/
+
+}
+
+/*
+ * Matching Rule Generation Routine for SET OF
+ * Written by Sang Seok Lim
+ */
+static void
+PrintCListSetOfMatchingRuleCode PARAMS ((src, td, list, elmtLevel, totalLevel, tagLevel, varName),
+    FILE *src _AND_
+    TypeDef *td _AND_
+    Type *list _AND_
+    int elmtLevel _AND_
+    int totalLevel _AND_
+    int tagLevel _AND_
+    char *varName)
+{
+    CTRI *ctri;
+    char tmpVarName[] = "component1";
+    char tmpVarName2[] = "component2";
+
+    ctri = list->basicType->a.setOf->cTypeRefInfo;
+
+    fprintf (src, "\tAsnListInit( &t_list, 0 );\n");
+    fprintf (src, "\trc = 1;");
+    fprintf (src, "\tFOR_EACH_LIST_ELMT");
+    fprintf (src, "(component1, v1)\n");
+    fprintf (src, "\t{\n");
+    fprintf (src, "\t\tFOR_EACH_LIST_ELMT");
+    fprintf (src, "(component2, v2)");
+    fprintf (src, "\n\t\t{\n");
+
+    fprintf (src, "\t\t\trc &= %s%sContent((%s%s*)%s,(%s%s*)%s);\n", 
+	     GetEncRulePrefix(), ctri->matchingRuleName,
+	     GetEncRulePrefix(), ctri->cTypeName, tmpVarName,
+	     GetEncRulePrefix(), ctri->cTypeName, tmpVarName2);
+
+    fprintf (src, "\t\t\tif( rc ){\n");
+    fprintf (src, "\t\t\t   AsnElmtMove( v2, &t_list );}\n\t\t\t   break;\n");
+
+    fprintf (src, "\t\t} /* end of inner for */\n");
+    fprintf (src, "\t} /* end of outer for */\n\n");
+
+    fprintf (src, "\tif( ( v1->last == v1->first ) &&");
+    fprintf (src, "( AsnListCount( v2 ) == 0 ))");
+    fprintf (src, "\n\t\trc = 1;\n");
+    fprintf (src, "\telse\n\t\trc = 0;\n");
+    fprintf (src, "\tAsnListMove( &t_list, v2 );\n");
+    fprintf (src, "\treturn rc;\n");
+/*
+    PrintCElmtMatchingRuleCode (src, td, list, list->basicType->a.setOf, elmtLevel,
+			totalLevel, tagLevel, varName, tmpVarName, tmpVarName);*/
+
+}
 /*
  * t is the choice type pointer
  */
@@ -2266,7 +2648,118 @@ PrintCChoiceDecodeCode PARAMS ((src, td, t, elmtLevel, totalLevel, tagLevel, var
 }  /* PrintCChoiceDecodeCode */
 
 
+void
+PrintMatchingRule PARAMS ((src, hdr, r, m,  td, longJmpVal),
+    FILE *src _AND_
+    FILE *hdr _AND_
+    CRules *r _AND_
+    Module *m _AND_
+    TypeDef *td _AND_
+    long *longJmpVal)
+{
+    CTDI *ctdi;
+    CTypeId rhsTypeId;
 
+    longJmpValG = longJmpVal;
+
+    genDecCRulesG = r;
+
+    ctdi =  td->cTypeDefInfo;
+    if ((ctdi == NULL) || (td->type->cTypeRefInfo == NULL))
+    {
+        fprintf (stderr,"PrintCDecoder: ERROR - no type info\n");
+        return;
+    }
+
+    rhsTypeId = td->type->cTypeRefInfo->cTypeId;
+
+    switch (rhsTypeId) {
+      case C_ANY:
+      case C_ANYDEFINEDBY:
+	fprintf(hdr, "#define %s%s %s%s\n", 
+		GetEncRulePrefix(), td->cTypeDefInfo->matchingRuleName, 
+		GetEncRulePrefix(), 
+		td->type->cTypeRefInfo->matchingRuleName);
+	
+	fprintf (hdr,"\n\n");
+	break;
+	
+      case C_LIB:
+      case C_TYPEREF:
+		PrintCMatchingRuleDefine ( hdr, td );
+	        fprintf (hdr,"\n\n");
+	        break;
+	
+      case C_CHOICE:
+	PrintCMatchingRulePrototype (hdr, td);
+	fprintf (hdr,"\n\n");
+	PrintCMatchingRuleDeclaration (src, td);
+	fprintf (src,"{\n");
+	PrintCMatchingRuleLocals (src, td);
+	fprintf (src,"\n\n");
+	PrintCChoiceMatchingRuleCode (src, td, td->type, FIRST_LEVEL-1,
+			FIRST_LEVEL,FIRST_LEVEL-1, valueArgNameG);
+	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
+		 td->cTypeDefInfo->matchingRuleName);
+	fprintf (src,"\n\n");
+	break;
+	    
+      case C_STRUCT:
+	PrintCMatchingRulePrototype (hdr, td);
+	fprintf (hdr,"\n\n");
+	PrintCMatchingRuleDeclaration (src, td);
+	fprintf (src,"{\n");
+	PrintCMatchingRuleLocals (src, td);
+	fprintf (src,"\n");
+	if ( td->type->basicType->choiceId == BASICTYPE_SET )
+	PrintCSeqSetMatchingRuleCode ( src, td, td->type,
+				td->type->basicType->a.set,
+				FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1,
+				valueArgNameG );
+	else
+	PrintCSeqSetMatchingRuleCode ( src, td, td->type,
+				td->type->basicType->a.sequence,
+				FIRST_LEVEL-1, FIRST_LEVEL, FIRST_LEVEL-1,
+				valueArgNameG );
+	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
+		 td->cTypeDefInfo->matchingRuleName);
+	fprintf (src,"\n\n");
+	break;
+
+
+      case C_LIST:
+	PrintCMatchingRulePrototype (hdr, td);
+	fprintf (hdr,"\n\n");
+	PrintCMatchingRuleDeclaration (src, td);
+	fprintf (src,"{\n");
+	PrintCMatchingRuleLocals (src, td);
+	fprintf (src,"\n\n");
+
+	if ( td->type->basicType->choiceId == BASICTYPE_SETOF )
+	PrintCListSetOfMatchingRuleCode (src, td, td->type,  FIRST_LEVEL-1,
+					   FIRST_LEVEL, FIRST_LEVEL-1,
+					   valueArgNameG);
+	else
+	PrintCListSeqOfMatchingRuleCode (src, td, td->type,  FIRST_LEVEL-1,
+				FIRST_LEVEL, FIRST_LEVEL-1, valueArgNameG);
+
+	fprintf (src,"}  /* %s%sContent */", GetEncRulePrefix(),
+		 td->cTypeDefInfo->matchingRuleName);
+	fprintf (src,"\n\n");
+	break;
+
+      case C_NO_TYPE:
+	return;
+	break;
+
+      default:
+	fprintf (stderr,"PrintMatchingRule : ERROR - unknown c type id\n");
+	return;
+	break;
+      }
+
+    m = m;   /* AVOIDS warning. */
+}
 
 /*static void
 PrintCLenDecodingCode PARAMS ((f),

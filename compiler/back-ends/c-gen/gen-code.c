@@ -128,6 +128,10 @@ void PrintCValueExtern  PROTO ((FILE *hdr, CRules *r, ValueDef *v));
 void PrintCValueInstantiation PROTO ((FILE *hdr, CRules *r, Value *v));
 void PrintConditionalIncludeOpen PROTO ((FILE *f, char *fileName));
 void PrintConditionalIncludeClose PROTO ((FILE *f, char *fileName));
+void PrintMatchingRule PROTO ((FILE* src, FILE* hdr, CRules* r,
+				Module* m ,TypeDef* td,long *longJmpVal));
+
+extern EncRulesType GetEncRulesType();
 
 
 /* Global Variables */
@@ -237,6 +241,9 @@ PrintCCode PARAMS ((src, hdr, mods, m, r, longJmpVal, printTypes, printValues, p
 			//if (td->bHasTableConstraint)
 			//	PrintCTableConstraintDecoder (src, hdr, m, td);		// Deepak: 25/Mar/2003
 		}
+
+	if ( GetEncRulesType() == GSER )
+		PrintMatchingRule(src, hdr, r, m ,td, &longJmpVal);
 
         if (printPrinters)
             PrintCPrinter (src, hdr, r, mods, m, td);

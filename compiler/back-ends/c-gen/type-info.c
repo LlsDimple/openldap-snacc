@@ -199,6 +199,7 @@ FillCTypeDefInfo PARAMS ((r, m, td),
     ctdi->printRoutineName = NULL;
     ctdi->encodeRoutineName = NULL;
     ctdi->decodeRoutineName = NULL;
+    ctdi->matchingRuleName = NULL;
     ctdi->freeRoutineName = NULL;
 
 
@@ -255,6 +256,14 @@ FillCTypeDefInfo PARAMS ((r, m, td),
             Malloc (strlen (ctdi->cTypeName) + strlen (r->decodeRoutineBaseName) + 1);
         strcpy (ctdi->decodeRoutineName, r->decodeRoutineBaseName);
         strcat (ctdi->decodeRoutineName, ctdi->cTypeName);
+    }
+
+    if (ctdi->matchingRuleName == NULL)
+    {
+        ctdi->matchingRuleName =
+            Malloc (strlen (ctdi->cTypeName) + strlen (r->matchingRuleBaseName) + 1);
+        strcpy (ctdi->matchingRuleName, r->matchingRuleBaseName);
+        strcat (ctdi->matchingRuleName, ctdi->cTypeName);
     }
 
     if (ctdi->printRoutineName == NULL)
@@ -323,6 +332,7 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
     ctri->printRoutineName = tmpCtdi->printRoutineName;
     ctri->encodeRoutineName = tmpCtdi->encodeRoutineName;
     ctri->decodeRoutineName = tmpCtdi->decodeRoutineName;
+    ctri->matchingRuleName = tmpCtdi->matchingRuleName;
     ctri->freeRoutineName = tmpCtdi->freeRoutineName;
     ctri->isEncDec = tmpCtdi->isEncDec;
 
@@ -408,6 +418,7 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
             ctri->printRoutineName  = tmpCtdi->printRoutineName;
             ctri->encodeRoutineName = tmpCtdi->encodeRoutineName;
             ctri->decodeRoutineName = tmpCtdi->decodeRoutineName;
+            ctri->matchingRuleName = tmpCtdi->matchingRuleName;
             ctri->freeRoutineName = tmpCtdi->freeRoutineName;
             ctri->isEncDec = tmpCtdi->isEncDec;
             ctri->optTestRoutineName = tmpCtdi->optTestRoutineName;
@@ -434,6 +445,10 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
             ctri->decodeRoutineName = Malloc (strlen (r->decodeRoutineBaseName)+ strlen (ctri->cTypeName) + 1);
             strcpy (ctri->decodeRoutineName, r->decodeRoutineBaseName);
             strcat (ctri->decodeRoutineName, ctri->cTypeName);
+
+            ctri->matchingRuleName = Malloc (strlen (r->matchingRuleBaseName)+ strlen (ctri->cTypeName) + 1);
+            strcpy (ctri->matchingRuleName, r->matchingRuleBaseName);
+            strcat (ctri->matchingRuleName, ctri->cTypeName);
 
             ctri->freeRoutineName = Malloc (strlen (ctri->cTypeName) + strlen (r->freeRoutineBaseName) + 1);
             strcpy (ctri->freeRoutineName, r->freeRoutineBaseName);
@@ -483,6 +498,10 @@ FillCTypeRefInfo PARAMS ((r, m, head, t, parentTypeId),
             ctri->decodeRoutineName = Malloc (strlen (r->decodeRoutineBaseName)+ strlen (ctri->cTypeName) + 1);
             strcpy (ctri->decodeRoutineName, r->decodeRoutineBaseName);
             strcat (ctri->decodeRoutineName, ctri->cTypeName);
+
+            ctri->matchingRuleName = Malloc (strlen (r->matchingRuleBaseName)+ strlen (ctri->cTypeName) + 1);
+            strcpy (ctri->matchingRuleName, r->matchingRuleBaseName);
+            strcat (ctri->matchingRuleName, ctri->cTypeName);
 
             ctri->freeRoutineName = Malloc (strlen (ctri->cTypeName) + strlen (r->freeRoutineBaseName) + 1);
             strcpy (ctri->freeRoutineName, r->freeRoutineBaseName);
@@ -914,6 +933,10 @@ void ParseTypeDefAttribs PARAMS ((ctdi, attrList),
 			ctdi->decodeRoutineName = pDirective->value.stringVal;
 			break;
 
+		case MatchingRuleName:
+			ctdi->matchingRuleName = pDirective->value.stringVal;
+			break;
+
 		case FreeRoutineName:
 			ctdi->freeRoutineName = pDirective->value.stringVal;
 			break;
@@ -1013,6 +1036,10 @@ void ParseTypeRefAttribs PARAMS ((ctri, attrList),
 			ctri->decodeRoutineName = pDirective->value.stringVal;
 			break;
 
+		case MatchingRuleName:
+			ctri->matchingRuleName = pDirective->value.stringVal;
+			break;
+
 		case FreeRoutineName:
 			ctri->freeRoutineName = pDirective->value.stringVal;
 			break;
@@ -1028,6 +1055,7 @@ void ParseTypeRefAttribs PARAMS ((ctri, attrList),
 				ctri->printRoutineName = "PrintAsnBigInt";
 				ctri->encodeRoutineName = "EncAsnBigInt";
 				ctri->decodeRoutineName = "DecAsnBigInt";
+				ctri->matchingRuleName = "MatchingAsnBigInt";
 				ctri->freeRoutineName = "FreeAsnBigInt";
 			}
 			break;

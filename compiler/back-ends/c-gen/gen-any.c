@@ -242,6 +242,7 @@ void PrintCAnyHashInitRoutine(FILE *src, FILE *hdr, ModuleList *mods,
     enum BasicTypeChoiceId typeId;
     char *encRoutineName=NULL;
     char *decRoutineName=NULL;
+    char *matchingRuleName=NULL;
     char *freeRoutineName=NULL;
     char *printRoutineName=NULL;
     int installedSomeHashes = FALSE;
@@ -446,10 +447,12 @@ REN -- 1/13/98 -- added the following: */
 						(t->basicType->choiceId <= BASICTYPE_T61_STR)))
 					{
 						typeId = t->basicType->choiceId;
-		                encRoutineName = 
+		               			encRoutineName = 
 							r->typeConvTbl[typeId].encodeRoutineName;
 						decRoutineName = 
 							r->typeConvTbl[typeId].decodeRoutineName;
+						matchingRuleName = 
+							r->typeConvTbl[typeId].matchingRuleName;
 						printRoutineName = 
 							r->typeConvTbl[typeId].printRoutineName;
 						switch (typeId)
@@ -480,6 +483,7 @@ REN -- 1/13/98 -- added the following: */
 							
 							encRoutineName = ctdi->encodeRoutineName;
 							decRoutineName = ctdi->decodeRoutineName;
+							matchingRuleName = ctdi->matchingRuleName;
 							printRoutineName = ctdi->printRoutineName;
 							freeRoutineName = ctdi->freeRoutineName;
 							typeName = ctdi->cTypeName;

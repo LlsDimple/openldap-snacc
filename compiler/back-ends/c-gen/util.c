@@ -79,6 +79,9 @@ MakeVarPtrRef PARAMS ((r, td, parent, fieldType, parentVarName, newVarName),
     /* start with ref to parent */
     strcat (newVarName, parentVarName);
 
+    /* tricky space to be used for matching rule  */
+    strcat (newVarName, " ");
+
     /* ref this field */
     if ((td->type == parent) || (parent->cTypeRefInfo->isPtr))
         strcat (newVarName, "->");
@@ -159,6 +162,9 @@ MakeChoiceIdValueRef PARAMS ((r, td, parent, fieldType, parentVarName, newVarNam
 
     /* start with ref to parent */
     strcat (newVarName, parentVarName);
+
+    /* tricky space to be used for matching rule  */
+    strcat (newVarName, " ");
 
     /* ref this field */
     if ((td->type == parent) || (parent->cTypeRefInfo->isPtr))

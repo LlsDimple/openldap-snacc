@@ -153,6 +153,7 @@ typedef enum
 	PrintRoutineName,			/* String value */
 	EncodeRoutineName,			/* String value */
 	DecodeRoutineName,			/* String value */
+	MatchingRuleName,			/* String value */
 	FreeRoutineName,			/* String value */
 	IsEncDec,					/* Boolean value */
 	GenTypeDef,					/* Boolean value */
@@ -260,7 +261,7 @@ typedef struct TypeDef /* SEQUENCE */
     AsnBool exported; /* BOOLEAN */
     AsnBool recursive; /* BOOLEAN */
     AsnBool isPdu; /* BOOLEAN */
-	AsnBool bHasTableConstraint; /* BOOLEAN */
+    AsnBool bHasTableConstraint; /* BOOLEAN */
     AsnInt localRefCount; /* INTEGER */
     AsnInt importRefCount; /* INTEGER */
     AsnInt tmpRefCount; /* INTEGER */
@@ -970,6 +971,7 @@ typedef struct CTDI /* SEQUENCE */
     MyString printRoutineName; /* MyString */
     MyString encodeRoutineName; /* MyString */
     MyString decodeRoutineName; /* MyString */
+    MyString matchingRuleName; /* MyString */
     MyString freeRoutineName; /* MyString */
     AsnBool genPrintRoutine; /* BOOLEAN */
     AsnBool genEncodeRoutine; /* BOOLEAN */
@@ -1070,6 +1072,7 @@ typedef struct CTRI /* SEQUENCE */
     MyString printRoutineName; /* MyString */
     MyString encodeRoutineName; /* MyString */
     MyString decodeRoutineName; /* MyString */
+    MyString matchingRuleName; /* MNyString */
     MyString freeRoutineName; /* MyString */
     AsnBool isEncDec; /* BOOLEAN */
 } CTRI;
