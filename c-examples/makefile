@@ -1,6 +1,6 @@
 all:
-	(cd vdatestC; make)
+	(cd vdatestC; $(MAKE))
 clean:
-	(cd vdatestC; make clean)
+	(cd vdatestC; $(MAKE) clean)
 # dummy
 install::

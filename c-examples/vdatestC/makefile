@@ -24,8 +24,8 @@ endif
 
 all: 
 	@echo "...building ASN.1 modules..."
-	make $(ASN_CPP)
-	make targets
+	$(MAKE) $(ASN_CPP)
+	$(MAKE) targets
 
 targets: $(TARGET) $(TARGET2)
 
